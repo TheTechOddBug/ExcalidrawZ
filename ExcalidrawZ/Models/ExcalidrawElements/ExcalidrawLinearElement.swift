@@ -127,6 +127,115 @@ struct ExcalidrawLinearElement: ExcalidrawLinearElementBase {
     var endBinding: PointBinding?
     var startArrowhead: Arrowhead?
     var endArrowhead: Arrowhead?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case x
+        case y
+        case strokeColor
+        case backgroundColor
+        case fillStyle
+        case strokeWidth
+        case strokeStyle
+        case roundness
+        case roughness
+        case opacity
+        case width
+        case height
+        case angle
+        case seed
+        case version
+        case versionNonce
+        case index
+        case isDeleted
+        case groupIds
+        case frameId
+        case boundElements
+        case updated
+        case link
+        case locked
+        case customData
+        case type
+        case points
+        case lastCommittedPoint
+        case startBinding
+        case endBinding
+        case startArrowhead
+        case endArrowhead
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(x, forKey: .x)
+        try container.encode(y, forKey: .y)
+        try container.encode(strokeColor, forKey: .strokeColor)
+        try container.encode(backgroundColor, forKey: .backgroundColor)
+        try container.encode(fillStyle, forKey: .fillStyle)
+        try container.encode(strokeWidth, forKey: .strokeWidth)
+        try container.encode(strokeStyle, forKey: .strokeStyle)
+        if let roundness {
+            try container.encode(roundness, forKey: .roundness)
+        } else {
+            try container.encodeNil(forKey: .roundness)
+        }
+        try container.encode(roughness, forKey: .roughness)
+        try container.encode(opacity, forKey: .opacity)
+        try container.encode(width, forKey: .width)
+        try container.encode(height, forKey: .height)
+        try container.encode(angle, forKey: .angle)
+        try container.encode(seed, forKey: .seed)
+        try container.encode(version, forKey: .version)
+        try container.encode(versionNonce, forKey: .versionNonce)
+        if let index {
+            try container.encode(index, forKey: .index)
+        } else {
+            try container.encodeNil(forKey: .index)
+        }
+        try container.encode(isDeleted, forKey: .isDeleted)
+        try container.encode(groupIds, forKey: .groupIds)
+        if let frameId {
+            try container.encode(frameId, forKey: .frameId)
+        } else {
+            try container.encodeNil(forKey: .frameId)
+        }
+        if let boundElements {
+            try container.encode(boundElements, forKey: .boundElements)
+        } else {
+            try container.encodeNil(forKey: .boundElements)
+        }
+        try container.encodeIfPresent(updated, forKey: .updated)
+        if let link {
+            try container.encode(link, forKey: .link)
+        } else {
+            try container.encodeNil(forKey: .link)
+        }
+        try container.encodeIfPresent(locked, forKey: .locked)
+        try container.encodeIfPresent(customData, forKey: .customData)
+        try container.encode(type, forKey: .type)
+        try container.encode(points, forKey: .points)
+        try container.encodeIfPresent(lastCommittedPoint, forKey: .lastCommittedPoint)
+        if let startBinding {
+            try container.encode(startBinding, forKey: .startBinding)
+        } else {
+            try container.encodeNil(forKey: .startBinding)
+        }
+        if let endBinding {
+            try container.encode(endBinding, forKey: .endBinding)
+        } else {
+            try container.encodeNil(forKey: .endBinding)
+        }
+        if let startArrowhead {
+            try container.encode(startArrowhead, forKey: .startArrowhead)
+        } else {
+            try container.encodeNil(forKey: .startArrowhead)
+        }
+        if let endArrowhead {
+            try container.encode(endArrowhead, forKey: .endArrowhead)
+        } else {
+            try container.encodeNil(forKey: .endArrowhead)
+        }
+    }
     
     /// ignore `version`, `versionNounce`, `updated`
     static func == (lhs: Self, rhs: Self) -> Bool {
@@ -198,6 +307,43 @@ struct ExcalidrawArrowElement: ExcalidrawLinearElementBase {
     var startArrowhead: Arrowhead?
     var endArrowhead: Arrowhead?
     var elbowed: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case x
+        case y
+        case strokeColor
+        case backgroundColor
+        case fillStyle
+        case strokeWidth
+        case strokeStyle
+        case roundness
+        case roughness
+        case opacity
+        case width
+        case height
+        case angle
+        case seed
+        case version
+        case versionNonce
+        case index
+        case isDeleted
+        case groupIds
+        case frameId
+        case boundElements
+        case updated
+        case link
+        case locked
+        case customData
+        case type
+        case points
+        case lastCommittedPoint
+        case startBinding
+        case endBinding
+        case startArrowhead
+        case endArrowhead
+        case elbowed
+    }
     
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -235,6 +381,80 @@ struct ExcalidrawArrowElement: ExcalidrawLinearElementBase {
         self.startArrowhead = try container.decodeIfPresent(Arrowhead.self, forKey: .startArrowhead)
         self.endArrowhead = try container.decodeIfPresent(Arrowhead.self, forKey: .endArrowhead)
         self.elbowed = try container.decodeIfPresent(Bool.self, forKey: .elbowed) ?? false
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(x, forKey: .x)
+        try container.encode(y, forKey: .y)
+        try container.encode(strokeColor, forKey: .strokeColor)
+        try container.encode(backgroundColor, forKey: .backgroundColor)
+        try container.encode(fillStyle, forKey: .fillStyle)
+        try container.encode(strokeWidth, forKey: .strokeWidth)
+        try container.encode(strokeStyle, forKey: .strokeStyle)
+        if let roundness {
+            try container.encode(roundness, forKey: .roundness)
+        } else {
+            try container.encodeNil(forKey: .roundness)
+        }
+        try container.encode(roughness, forKey: .roughness)
+        try container.encode(opacity, forKey: .opacity)
+        try container.encode(width, forKey: .width)
+        try container.encode(height, forKey: .height)
+        try container.encode(angle, forKey: .angle)
+        try container.encode(seed, forKey: .seed)
+        try container.encode(version, forKey: .version)
+        try container.encode(versionNonce, forKey: .versionNonce)
+        if let index {
+            try container.encode(index, forKey: .index)
+        } else {
+            try container.encodeNil(forKey: .index)
+        }
+        try container.encode(isDeleted, forKey: .isDeleted)
+        try container.encode(groupIds, forKey: .groupIds)
+        if let frameId {
+            try container.encode(frameId, forKey: .frameId)
+        } else {
+            try container.encodeNil(forKey: .frameId)
+        }
+        if let boundElements {
+            try container.encode(boundElements, forKey: .boundElements)
+        } else {
+            try container.encodeNil(forKey: .boundElements)
+        }
+        try container.encodeIfPresent(updated, forKey: .updated)
+        if let link {
+            try container.encode(link, forKey: .link)
+        } else {
+            try container.encodeNil(forKey: .link)
+        }
+        try container.encodeIfPresent(locked, forKey: .locked)
+        try container.encodeIfPresent(customData, forKey: .customData)
+        try container.encode(type, forKey: .type)
+        try container.encode(points, forKey: .points)
+        try container.encodeIfPresent(lastCommittedPoint, forKey: .lastCommittedPoint)
+        if let startBinding {
+            try container.encode(startBinding, forKey: .startBinding)
+        } else {
+            try container.encodeNil(forKey: .startBinding)
+        }
+        if let endBinding {
+            try container.encode(endBinding, forKey: .endBinding)
+        } else {
+            try container.encodeNil(forKey: .endBinding)
+        }
+        if let startArrowhead {
+            try container.encode(startArrowhead, forKey: .startArrowhead)
+        } else {
+            try container.encodeNil(forKey: .startArrowhead)
+        }
+        if let endArrowhead {
+            try container.encode(endArrowhead, forKey: .endArrowhead)
+        } else {
+            try container.encodeNil(forKey: .endArrowhead)
+        }
+        try container.encode(elbowed, forKey: .elbowed)
     }
     
     /// ignore `version`, `versionNounce`, `updated`
