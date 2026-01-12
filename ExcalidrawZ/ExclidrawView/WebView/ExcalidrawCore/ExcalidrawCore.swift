@@ -392,7 +392,6 @@ window.excalidrawZHelper.exportElementsToBlob(
         withBackground: Bool = true,
         colorScheme: ColorScheme
     ) async throws -> PlatformImage {
-        print("[DEBUG] exportElementsToPNG", try? elements.jsonStringified(options: .prettyPrinted))
         let data = try await self.exportElementsToPNGData(
             elements: elements,
             files: files,
