@@ -293,7 +293,7 @@ private struct RecentlyFilesSection: View {
                                 }
                             }
                             .mask {
-                                if #available(macOS 14.0, *) {
+                                if #available(macOS 14.0, iOS 17.0, *) {
                                     SmoothLinearGradient(
                                         from: .white.opacity(0.2),
                                         to: .clear,
