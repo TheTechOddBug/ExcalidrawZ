@@ -108,14 +108,19 @@ class LocalFileUtils {
         }
 
         // find all files in sourceURL to update mappings
-        guard let enumerator = FileManager.default.enumerator(
-            at: sourceURL,
-            includingPropertiesForKeys: []
-        ) else {
-            return
-        }
+        // Collect all files first to avoid Swift 6 async iterator warning
+        let allFiles: [URL] = {
+            guard let enumerator = FileManager.default.enumerator(
+                at: sourceURL,
+                includingPropertiesForKeys: []
+            ) else {
+                return []
+            }
+            return enumerator.compactMap { $0 as? URL }
+        }()
 
-        for case let file as URL in enumerator {
+        // Update mappings for all files
+        for file in allFiles {
             // get the changed folder
             let relativePath = file.filePath.suffix(from: sourceURL.filePath.endIndex)
             let fileNewURL = if #available(macOS 13.0, *) {
