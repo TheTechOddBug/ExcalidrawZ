@@ -53,6 +53,9 @@ struct RenameFileTool: Tool {
 
         let params = try parseInput(input)
         let fileID = try resolveFileID(params.fileID, context: context)
+        guard try await LockedContentAIGuard.canToolAccess(fileID: fileID) else {
+            return LockedContentAIGuard.lockedToolResult
+        }
 
         let ctx = PersistenceController.shared.newTaskContext()
         let output: Output = try await ctx.perform {

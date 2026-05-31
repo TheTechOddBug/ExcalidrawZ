@@ -28,6 +28,8 @@ extension Notification.Name {
     static let toggleSidebar = Notification.Name("ToggleSidebar")
     static let toggleInspector = Notification.Name("ToggleInspector")
     static let toggleShare = Notification.Name("ToggleShare")
+    static let lockedContentDidReset = Notification.Name("LockedContentDidReset")
+    static let lockedContentDidDeleteFile = Notification.Name("LockedContentDidDeleteFile")
 }
 
 extension LLMClient {
@@ -205,6 +207,7 @@ struct ExcalidrawZApp: App {
 #endif
     @StateObject private var llmState: LLMStateObject
     @StateObject private var aiChatState = AIChatState()
+    @StateObject private var lockedContentState = LockedContentStateStore()
 
     @State private var isArchiveFilesExporterPresented = false
 
@@ -224,7 +227,9 @@ struct ExcalidrawZApp: App {
                 .environmentObject(appPrefernece)
                 .environmentObject(store)
                 .environmentObject(aiChatState)
+                .environmentObject(lockedContentState)
                 .llmProvider(state: llmState, client: .shared)
+                .lockedContentAutoRelock(lockedContentState: lockedContentState)
                 .onAppear {
 #if os(macOS) && !APP_STORE
                     updateChecker.assignUpdater(updater: updaterController.updater)
@@ -348,6 +353,7 @@ struct ExcalidrawZApp: App {
                 .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
                 .environmentObject(appPrefernece)
                 .environmentObject(store)
+                .environmentObject(lockedContentState)
                 .llmProvider(state: llmState, client: .shared)
 #if !APP_STORE
                 .environmentObject(updateChecker)

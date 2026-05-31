@@ -35,7 +35,7 @@ struct ShareFileModifier: ViewModifier {
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content(_ file: ExcalidrawFile) -> some View {
         ZStack {
             if #available(macOS 13.0, iOS 16.0, *) {
@@ -51,7 +51,6 @@ struct ShareFileModifier: ViewModifier {
 
 @available(macOS 13.0, iOS 16.0, *)
 struct ShareView: View {
-    @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.containerVerticalSizeClass) private var containerVerticalSizeClass
     
@@ -75,8 +74,30 @@ struct ShareView: View {
     enum Route: Hashable {
         case exportImage
         case exportFile
+#if os(macOS)
+        case archive
+#endif
 #if DEBUG
         case svgPreview(URL)
+#endif
+
+#if os(macOS)
+        static let rootSheetHeight: CGFloat = 300
+
+        var preferredSheetHeight: CGFloat {
+            switch self {
+                case .exportImage:
+                    return 442
+                case .exportFile:
+                    return 250
+                case .archive:
+                    return ArchiveFilesView.preferredSheetHeight
+#if DEBUG
+                case .svgPreview:
+                    return Self.rootSheetHeight
+#endif
+            }
+        }
 #endif
     }
     
@@ -86,25 +107,10 @@ struct ShareView: View {
 #if os(iOS)
     @State private var exportedPDFURL: URL?
 #endif
-    @State private var isArchiveFilesExporterPresented = false
-    @State private var isArchiving = false
-    @State private var archiveResult: ArchiveResult?
 
     private var preferredSheetHeight: CGFloat {
         #if os(macOS)
-        switch activeRoute {
-            case .exportImage:
-                return 442
-            case .exportFile:
-                return 250
-#if DEBUG
-            case .svgPreview, .none:
-                return 300
-                #else
-            case .none:
-                return 300
-#endif
-        }
+        activeRoute?.preferredSheetHeight ?? Route.rootSheetHeight
         #else
         return 0
         #endif
@@ -150,16 +156,8 @@ struct ShareView: View {
 #endif
                 Spacer()
                 exportActionButtons()
-                
-                ZStack {
-                    Color.clear
-                    if let archiveResult = archiveResult, !archiveResult.failedFiles.isEmpty {
-                        Text("\(archiveResult.failedFiles.count) files failed to archive")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .frame(height: 40)
+
+                Color.clear.frame(height: 40)
             }
             .onChange(of: route) { newValue in
                 activeRoute = newValue.last
@@ -171,6 +169,14 @@ struct ShareView: View {
                             ExportImageView(file: sharedFile)
                         case .exportFile:
                             ExportFileView(file: sharedFile)
+#if os(macOS)
+                        case .archive:
+                            ArchiveFilesView {
+                                if !self.route.isEmpty {
+                                    self.route.removeLast()
+                                }
+                            }
+#endif
 #if DEBUG
                         case .svgPreview(let url):
                             svgPreviewView(url: url)
@@ -215,12 +221,12 @@ struct ShareView: View {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func exportActionButtons() -> some View {
         exportActionButtonGroup()
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func exportActionButtonGroup() -> some View {
         HStack(spacing: 10) {
             SquareButton(title: .localizable(.exportSheetButtonImage), icon: .photo) {
@@ -264,41 +270,24 @@ struct ShareView: View {
 #if os(macOS)
                 SquareButton(
                     title: .localizable(.exportSheetButtonArchive),
-                    icon: .archivebox,
-                    loading: isArchiving
+                    icon: .archivebox
                 ) {
-                    isArchiving = true
-                    isArchiveFilesExporterPresented = true
+                    activeRoute = .archive
+                    route.append(.archive)
                 }
-                .archiveFilesExporter(
-                    isPresented: $isArchiveFilesExporterPresented,
-                    context: viewContext,
-                    onComplete: { result in
-                        isArchiving = false
-                        switch result {
-                            case .success(let archiveResult):
-                                self.archiveResult = archiveResult
-                            case .failure:
-                                break
-                        }
-                    },
-                    onCancellation: {
-                        isArchiving = false
-                    }
-                )
 #endif
             }
         }
     }
     
 #if DEBUG
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func svgPreviewView(url: URL) -> some View {
         SVGPreviewView(svgURL: url)
     }
 #endif
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func closeButton(block: Bool) -> some View {
         Button {
             dismiss()
@@ -359,7 +348,7 @@ struct ShareViewLagacy: View {
     @State private var exportedPDFURL: URL?
 #endif
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func homepage() -> some View {
         VStack(spacing: 20) {
             Text(.localizable(.exportSheetHeadline))
@@ -486,7 +475,7 @@ fileprivate struct SquareButton: View {
         .buttonStyle(ExportButtonStyle())
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     static func label(_ title: LocalizedStringKey, icon: SFSymbol) -> some View {
         VStack {
             Image(systemSymbol: icon)

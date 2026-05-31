@@ -351,7 +351,7 @@ struct FileMenuItems: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func moveFileMenu() -> some View {
         if let sourceGroup = firstFile?.group {
             Menu {

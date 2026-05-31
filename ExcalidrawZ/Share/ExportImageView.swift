@@ -80,17 +80,17 @@ struct ExportImageView: View {
     }
     
     var body: some View {
-        SwiftUI.Group {
+        ShareSubViewContainer(dismiss: dismiss) {
+            SwiftUI.Group {
 #if os(macOS)
-            Center {
-                content
-            }
+                Center {
+                    content
+                }
 #else
-            iOSContent()
+                iOSContent()
 #endif
+            }
         }
-        .modifier(ShareSubViewBackButtonModifier(dismiss: dismiss))
-        .padding(horizontalSizeClass == .compact ? 0 : 20)
         .onChange(of: keepEditable) { newValue in
             exportImageData()
         }
@@ -120,7 +120,7 @@ struct ExportImageView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var content: some View {
         VStack(spacing: 16) {
             previewSection
@@ -148,7 +148,7 @@ struct ExportImageView: View {
     
     
 #if os(iOS)
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func iOSContent() -> some View {
         NavigationStack {
             Form {
@@ -196,7 +196,7 @@ struct ExportImageView: View {
     }
 #endif
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func thumbnailView(_ image: PlatformImage, url: URL) -> some View {
 #if os(macOS)
         DragableImageView(
@@ -216,7 +216,7 @@ struct ExportImageView: View {
 
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var previewSection: some View {
         ZStack {
 #if os(macOS)
@@ -251,7 +251,7 @@ struct ExportImageView: View {
 #endif
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var fileInfoView: some View {
         VStack {
             imageNameField()
@@ -267,7 +267,7 @@ struct ExportImageView: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func imageNameField() -> some View {
         HStack(alignment: .center, spacing: 4) {
             // File name
@@ -319,7 +319,7 @@ struct ExportImageView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func exportImageSettingItems() -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -378,7 +378,7 @@ struct ExportImageView: View {
 #endif
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var actionsPlaceholderView: some View {
         HStack {
             if #available(macOS 13.0, iOS 16.0, *) {
@@ -405,7 +405,7 @@ struct ExportImageView: View {
 #endif
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func actionsFooterView(url: URL) -> some View {
         if containerHorizontalSizeClass == .compact {
             VStack {
@@ -423,7 +423,7 @@ struct ExportImageView: View {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var actionsFooterPlaceholderView: some View {
         if containerHorizontalSizeClass == .compact {
             VStack {
@@ -441,7 +441,7 @@ struct ExportImageView: View {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var actionsPlaceholderItems: some View {
         if #available(macOS 13.0, iOS 16.0, *) {
             Label(.localizable(.exportActionCopy), systemSymbol: .clipboard)
@@ -464,7 +464,7 @@ struct ExportImageView: View {
             .frame(maxWidth: containerHorizontalSizeClass == .compact ? .infinity : nil)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func actionItems(_ url: URL) -> some View {
         Button {
 #if canImport(AppKit)

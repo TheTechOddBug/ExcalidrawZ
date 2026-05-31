@@ -282,19 +282,25 @@ actor FileRepository {
         let context = PersistenceController.shared.newTaskContext()
 
         // Step 1: Get file ID and metadata
-        let (fileID, updatedAt) = try await context.perform {
+        let (fileID, existingFilePath, updatedAt) = try await context.perform {
             guard let file = context.object(with: fileObjectID) as? File else {
                 throw AppError.fileError(.notFound)
             }
             guard let fileID = file.id else {
                 throw AppError.fileError(.contentNotAvailable(filename: file.name ?? String(localizable: .generalUnknown)))
             }
-            return (fileID, file.updatedAt)
+            return (fileID, file.filePath, file.updatedAt)
         }
+
+        let contentToSave = try await encryptedContentIfNeeded(
+            content,
+            existingFilePath: existingFilePath,
+            fileID: fileID
+        )
 
         // Step 2: Save to storage (local + iCloud sync)
         let relativePath = try await FileStorageManager.shared.saveContent(
-            content,
+            contentToSave,
             fileID: fileID.uuidString,
             type: .file,
             updatedAt: updatedAt
@@ -307,6 +313,53 @@ actor FileRepository {
             try context.save()
         }
         logger.info("Saved file to storage: \(relativePath)")
+    }
+
+    private func encryptedContentIfNeeded(
+        _ content: Data,
+        existingFilePath: String?,
+        fileID: UUID
+    ) async throws -> Data {
+        let contentID = fileID.uuidString
+
+        if EncryptedContentService.isEncryptedEnvelope(content) {
+            let envelope = try EncryptedContentService.decodeEnvelope(content)
+            guard envelope.contentType == "file", envelope.contentID == contentID else {
+                throw EncryptedContentError.contentIdentityMismatch(
+                    expectedType: "file",
+                    expectedID: contentID,
+                    actualType: envelope.contentType,
+                    actualID: envelope.contentID
+                )
+            }
+            return content
+        }
+
+        guard let existingFilePath else {
+            return content
+        }
+
+        let existingContent: Data
+        do {
+            existingContent = try await FileStorageManager.shared.loadContent(
+                relativePath: existingFilePath,
+                fileID: contentID
+            )
+        } catch {
+            logger.warning("Failed to inspect existing file content before save: \(error.localizedDescription). Saving plain content.")
+            return content
+        }
+
+        guard EncryptedContentService.isEncryptedEnvelope(existingContent) else {
+            return content
+        }
+
+        return try await LockedContentUnlockSession.shared.resealPayload(
+            content,
+            existingEnvelopeData: existingContent,
+            expectedContentType: "file",
+            expectedContentID: contentID
+        )
     }
 
     /// Create a new checkpoint for the file with explicit metadata.

@@ -42,7 +42,7 @@ struct FileCheckpointRowView<Checkpoint: FileCheckpointRepresentable>: View {
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
 #if os(iOS)
         NavigationLink {
@@ -61,7 +61,7 @@ struct FileCheckpointRowView<Checkpoint: FileCheckpointRepresentable>: View {
 #endif
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func label() -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
@@ -193,7 +193,7 @@ private struct FileCheckpointRowButtonStyle: PrimitiveButtonStyle {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func rowBackground(isPressed: Bool) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         

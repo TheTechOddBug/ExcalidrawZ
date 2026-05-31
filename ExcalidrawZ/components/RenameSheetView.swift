@@ -99,7 +99,7 @@ struct RenameSheetView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         Section {
             HStack {

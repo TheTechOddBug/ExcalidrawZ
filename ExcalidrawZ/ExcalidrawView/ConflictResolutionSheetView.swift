@@ -112,7 +112,7 @@ struct ConflictResolutionSheetView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func navigationStack<Content: View>(
         @ViewBuilder content: () -> Content
     ) -> some View {
@@ -127,7 +127,7 @@ struct ConflictResolutionSheetView: View {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func header() -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -147,7 +147,7 @@ struct ConflictResolutionSheetView: View {
         .padding()
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func loadingView() -> some View {
         VStack(spacing: 0) {
             Spacer()
@@ -157,7 +157,7 @@ struct ConflictResolutionSheetView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func errorView(error: Error) -> some View {
         VStack(spacing: 0) {
             Spacer()
@@ -184,7 +184,7 @@ struct ConflictResolutionSheetView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func emptyView() -> some View {
         VStack(spacing: 0) {
             Spacer()
@@ -206,7 +206,7 @@ struct ConflictResolutionSheetView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func actions() -> some View {
         Button(.localizable(.generalButtonCancel)) {
             onCancelled()

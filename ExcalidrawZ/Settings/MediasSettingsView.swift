@@ -37,7 +37,7 @@ struct MediasSettingsView: View {
 #endif
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func regularContent() -> some View {
         HStack(spacing: 0) {
             mediaList()
@@ -58,7 +58,7 @@ struct MediasSettingsView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func mediaList() -> some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -101,7 +101,7 @@ struct MediasSettingsView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func detailView() -> some View {
         ZStack {
             if let item = selection,
@@ -164,7 +164,7 @@ struct MediasSettingsView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func placeholderView() -> some View {
         VStack {
             Text(.localizable(.settingsMediasName)).font(.largeTitle)
@@ -183,7 +183,7 @@ struct MediasSettingsView: View {
         .frame(maxWidth: 400)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func galleryView() -> some View {
         ScrollView {
             LazyVGrid(columns: [.init(.adaptive(minimum: 120, maximum: 300))]) {

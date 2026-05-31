@@ -35,6 +35,7 @@ extension FileState {
         userMessageID: String
     ) async throws {
         let active = currentActiveFile
+        try await LockedContentAIGuard.ensureAIReadable(activeFile: active)
 
         // Open the session first so suppression kicks in *before* the
         // snapshot read — without this, a concurrent updateFile from a

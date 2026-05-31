@@ -37,6 +37,7 @@ import LLMCore
 struct AddLibraryItemToCanvasTool: Tool {
     struct AddContext: ToolContext {
         var canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget
+        var currentFileID: UUID? = nil
     }
 
     var name: String { "add_library_item_to_canvas" }
@@ -87,6 +88,9 @@ struct AddLibraryItemToCanvasTool: Tool {
             throw ToolError.executionFailed("Missing canvas context — tool needs an active Excalidraw coordinator.")
         }
         let addContext = try context.resolve(AddContext.self)
+        guard try await LockedContentAIGuard.canToolAccess(fileID: addContext.currentFileID) else {
+            return LockedContentAIGuard.lockedToolResult
+        }
 
         // 1. Load the item's elements blob.
         let elementsBlob = try await loadElementsBlob(

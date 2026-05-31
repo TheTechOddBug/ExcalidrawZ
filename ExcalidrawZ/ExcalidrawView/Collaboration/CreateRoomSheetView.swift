@@ -65,7 +65,7 @@ struct CreateRoomSheetView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func menuButton() -> some View {
         Menu {
             Button {

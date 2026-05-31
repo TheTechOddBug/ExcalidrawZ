@@ -39,22 +39,12 @@ struct GeneralSettingsView: View {
     }
 
     var body: some View {
-        if #available(macOS 14.0, *) {
-            Form {
-                content()
-            }
-            .formStyle(.grouped)
-        } else {
-            ScrollView {
-                VStack {
-                    content()
-                }
-                .padding()
-            }
+        SettingsFormContainer {
+            content()
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         Section {
             settingCellView(.localizable(.settingsAppAppearanceName)) {
@@ -265,7 +255,7 @@ struct GeneralSettingsView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func settingCellView<T: View, V: View>(
         _ title: LocalizedStringKey,
         @ViewBuilder trailing: @escaping () -> T,

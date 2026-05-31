@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension View {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     public func modifier<V: ViewModifier>(_ modifier: V, isActive: Bool) -> some View {
         if isActive {
             self.modifier(modifier)
@@ -17,7 +17,7 @@ extension View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func sheetPadding() -> some View {
         self
             .padding(.horizontal, {

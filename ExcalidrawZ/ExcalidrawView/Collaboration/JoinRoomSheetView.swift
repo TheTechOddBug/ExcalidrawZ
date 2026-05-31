@@ -102,7 +102,7 @@ struct JoinRoomSheetView: View {
         .padding()
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func row<Content: View>(
         _ title: LocalizedStringKey,
         @ViewBuilder content: () -> Content

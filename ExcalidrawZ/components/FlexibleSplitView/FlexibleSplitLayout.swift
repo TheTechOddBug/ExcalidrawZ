@@ -28,7 +28,7 @@ public enum SplitArrangement: Hashable {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func iconView() -> some View {
         switch self {
             case .single:

@@ -73,7 +73,7 @@ struct TemporaryFilesHomeView: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func actionsMenu() -> some View {
         Menu {
             TemporaryGroupMenuItems()

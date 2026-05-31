@@ -23,7 +23,7 @@ extension EnvironmentValues {
 }
 
 extension View {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     public func disclosureGroupIndicatorVisibility(
         _ visibility: DisclosureGroupIndicatorVisibility
     ) -> some View {

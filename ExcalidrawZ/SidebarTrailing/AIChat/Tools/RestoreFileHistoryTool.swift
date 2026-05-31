@@ -96,10 +96,13 @@ struct RestoreFileHistoryTool: Tool {
             return Resolution(
                 fileObjectID: file.objectID,
                 checkpointObjectID: checkpoint.objectID,
-                fileName: file.name ?? "Untitled",
-                checkpointSource: checkpoint.checkpointSource.rawValue,
-                checkpointUpdatedAt: checkpoint.updatedAt
+                fileName: nil,
+                checkpointSource: nil,
+                checkpointUpdatedAt: nil
             )
+        }
+        guard try await LockedContentAIGuard.canToolAccess(fileObjectID: resolution.fileObjectID) else {
+            return LockedContentAIGuard.lockedToolResult
         }
 
         // 2. Run the actual restore through the existing repository
@@ -128,11 +131,24 @@ struct RestoreFileHistoryTool: Tool {
             )
         }
 
-        let timestampString = resolution.checkpointUpdatedAt
+        let metadata: Resolution = try await resolveCtx.perform {
+            guard let file = try resolveCtx.existingObject(with: resolution.fileObjectID) as? File,
+                  let checkpoint = try resolveCtx.existingObject(with: resolution.checkpointObjectID) as? FileCheckpoint else {
+                throw ToolError.executionFailed("File or checkpoint disappeared during restore.")
+            }
+            return Resolution(
+                fileObjectID: resolution.fileObjectID,
+                checkpointObjectID: resolution.checkpointObjectID,
+                fileName: file.name ?? "Untitled",
+                checkpointSource: checkpoint.checkpointSource.rawValue,
+                checkpointUpdatedAt: checkpoint.updatedAt
+            )
+        }
+        let timestampString = metadata.checkpointUpdatedAt
             .map(ISO8601DateFormatter.shared.string(from:)) ?? "unknown"
         return .text(
-            "Restored file '\(resolution.fileName)' to checkpoint " +
-            "(\(resolution.checkpointSource), \(timestampString))."
+            "Restored file '\(metadata.fileName ?? "Untitled")' to checkpoint " +
+            "(\(metadata.checkpointSource ?? "unknown"), \(timestampString))."
         )
     }
 
@@ -160,8 +176,8 @@ struct RestoreFileHistoryTool: Tool {
     private struct Resolution {
         let fileObjectID: NSManagedObjectID
         let checkpointObjectID: NSManagedObjectID
-        let fileName: String
-        let checkpointSource: String
+        let fileName: String?
+        let checkpointSource: String?
         let checkpointUpdatedAt: Date?
     }
 

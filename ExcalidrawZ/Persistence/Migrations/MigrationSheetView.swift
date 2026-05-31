@@ -268,7 +268,7 @@ struct MigrationProgressSheet: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func actionsView() -> some View {
         Button {
             isArchiving = true
@@ -323,7 +323,7 @@ struct MigrationProgressSheet: View {
     
     @State private var isSkipAlertPresented = false
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func errorActionsView() -> some View {
         var isMigrating: Bool {
             if case .migrating = migrationState.phase { true } else { false }

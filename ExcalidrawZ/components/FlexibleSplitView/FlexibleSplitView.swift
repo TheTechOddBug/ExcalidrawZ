@@ -353,7 +353,7 @@ fileprivate struct SubViewToolbarModifier: ViewModifier {
     }
     
     
-//    @MainActor @ViewBuilder
+//    @ViewBuilder
 //    private func toolbarContent() -> some View {
 //        content
 //            .padding(6)

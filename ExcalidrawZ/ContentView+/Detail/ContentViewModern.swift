@@ -40,7 +40,7 @@ struct ContentViewModern: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         if #available(iOS 26.0, *), horizontalSizeClass == .compact {
 #if os(iOS)
@@ -53,7 +53,7 @@ struct ContentViewModern: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func navigationView() -> some View {
         // Known issue: Cause `Unable to simultaneously satisfy constraints.` in iOS
         NavigationSplitView(columnVisibility: $columnVisibility) {

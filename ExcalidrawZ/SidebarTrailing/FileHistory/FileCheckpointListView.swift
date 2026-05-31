@@ -89,7 +89,7 @@ struct FileCheckpointListView<Checkpoint: FileCheckpointRepresentable>: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
 #if os(iOS)
         content_iOS()
@@ -100,7 +100,7 @@ struct FileCheckpointListView<Checkpoint: FileCheckpointRepresentable>: View {
     
 #if os(iOS)
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content_iOS() -> some View {
         NavigationStack {
             List(selection: $selection) {
@@ -123,7 +123,7 @@ struct FileCheckpointListView<Checkpoint: FileCheckpointRepresentable>: View {
         }
     }
 #else
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content_macOS() -> some View {
         let _ = print("[updateElements FileCheckpointListView] checkpoints count: \(fileCheckpoints.count), unique count: \(Set(fileCheckpoints).count), ids: \(fileCheckpoints.map { $0.objectID })")
         

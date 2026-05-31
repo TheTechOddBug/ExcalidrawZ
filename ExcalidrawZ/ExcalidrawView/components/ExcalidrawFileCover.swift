@@ -53,13 +53,27 @@ struct ExcalidrawFileCover: View {
     }
     
     private let source: Source
+    private let refreshToken: String?
+    private let allowsGeneration: Bool
     
-    init(file: FileState.ActiveFile) {
+    init(
+        file: FileState.ActiveFile,
+        refreshToken: String? = nil,
+        allowsGeneration: Bool = true
+    ) {
         self.source = .activeFile(file)
+        self.refreshToken = refreshToken
+        self.allowsGeneration = allowsGeneration
     }
     
-    init(excalidrawFile: ExcalidrawFile) {
+    init(
+        excalidrawFile: ExcalidrawFile,
+        refreshToken: String? = nil,
+        allowsGeneration: Bool = true
+    ) {
         self.source = .excalidrawFile(excalidrawFile)
+        self.refreshToken = refreshToken
+        self.allowsGeneration = allowsGeneration
     }
     
     var fileID: String {
@@ -76,6 +90,14 @@ struct ExcalidrawFileCover: View {
     var cacheKey: String {
         colorScheme == .light ? fileID + "_light" : fileID + "_dark"
     }
+
+    private var coverTaskID: String {
+        [
+            cacheKey,
+            refreshToken ?? "default",
+            allowsGeneration ? "enabled" : "disabled"
+        ].joined(separator: "|")
+    }
     
     @State private var coverImage: Image? = nil
     @State private var error: Error?
@@ -88,7 +110,8 @@ struct ExcalidrawFileCover: View {
             .apply { view in
                 applyListeners(to: view)
             }
-            .task(id: cacheKey) {
+            .task(id: coverTaskID) {
+                guard allowsGeneration else { return }
                 loadCover()
             }
             .onReceive(
@@ -177,6 +200,8 @@ struct ExcalidrawFileCover: View {
     }
 
     private func generateCover(forceRefresh: Bool = false) {
+        guard allowsGeneration else { return }
+
         let fileID = self.fileID
         let colorScheme = self.colorScheme
         let cacheKey = self.cacheKey
@@ -190,6 +215,7 @@ struct ExcalidrawFileCover: View {
         }
 
         generationTask?.cancel()
+        error = nil
         generatingCacheKey = cacheKey
         let generationToken = UUID()
         self.generationToken = generationToken

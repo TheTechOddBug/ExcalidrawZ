@@ -9,7 +9,7 @@ import SwiftUI
 import SFSafeSymbols
 
 extension AISettingsView {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var informationHeader: some View {
         settingsTabHeader {
             HStack(alignment: .top, spacing: 16) {
@@ -31,7 +31,7 @@ extension AISettingsView {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var aiInformationRows: some View {
         if !prefs.isAIEnabled {
             Toggle(isOn: aiEnabledBinding) {

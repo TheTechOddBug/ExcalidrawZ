@@ -11,7 +11,7 @@ import LLMCore
 import SFSafeSymbols
 
 extension AISettingsView {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var activityBody: some View {
         if let error = transactionLoadError {
             Text(localizable: .settingsAIUsageActivityLoadFailTitle(error.localizedDescription))

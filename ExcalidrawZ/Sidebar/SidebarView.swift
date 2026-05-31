@@ -37,7 +37,7 @@ struct SidebarView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func oneColumnSidebar() -> some View {
         GroupListView(sortField: fileState.sortField)
             .border(.top, color: .separatorColor)

@@ -43,7 +43,7 @@ struct ContentViewDetail: View {
 //        }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func splitViewsContent() -> some View {
         if #available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *), false {
             ExcalidrawSplitViewsContainer()

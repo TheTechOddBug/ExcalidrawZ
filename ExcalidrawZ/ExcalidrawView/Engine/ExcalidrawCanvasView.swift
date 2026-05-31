@@ -59,6 +59,7 @@ struct ExcalidrawCanvasView: View {
     @Binding var file: ExcalidrawFile?
     @Binding var loadingState: LoadingState
     var savingType: UTType
+    var onDocumentLoadFinished: (String) -> Void
     var onError: (Error) -> Void
     var interactionEnabled: Bool
     
@@ -82,6 +83,7 @@ struct ExcalidrawCanvasView: View {
         savingType: UTType = .excalidrawFile,
         loadingState: Binding<LoadingState>,
         interactionEnabled: Bool = true,
+        onDocumentLoadFinished: @escaping (String) -> Void = { _ in },
         onError: @escaping (Error) -> Void
     ) {
         self.type = type
@@ -89,6 +91,7 @@ struct ExcalidrawCanvasView: View {
         self.savingType = savingType
         self._loadingState = loadingState
         self.interactionEnabled = interactionEnabled
+        self.onDocumentLoadFinished = onDocumentLoadFinished
         self.onError = onError
     }
     
@@ -271,15 +274,20 @@ struct ExcalidrawCanvasView: View {
         // application, we can chain the re-sync directly.
         Task {
             let outcome = await excalidrawCore.documentSyncController.load(newFile)
+            let isStillCurrent = await MainActor.run {
+                file?.id == newFile.id
+            }
+            guard isStillCurrent else { return }
+
             if outcome.didLoad, type == .normal {
-                let isStillCurrent = await MainActor.run {
-                    file?.id == newFile.id
-                }
-                guard isStillCurrent else { return }
                 await syncCanvasPrefsFromWeb()
                 await MainActor.run {
                     syncCanvasDrawingSettingsFromFile()
                 }
+            }
+
+            await MainActor.run {
+                onDocumentLoadFinished(newFile.id)
             }
         }
     }

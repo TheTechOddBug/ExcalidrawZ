@@ -61,7 +61,7 @@ struct AboutView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         Section {
             HStack {
@@ -118,7 +118,7 @@ struct AboutView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func licenseView() -> some View {
         let license = """
 MIT License

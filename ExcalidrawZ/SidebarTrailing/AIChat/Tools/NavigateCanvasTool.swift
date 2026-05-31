@@ -66,6 +66,7 @@ final class ExcalidrawCoordinatorRegistry {
 struct NavigateCanvasTool: Tool {
     struct NavigateCanvasContext: ToolContext {
         var canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget
+        var currentFileID: UUID? = nil
     }
 
     var name: String { "navigate_canvas" }
@@ -98,6 +99,9 @@ struct NavigateCanvasTool: Tool {
             throw ToolError.executionFailed("Missing NavigateCanvasContext")
         }
         let navigationContext = try context.resolve(NavigateCanvasContext.self)
+        guard try await LockedContentAIGuard.canToolAccess(fileID: navigationContext.currentFileID) else {
+            return LockedContentAIGuard.lockedToolResult
+        }
         await MainActor.run {
             ExcalidrawCoordinatorRegistry.shared.stopCameraDirector(for: navigationContext.canvasTarget)
         }

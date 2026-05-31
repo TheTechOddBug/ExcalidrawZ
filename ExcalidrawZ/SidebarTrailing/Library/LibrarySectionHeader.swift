@@ -86,7 +86,7 @@ struct LibrarySectionHeader: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func menuButton() -> some View {
         if !inSelectionMode {
             Menu {
@@ -101,7 +101,7 @@ struct LibrarySectionHeader: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func menuContent(library: Library) -> some View {
         Button {
             isEditLibrarySheetPresented.toggle()

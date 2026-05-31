@@ -288,7 +288,7 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
     let fileItemWidth: CGFloat = 240
     let folderItemWidth: CGFloat = 220
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         FileHomeContainer {
             containerContent()
@@ -344,7 +344,7 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
 #endif
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func header() -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 2) {
@@ -405,7 +405,7 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func containerContent() -> some View {
         VStack(spacing: 30) {
             header()
@@ -418,7 +418,7 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
         .padding(.top, parentGroups.isEmpty ? 36 : 15)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func actionsMenu() -> some View {
         SwiftUI.Group {
             if let group = group as? Group {
@@ -504,7 +504,7 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func quickActions() -> some View {
         
         if let group = self.group as? Group, group.groupType == .trash {
@@ -530,7 +530,7 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func groupsAndFiles() -> some View {
         if let group = self.group as? Group, group.groupType == .trash {} else {
             // Groups
@@ -603,7 +603,7 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
 }
 
 private struct FileHomeQuickActionButtonStyleModifier: ViewModifier {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func body(content: Content) -> some View {
         if #available(macOS 26.0, iOS 26.0, *) {
             content

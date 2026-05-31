@@ -70,7 +70,7 @@ struct CompactBrowseRootView: View {
 
     @State private var editMode: EditMode = .inactive
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         List {
             // iCloud Section
@@ -130,7 +130,7 @@ struct CompactBrowseRootView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func navigationDestination(_ objectID: NSManagedObjectID) -> some View {
         ZStack {
             if let group = viewContext.object(with: objectID) as? (any ExcalidrawGroup) {
@@ -146,7 +146,7 @@ struct CompactBrowseRootView: View {
         .environment(\.editMode, $editMode)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func expandableSection<Content: View, Header: View>(
         isExpanded: Binding<Bool>,
         content: () -> Content,
@@ -245,7 +245,7 @@ struct CompactBrowserDestinationView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         let group = viewContext.object(with: objectID)
         SwiftUI.Group {
@@ -371,7 +371,7 @@ struct CompactBrowserDestinationView: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func editModeToolbarContent() -> some View {
         HStack(spacing: 16) {
             FileMenuProvider(file: nil) { triggers in

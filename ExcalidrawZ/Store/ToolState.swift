@@ -190,7 +190,7 @@ enum ExcalidrawTool: Int, Hashable, CaseIterable {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     public func icon(strokeLineWidth: CGFloat = 1.5) -> some View {
         switch self {
             case .eraser:

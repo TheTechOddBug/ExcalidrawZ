@@ -211,7 +211,7 @@ struct LibraryView: View {
     }
 #endif
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         if libraries.isEmpty {
             emptyPlaceholder()
@@ -249,7 +249,7 @@ struct LibraryView: View {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var searchField: some View {
         HStack(spacing: 8) {
             Image(systemSymbol: .magnifyingglass)
@@ -279,7 +279,7 @@ struct LibraryView: View {
     }
     
 #if os(iOS)
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func compactContent() -> some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -314,7 +314,7 @@ struct LibraryView: View {
     
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func emptyPlaceholder() -> some View {
         VStack(spacing: 20) {
             Spacer()
@@ -348,7 +348,7 @@ struct LibraryView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func scrollContent() -> some View {
         ScrollView {
             LazyVStack(spacing: 16) {
@@ -367,7 +367,7 @@ struct LibraryView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func bottomBar() -> some View {
         HStack {
             Color.clear
@@ -441,7 +441,7 @@ struct LibraryView: View {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func bottomBarMenu() -> some View {
         Menu {
             bottomBarMenuItems()
@@ -455,7 +455,7 @@ struct LibraryView: View {
         .contentShape(Rectangle())
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func bottomBarMenuItems() -> some View {
         if inSelectionMode {
             if libraries.count > 1 {
@@ -498,7 +498,7 @@ struct LibraryView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func importButton() -> some View {
         // Now opens the in-app library browser; users can drill into a manual
         // file import from the sheet's header if they have a local .excalidrawlib.

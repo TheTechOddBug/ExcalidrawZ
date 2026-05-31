@@ -211,6 +211,7 @@ struct FileHomeItemHeroLayer: View {
     @Environment(\.colorScheme) var colorScheme
     
     @EnvironmentObject var appPreference: AppPreference
+    @EnvironmentObject private var lockedContentState: LockedContentStateStore
     
     var file: FileState.ActiveFile
     var show: Bool
@@ -235,9 +236,15 @@ struct FileHomeItemHeroLayer: View {
     var cacheKey: String {
         colorScheme == .light ? file.id + "_light" : file.id + "_dark"
     }
+
+    var lockState: FileContentLockState? {
+        lockedContentState.previewLockState(for: file)
+    }
     
     var platformImage: PlatformImage? {
-        FileItemPreviewCache.shared.object(forKey: cacheKey as NSString)
+        guard let lockState,
+              lockState != .locked else { return nil }
+        return FileItemPreviewCache.shared.object(forKey: cacheKey as NSString)
     }
 
     var background: Color {
@@ -253,16 +260,54 @@ struct FileHomeItemHeroLayer: View {
             let sRect = geomerty[sourceAnchor]
             let dRect = geomerty[destinationAnchor]
             
-            let viewSize: CGSize = CGSize(
-                width: isAnimating ? dRect.width : sRect.width,
-                height: isAnimating ? dRect.height : sRect.height
+            FileHomeItemHeroSurface(
+                show: show,
+                progress: isAnimating ? 1 : 0,
+                sourceRect: sRect,
+                destinationRect: dRect,
+                lockState: lockState,
+                platformImage: platformImage,
+                background: background
             )
-            let viewPosition: CGSize = CGSize(
-                width: isAnimating ? dRect.minX : sRect.minX,
-                height: isAnimating ? dRect.minY : sRect.minY
-            )
-            
-            ZStack {
+            .onAppear {
+                clearPreviewCacheIfLocked(lockState)
+            }
+            .onChange(of: lockState) { newValue in
+                clearPreviewCacheIfLocked(newValue)
+            }
+        }
+    }
+
+    private func clearPreviewCacheIfLocked(_ lockState: FileContentLockState?) {
+        guard lockState == .locked else { return }
+        FileItemPreviewCache.shared.removePreviewCache(forID: file.id)
+    }
+}
+
+private struct FileHomeItemHeroSurface: View, Animatable {
+    var show: Bool
+    var progress: CGFloat
+    var sourceRect: CGRect
+    var destinationRect: CGRect
+    var lockState: FileContentLockState?
+    var platformImage: PlatformImage?
+    var background: Color
+
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    var body: some View {
+        ZStack {
+            if lockState == .locked {
+                LockedFilePreviewPlaceholder(
+                    showsIcon: true,
+                    iconSize: lockIconSize
+                )
+            } else if lockState == nil {
+                LockedFilePreviewPlaceholder()
+            } else {
                 background
 
                 if let platformImage {
@@ -271,24 +316,55 @@ struct FileHomeItemHeroLayer: View {
                         .scaledToFill()
                 }
             }
-            .frame(width: viewSize.width, height: viewSize.height)
-            .clipShape(RoundedRectangle(cornerRadius: isAnimating ? 0 : 12))
-            .background {
-                if show {
-                    RoundedRectangle(cornerRadius: isAnimating ? 0 : 12)
-                        .fill(background)
-                        .shadow(
-                            color: isAnimating ? .clear : Color.gray.opacity(0.2),
-                            radius: isAnimating ? 0 : 4
-                        )
-                }
-            }
-            .offset(viewPosition)
-            .transition(.identity)
-            // can not use with if condition
-            .opacity(show ? 1 : 0) // <-- important
-            // .animation(.default, value: show)
         }
+        .frame(width: currentRect.width, height: currentRect.height)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .background {
+            if show {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(background)
+                    .shadow(
+                        color: Color.gray.opacity(shadowOpacity),
+                        radius: shadowRadius
+                    )
+            }
+        }
+        .offset(x: currentRect.minX, y: currentRect.minY)
+        .transition(.identity)
+        // can not use with if condition
+        .opacity(show ? 1 : 0) // <-- important
+        // .animation(.default, value: show)
+    }
+
+    private var currentRect: CGRect {
+        CGRect(
+            x: interpolate(sourceRect.minX, destinationRect.minX),
+            y: interpolate(sourceRect.minY, destinationRect.minY),
+            width: interpolate(sourceRect.width, destinationRect.width),
+            height: interpolate(sourceRect.height, destinationRect.height)
+        )
+    }
+
+    private var cornerRadius: CGFloat {
+        12 * (1 - progress)
+    }
+
+    private var shadowRadius: CGFloat {
+        4 * (1 - progress)
+    }
+
+    private var shadowOpacity: CGFloat {
+        0.2 * (1 - progress)
+    }
+
+    private var lockIconSize: CGFloat {
+        let sourceIconSize: CGFloat = sourceRect.height <= 70 ? 22 : 34
+        let destinationIconSize: CGFloat = 72
+        return interpolate(sourceIconSize, destinationIconSize)
+    }
+
+    private func interpolate(_ source: CGFloat, _ destination: CGFloat) -> CGFloat {
+        source + (destination - source) * progress
     }
 }
 

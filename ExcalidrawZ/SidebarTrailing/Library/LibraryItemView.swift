@@ -101,7 +101,7 @@ struct LibraryItemView: View {
 #endif
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         LibraryItemContentView(item: item)
         .font(.footnote)
@@ -109,7 +109,7 @@ struct LibraryItemView: View {
         .truncationMode(.middle)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func contextMenu() -> some View {
         if !inSelectionMode {
             Button {
@@ -328,7 +328,7 @@ struct LibraryItemContentView: View {
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         Center {
             VStack {

@@ -7,6 +7,19 @@
 
 import SwiftUI
 
+struct ShareSubViewContainer<Content: View>: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    var dismiss: () -> Void
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        content()
+            .modifier(ShareSubViewBackButtonModifier(dismiss: dismiss))
+            .padding(horizontalSizeClass == .compact ? 0 : 20)
+    }
+}
+
 struct ShareSubViewBackButtonModifier: ViewModifier {
     var dismiss: () -> Void
     @State private var showBackButton = false

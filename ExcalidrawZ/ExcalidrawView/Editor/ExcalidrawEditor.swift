@@ -24,18 +24,19 @@ struct ExcalidrawEditor: View {
     /// but the *anchor* (bottom-center) is editor-local, hence the overlay
     /// lives here rather than at the NavigationSplitView level.
     @EnvironmentObject var layoutState: LayoutState
+    @EnvironmentObject private var lockedContentState: LockedContentStateStore
     @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
 
     let logger = Logger(label: "ExcalidrawEditor")
-    
+
     @Binding var activeFile: FileState.ActiveFile?
     var interactionEnabled: Bool
 
     @State private var isSettingsPresented = false
     @State private var excalidrawFile: ExcalidrawFile?
     @State private var isLoadingFile = false
-    @State private var shouldShowLoadingMask = false
     @State private var loadingTask: Task<Void, Never>?
+    @State private var documentLoadCompletion: ExcalidrawDocumentLoadCompletion?
 
     @State private var conflictFileURL: URL?
     @State private var isSyncing = false
@@ -111,7 +112,10 @@ struct ExcalidrawEditor: View {
                         applyExcalidrawFile(val)
                     },
                     loadingState: $canvasLoadingState,
-                    interactionEnabled: interactionEnabled
+                    interactionEnabled: interactionEnabled,
+                    onDocumentLoadFinished: { fileID in
+                        documentLoadCompletion = ExcalidrawDocumentLoadCompletion(fileID: fileID)
+                    }
                 ) { error in
                     alertToast(error)
                 }
@@ -129,22 +133,6 @@ struct ExcalidrawEditor: View {
             }
             .opacity(isLoadingFile ? 0 : 1)
             .animation(.smooth, value: isLoadingFile)
-            
-            // Loading mask
-            if isLoadingFile {
-                ZStack {
-                    VStack(spacing: 12) {
-                        ProgressView()
-                            .controlSize(.large)
-                        Text(localizable: .generalLoading)
-                            .font(.headline)
-                    }
-                    .padding(24)
-                    .background(.regularMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                .transition(.opacity)
-            }
 
             ExcalidrawTrailingControls()
                 .opacity(isLoadingFile ? 0 : 1)
@@ -165,15 +153,14 @@ struct ExcalidrawEditor: View {
             }
         }
         .animation(.smooth(duration: 0.3), value: layoutState.isAIChatIslandMode)
-        .onAppear {
-            collapseAIChatIslandIfCurrentFileIsTrashed()
-        }
-        .onChange(of: fileState.currentActiveFileIsInTrash) { _ in
-            collapseAIChatIslandIfCurrentFileIsTrashed()
-        }
-        .onChange(of: layoutState.isAIChatIslandMode) { _ in
-            collapseAIChatIslandIfCurrentFileIsTrashed()
-        }
+        .modifier(
+            LockedFileUnlockOverlayModifier(
+                activeFile: activeFile,
+                documentLoadCompletion: documentLoadCompletion,
+                onPrepareLockedFile: prepareEditorForLockedFile,
+                onApplyUnlockedContent: applyUnlockedFileContentToEditor
+            )
+        )
         .allowsHitTesting(interactionEnabled)
         .observeExcalidrawFileStatus(
             for: activeFile,
@@ -200,11 +187,22 @@ struct ExcalidrawEditor: View {
         .onChange(of: activeFile) { (newFile: FileState.ActiveFile?) in
             loadingTask?.cancel()
             loadingTask = Task {
+                await lockedContentState.prepareForActiveFileChange(to: newFile)
                 await loadExcalidrawFile(from: newFile)
             }
         }
+        .onChange(of: fileState.currentActiveFileIsInTrash) { _ in
+            collapseAIChatIslandIfCurrentFileIsTrashed()
+        }
+        .onChange(of: layoutState.isAIChatIslandMode) { _ in
+            collapseAIChatIslandIfCurrentFileIsTrashed()
+        }
         .task {
+            await lockedContentState.prepareForActiveFileChange(to: activeFile)
             await loadExcalidrawFile(from: activeFile)
+        }
+        .onAppear {
+            collapseAIChatIslandIfCurrentFileIsTrashed()
         }
     }
 
@@ -282,12 +280,47 @@ struct ExcalidrawEditor: View {
                         self.excalidrawFile = nil
                     }
             }
+        } catch EncryptedContentError.contentLocked(_, _) {
+            await MainActor.run {
+                guard self.activeFile?.id == activeFile.id else { return }
+                prepareEditorForLockedFile()
+            }
+        } catch is EncryptedContentError {
+            await MainActor.run {
+                guard self.activeFile?.id == activeFile.id else { return }
+                lockedContentState.markUnlockFailed(fileID: activeFile.id)
+                prepareEditorForLockedFile()
+            }
         } catch {
             fileState.excalidrawWebCoordinator?.documentSyncController.setTargetFileID(nil)
             alertToast(error)
             await MainActor.run {
                 self.excalidrawFile = nil
             }
+        }
+    }
+
+    @MainActor
+    private func prepareEditorForLockedFile() {
+        fileState.excalidrawWebCoordinator?.documentSyncController.setTargetFileID(nil)
+        cloudSyncTask?.cancel()
+        cloudSyncTask = nil
+        latestCloudData = nil
+        lastReceivedFileContent = nil
+        excalidrawFile = nil
+    }
+
+    private func applyUnlockedFileContentToEditor(
+        _ content: Data,
+        request: LockedFileUnlockRequest
+    ) async throws {
+        let parsedFile = try ExcalidrawFile(data: content, id: request.fileID)
+        await MainActor.run {
+            guard self.activeFile?.id == request.fileID else { return }
+            self.fileState.excalidrawWebCoordinator?.documentSyncController
+                .setTargetFileID(request.fileID)
+            self.excalidrawFile = parsedFile
+            self.lastReceivedFileContent = parsedFile.content
         }
     }
     
@@ -408,6 +441,7 @@ struct ExcalidrawEditor: View {
         guard persistCanvasUpdate(file).shouldUpdateEditorState else { return }
 
         // Content changed, update tracking
+        lockedContentState.noteUserActivity()
         lastReceivedFileContent = currentContent
         lastEditTime = Date()
         logger.info("Content changed, updating lastEditTime and canceling any pending cloud sync task")

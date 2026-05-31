@@ -61,7 +61,7 @@ struct ExcalidrawZSidebarRowModifier: ViewModifier {
         .animation(.easeInOut(duration: 0.16), value: isActive)
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var rowBackground: some View {
         if #available(macOS 26.0, iOS 26.0, *) {
             if isActive {

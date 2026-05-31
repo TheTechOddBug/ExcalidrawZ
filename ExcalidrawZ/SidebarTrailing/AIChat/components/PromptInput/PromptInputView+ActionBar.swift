@@ -24,7 +24,7 @@ extension PromptInputView {
     /// model picker. Wrapped in an HStack so the whole group can take a
     /// shared `buttonStyle` from the caller (`.accessoryBar` on macOS 14+,
     /// `.plain` below).
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func actionBarLeading() -> some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.actionBarLeading")
 
@@ -51,7 +51,7 @@ extension PromptInputView {
     /// We deliberately don't use the `primaryAction:` closure form —
     /// the icon doesn't have a single "default" action; tapping it
     /// just opens the menu.
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var attachmentMenu: some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.attachmentMenu")
 
@@ -109,7 +109,7 @@ extension PromptInputView {
         aiChatState.requestAppendDraftImages(images, draftKey: promptDraftKey)
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var modelPicker: some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.modelPicker")
 

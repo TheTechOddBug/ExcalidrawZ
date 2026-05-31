@@ -23,7 +23,7 @@ struct FontsSettingsView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         MultiFontPickerView()
     }

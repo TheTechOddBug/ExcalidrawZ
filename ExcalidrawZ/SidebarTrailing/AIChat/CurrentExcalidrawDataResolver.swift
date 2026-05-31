@@ -13,11 +13,13 @@ enum CurrentExcalidrawDataResolver {
         fileState: FileState,
         canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget
     ) async throws -> Data? {
+        let currentFileID = currentFileID(from: fileState.currentActiveFile)
         let storedContent = try await storedContent(from: fileState)
 
         if let liveContent = try await resolveLiveSnapshot(
             canvasTarget: canvasTarget,
-            baseContent: storedContent
+            baseContent: storedContent,
+            currentFileID: currentFileID
         ) {
             return liveContent
         }
@@ -28,8 +30,11 @@ enum CurrentExcalidrawDataResolver {
     @MainActor
     static func resolveLiveSnapshot(
         canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget,
-        baseContent: Data?
+        baseContent: Data?,
+        currentFileID: UUID? = nil
     ) async throws -> Data? {
+        try await LockedContentAIGuard.ensureAIReadable(fileID: currentFileID)
+
         guard let coordinator = ExcalidrawCoordinatorRegistry.shared.coordinator(for: canvasTarget) else {
             return baseContent
         }
@@ -42,9 +47,11 @@ enum CurrentExcalidrawDataResolver {
         return baseContent
     }
 
+    @MainActor
     private static func storedContent(from fileState: FileState) async throws -> Data? {
         switch fileState.currentActiveFile {
             case .file(let file):
+                try await LockedContentAIGuard.ensureAIReadable(fileObjectID: file.objectID)
                 if let content = file.content {
                     return content
                 }
@@ -62,6 +69,14 @@ enum CurrentExcalidrawDataResolver {
             default:
                 return nil
         }
+    }
+
+    @MainActor
+    private static func currentFileID(from activeFile: FileState.ActiveFile?) -> UUID? {
+        if case .file(let file) = activeFile {
+            return file.id
+        }
+        return nil
     }
 
     private static func mergeLiveSceneData(_ sceneData: Data, into baseData: Data?) throws -> Data {

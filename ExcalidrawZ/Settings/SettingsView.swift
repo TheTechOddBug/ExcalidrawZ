@@ -7,6 +7,7 @@
 
 import SwiftUI
 import ChocofordUI
+import SFSafeSymbols
 #if os(macOS) && !APP_STORE
 import Sparkle
 #endif
@@ -43,7 +44,7 @@ struct SettingsView: View {
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         if #available(macOS 14.0, iOS 17.0, *) {
             NavigationSplitView {
@@ -97,7 +98,8 @@ struct SettingsView: View {
                     Button {
                         selection = route
                     } label: {
-                        Text(route.text)
+                        Label(route.text, systemSymbol: route.iconSymbol)
+                            .labelStyle(.titleAndIcon)
                     }
                     .buttonStyle(
                         .excalidrawSidebarRow(
@@ -114,7 +116,7 @@ struct SettingsView: View {
             Section {
                 ForEach(Route.allCases) { route in
                     NavigationLink(value: route) {
-                        Text(route.text)
+                        Label(route.text, systemSymbol: route.iconSymbol)
                     }
                 }
             }
@@ -173,6 +175,8 @@ struct SettingsView: View {
 
             case .backups:
                 BackupsSettingsView()
+            case .security:
+                SecuritySettingsView()
             case .ai:
                 AISettingsView()
 #if os(macOS)
@@ -199,6 +203,7 @@ extension SettingsView {
 //        case fileHistory
         case medias
         case backups
+        case security
         case ai
 #if os(macOS)
         case fonts
@@ -222,6 +227,8 @@ extension SettingsView {
 
                 case .backups:
                     return .localizable(.settingsBackupsName)
+                case .security:
+                    return "Security"
                 case .ai:
                     // TODO: localize once a key is added.
                     return "AI"
@@ -239,6 +246,36 @@ extension SettingsView {
             }
         }
 
+        var iconSymbol: SFSymbol {
+            switch self {
+                case .general:
+                    return .gearshape
+                case .excalidraw:
+                    return .pencilAndOutline
+//                case .fileHistory:
+//                    return .clockArrowCirclepath
+                case .medias:
+                    return .photoOnRectangle
+                case .backups:
+                    return .clockArrowCirclepath
+                case .security:
+                    return .lockShield
+                case .ai:
+                    return .sparkles
+#if os(macOS)
+                case .fonts:
+                    return .textformat
+#elseif os(iOS)
+                case .pencil:
+                    return .pencilTip
+                case .whatsNews:
+                    return .sparkles
+#endif
+                case .about:
+                    return .infoCircle
+            }
+        }
+
         var id: String {
             switch self {
                 case .general: "general"
@@ -247,6 +284,7 @@ extension SettingsView {
 //                    "fileHistory"
                 case .medias: "medias"
                 case .backups: "backups"
+                case .security: "security"
                 case .ai: "ai"
 #if os(macOS)
                 case .fonts: "fonts"

@@ -14,7 +14,7 @@ extension Notification.Name {
 #endif
 
 extension View {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     public func debugNotify() -> some View {
         modifier(DebugNotifyModifier())
     }

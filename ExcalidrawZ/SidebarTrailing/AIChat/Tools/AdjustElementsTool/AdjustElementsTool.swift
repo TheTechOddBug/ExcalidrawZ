@@ -13,6 +13,7 @@ struct AdjustElementsTool: Tool {
     struct AdjustElementsContext: ToolContext {
         var currentFileData: Data?
         var canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget
+        var currentFileID: UUID? = nil
     }
 
     var name: String { "adjust_elements" }
@@ -65,9 +66,13 @@ struct AdjustElementsTool: Tool {
             throw ToolError.executionFailed("Missing AdjustElementsContext")
         }
         let adjustContext = try context.resolve(AdjustElementsContext.self)
+        guard try await LockedContentAIGuard.canToolAccess(fileID: adjustContext.currentFileID) else {
+            return LockedContentAIGuard.lockedToolResult
+        }
         guard let currentFileData = try await CurrentExcalidrawDataResolver.resolveLiveSnapshot(
             canvasTarget: adjustContext.canvasTarget,
-            baseContent: adjustContext.currentFileData
+            baseContent: adjustContext.currentFileData,
+            currentFileID: adjustContext.currentFileID
         ) else {
             throw ToolError.executionFailed("Missing current file data")
         }

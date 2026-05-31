@@ -350,7 +350,7 @@ struct LocalFileRowMenuItems: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func moveLocalFileMenu() -> some View {
         if case .localFolder(let currentLocalFolder) = fileState.currentActiveGroup {
             Menu {

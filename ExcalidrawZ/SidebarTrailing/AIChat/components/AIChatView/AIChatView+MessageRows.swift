@@ -233,7 +233,7 @@ extension AIChatView {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func chatScrollRowContent(
         _ row: ChatScrollRowModel,
         activeRoundID: String?,
@@ -288,7 +288,7 @@ extension AIChatView {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func chatScrollGroupContent(
         _ group: MessageGroup,
         activeRoundID: String?,

@@ -58,12 +58,12 @@ struct GroupRowView: View {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var content: some View {
         groupRowView()
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func groupRowView() -> some View {
         if folderStructStyle == .disclosureGroup {
             HStack(spacing: 6) {
@@ -88,7 +88,7 @@ struct GroupRowView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var groupIcon: some View {
         HStack {
             switch group.groupType {

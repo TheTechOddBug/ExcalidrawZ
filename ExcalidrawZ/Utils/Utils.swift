@@ -65,7 +65,7 @@ func backupFiles(context: NSManagedObjectContext) async throws {
     do {
         print("[Backup Files] Start... \(cloudExportURL)")
         try fileManager.createDirectory(at: cloudExportURL, withIntermediateDirectories: true)
-        try await archiveAllCloudFiles(to: cloudExportURL, context: context)
+        try await backupAllCloudFiles(to: cloudExportURL, context: context)
     } catch {
         print("[Backup Files] backup cloud files done, but with error: \(error)")
     }
@@ -149,6 +149,247 @@ func backupFiles(context: NSManagedObjectContext) async throws {
         } catch {
             print(error)
         }
+    }
+}
+
+struct BackupRecoveryKeyRewrapResult: Sendable {
+    let rewrappedCount: Int
+    let failedCount: Int
+}
+
+struct BackupEncryptedFileDeletionResult: Sendable {
+    let deletedCount: Int
+    let failedCount: Int
+}
+
+func backupsContainEncryptedExcalidrawFiles() async -> Bool {
+    await Task.detached(priority: .utility) {
+        do {
+            return try backupDirectoryContainsEncryptedExcalidrawFiles(try getBackupsDir())
+        } catch {
+            print("[Backup Files] Failed to scan backups for locked content: \(error)")
+            return false
+        }
+    }.value
+}
+
+func countEncryptedBackupExcalidrawFiles() async -> Int {
+    await Task.detached(priority: .utility) {
+        do {
+            return try countEncryptedExcalidrawFiles(in: try getBackupsDir())
+        } catch {
+            print("[Backup Files] Failed to count encrypted backup files: \(error)")
+            return 0
+        }
+    }.value
+}
+
+func deleteEncryptedBackupExcalidrawFiles() async -> BackupEncryptedFileDeletionResult {
+    await Task.detached(priority: .utility) {
+        do {
+            return try deleteEncryptedExcalidrawFiles(in: try getBackupsDir())
+        } catch {
+            print("[Backup Files] Failed to delete encrypted backup files: \(error)")
+            return BackupEncryptedFileDeletionResult(deletedCount: 0, failedCount: 1)
+        }
+    }.value
+}
+
+func canUnlockEncryptedBackupExcalidrawFile(with recoveryKey: RecoveryKey) async -> Bool {
+    await Task.detached(priority: .utility) {
+        do {
+            return try canUnlockEncryptedExcalidrawFile(
+                in: try getBackupsDir(),
+                recoveryKey: recoveryKey
+            )
+        } catch {
+            print("[Backup Files] Failed to validate encrypted backup Recovery Key: \(error)")
+            return false
+        }
+    }.value
+}
+
+func backupDirectoryContainsEncryptedExcalidrawFiles(_ directory: URL) throws -> Bool {
+    try countEncryptedExcalidrawFiles(in: directory, stopAfterFirstMatch: true) > 0
+}
+
+private func countEncryptedExcalidrawFiles(
+    in directory: URL,
+    stopAfterFirstMatch: Bool = false
+) throws -> Int {
+    let fileManager = FileManager.default
+    guard let enumerator = fileManager.enumerator(
+        at: directory,
+        includingPropertiesForKeys: [.isRegularFileKey],
+        options: [.skipsHiddenFiles]
+    ) else {
+        return 0
+    }
+
+    var count = 0
+    var visitedCount = 0
+    while let url = enumerator.nextObject() as? URL {
+        visitedCount += 1
+        if visitedCount.isMultiple(of: 20) {
+            try Task.checkCancellation()
+        }
+
+        guard url.pathExtension == "excalidraw" else { continue }
+        let values = try? url.resourceValues(forKeys: [.isRegularFileKey])
+        guard values?.isRegularFile == true else { continue }
+
+        let data = try Data(contentsOf: url)
+        if EncryptedContentService.isEncryptedEnvelope(data) {
+            count += 1
+            if stopAfterFirstMatch {
+                return count
+            }
+        }
+    }
+
+    return count
+}
+
+private func deleteEncryptedExcalidrawFiles(in directory: URL) throws -> BackupEncryptedFileDeletionResult {
+    let fileManager = FileManager.default
+    guard let enumerator = fileManager.enumerator(
+        at: directory,
+        includingPropertiesForKeys: [.isRegularFileKey],
+        options: [.skipsHiddenFiles]
+    ) else {
+        return BackupEncryptedFileDeletionResult(deletedCount: 0, failedCount: 0)
+    }
+
+    var deletedCount = 0
+    var failedCount = 0
+    var visitedCount = 0
+
+    while let url = enumerator.nextObject() as? URL {
+        visitedCount += 1
+        if visitedCount.isMultiple(of: 20) {
+            try Task.checkCancellation()
+        }
+
+        guard url.pathExtension == "excalidraw" else { continue }
+        let values = try? url.resourceValues(forKeys: [.isRegularFileKey])
+        guard values?.isRegularFile == true else { continue }
+
+        do {
+            let data = try Data(contentsOf: url)
+            guard EncryptedContentService.isEncryptedEnvelope(data) else { continue }
+            try fileManager.removeItem(at: url)
+            deletedCount += 1
+        } catch {
+            failedCount += 1
+            print("[Backup Files] Failed to delete encrypted backup file \(url.path): \(error)")
+        }
+    }
+
+    return BackupEncryptedFileDeletionResult(
+        deletedCount: deletedCount,
+        failedCount: failedCount
+    )
+}
+
+private func canUnlockEncryptedExcalidrawFile(
+    in directory: URL,
+    recoveryKey: RecoveryKey
+) throws -> Bool {
+    let fileManager = FileManager.default
+    guard let enumerator = fileManager.enumerator(
+        at: directory,
+        includingPropertiesForKeys: [.isRegularFileKey],
+        options: [.skipsHiddenFiles]
+    ) else {
+        return false
+    }
+
+    var visitedCount = 0
+    while let url = enumerator.nextObject() as? URL {
+        visitedCount += 1
+        if visitedCount.isMultiple(of: 20) {
+            try Task.checkCancellation()
+        }
+
+        guard url.pathExtension == "excalidraw" else { continue }
+        let values = try? url.resourceValues(forKeys: [.isRegularFileKey])
+        guard values?.isRegularFile == true else { continue }
+
+        let data = try Data(contentsOf: url)
+        guard EncryptedContentService.isEncryptedEnvelope(data) else { continue }
+
+        do {
+            _ = try EncryptedContentService.unlockContentKey(
+                data,
+                recoveryKey: recoveryKey
+            )
+            return true
+        } catch {
+            continue
+        }
+    }
+
+    return false
+}
+
+func rewrapEncryptedBackupFilesRecoveryKey(
+    oldRecoveryKey: RecoveryKey,
+    newRecoveryKey: RecoveryKey
+) async -> BackupRecoveryKeyRewrapResult {
+    let fileManager = FileManager.default
+    do {
+        let backupsDir = try getBackupsDir()
+        guard let enumerator = fileManager.enumerator(
+            at: backupsDir,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        ) else {
+            return BackupRecoveryKeyRewrapResult(rewrappedCount: 0, failedCount: 0)
+        }
+
+        var rewrappedCount = 0
+        var failedCount = 0
+        var visitedCount = 0
+
+        while let url = enumerator.nextObject() as? URL {
+            try Task.checkCancellation()
+            visitedCount += 1
+            if visitedCount.isMultiple(of: 20) {
+                await Task.yield()
+            }
+
+            guard url.pathExtension == "excalidraw" else { continue }
+            let values = try? url.resourceValues(forKeys: [.isRegularFileKey])
+            guard values?.isRegularFile == true else { continue }
+
+            do {
+                let data = try Data(contentsOf: url)
+                guard EncryptedContentService.isEncryptedEnvelope(data) else { continue }
+
+                let unlockedKey = try EncryptedContentService.unlockContentKey(
+                    data,
+                    recoveryKey: oldRecoveryKey
+                )
+                let rewrapped = try EncryptedContentService.rewrapRecoveryKey(
+                    existingEnvelopeData: data,
+                    unlockedKey: unlockedKey,
+                    newRecoveryKey: newRecoveryKey
+                )
+                try rewrapped.write(to: url, options: .atomic)
+                rewrappedCount += 1
+            } catch {
+                failedCount += 1
+                print("[Backup Files] Failed to reset Recovery Key for backup file \(url.path): \(error)")
+            }
+        }
+
+        return BackupRecoveryKeyRewrapResult(
+            rewrappedCount: rewrappedCount,
+            failedCount: failedCount
+        )
+    } catch {
+        print("[Backup Files] Failed to scan backups for Recovery Key reset: \(error)")
+        return BackupRecoveryKeyRewrapResult(rewrappedCount: 0, failedCount: 1)
     }
 }
 

@@ -30,12 +30,12 @@ private extension EnvironmentValues {
 }
 
 extension View {
-//    @MainActor @ViewBuilder
+//    @ViewBuilder
 //    public func disclosureGroupLabelOnTap(action: @escaping () -> Void) -> some View {
 //        environment(\.disclosureGroupLabelAction, action)
 //    }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     public func disableDisclosureLabelDefaultAction(
         _ disabled: Bool = true
     ) -> some View {

@@ -135,7 +135,7 @@ struct LocalFoldersView: View {
     
     
     @available(macOS 13.0, *)
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func diclsureGroupView() -> some View {
         SelectableDisclosureGroup(
             isSelected: isSelectedBinding,
@@ -208,7 +208,7 @@ struct LocalFoldersView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func treeView() -> some View {
         TreeStructureView(
             children: folderChildren,

@@ -287,7 +287,7 @@ struct LocalFolderMenuItems: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func moveLocalFileMenu() -> some View {
         Menu {
             ForEach(topLevelLocalFolders) { folder in

@@ -155,7 +155,7 @@ struct StaticGroupsView: View, Equatable {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func renderGroup(_ group: MessageGroup, at index: Int) -> some View {
         switch group {
             case .user(let c):

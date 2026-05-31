@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension WhatsNewView {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func featuresContent() -> some View {
         // 不能只有一行，不知道为啥一定报错
         
@@ -32,7 +32,7 @@ extension WhatsNewView {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func allFeaturesList() -> some View {
         VStack(spacing: 0) {
             // Navigation Back button
@@ -466,7 +466,7 @@ extension WhatsNewView {
 #endif
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func changeLogLink() -> some View {
         Link(destination: URL(string: "https://github.com/chocoford/ExcalidrawZ/blob/main/CHANGELOG.md")!) {
             HStack(spacing: 2) {

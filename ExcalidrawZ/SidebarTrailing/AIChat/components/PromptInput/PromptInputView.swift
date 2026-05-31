@@ -347,7 +347,7 @@ struct PromptInputView<Background: View, Header: View>: View {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.content")
 

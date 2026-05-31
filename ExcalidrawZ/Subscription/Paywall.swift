@@ -173,7 +173,7 @@ struct Paywall: View {
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         ZStack {
             lagacyView()
@@ -222,12 +222,12 @@ struct Paywall: View {
     }
     
     @available(macOS 14.0, iOS 17.0, *)
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func modernView() -> some View {
         SubscriptionStoreView(groupID: "21660497")
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func lagacyView() -> some View {
         ZStack {
             if horizontalSizeClass == .compact {
@@ -273,7 +273,7 @@ struct Paywall: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func regularLayout() -> some View {
         ZStack(alignment: .top) {
             // toolbar()
@@ -372,7 +372,7 @@ struct Paywall: View {
         .frame(height: 550)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func compactLayout() -> some View {
         VStack(spacing: 20) {
             VStack(spacing: 10) {
@@ -449,7 +449,7 @@ struct Paywall: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func leftFeatureShowcase() -> some View {
         VStack(alignment: .leading, spacing: 26) {
             VStack(alignment: .leading, spacing: 12) {
@@ -629,7 +629,7 @@ struct Paywall: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func toolbar() -> some View {
         HStack {
             Button {
@@ -660,7 +660,7 @@ struct Paywall: View {
     }
     
 #if APP_STORE
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func purchaseButton() -> some View {
         AsyncButton {
             try await purchaseSelectedPlan()
@@ -695,7 +695,7 @@ struct Paywall: View {
         .disabled(selectedBillingProduct == nil || isSelectedSubscriptionPurchased || isSelectedPlanIncludedInActivePlan)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func restorePurchasesButton() -> some View {
         AsyncButton {
             await store.refreshEntitlements(reason: .restorePurchases, force: true)
@@ -719,7 +719,7 @@ struct Paywall: View {
 #else
     @State private var isSwitchToAppStoreSheetPresented = false
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func purchaseButton() -> some View {
         Button {
             isSwitchToAppStoreSheetPresented.toggle()
@@ -731,7 +731,7 @@ struct Paywall: View {
     }
 #endif
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func privacyPolicyButton() -> some View {
         VStack(spacing: 3) {
             HStack {
@@ -748,7 +748,7 @@ struct Paywall: View {
         .buttonStyle(.borderless)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func aiUsageSettingsButton() -> some View {
 #if os(macOS)
         if #available(macOS 14.0, *) {

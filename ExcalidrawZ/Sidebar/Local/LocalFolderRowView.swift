@@ -59,7 +59,7 @@ struct LocalFolderRowView: View {
             }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         if folderStructStyle == .disclosureGroup {
             HStack(spacing: 6) {

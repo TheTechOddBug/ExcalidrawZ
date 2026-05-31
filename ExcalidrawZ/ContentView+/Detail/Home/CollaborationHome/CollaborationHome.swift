@@ -50,7 +50,7 @@ struct CollaborationHome: View {
         .readHeight($scrollViewHeight)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         VStack(spacing: 40) {
             VStack(spacing: 0) {
@@ -132,7 +132,7 @@ struct CollaborationHome: View {
         .animation(.default, value: collaborationFiles.isEmpty)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func actions() -> some View {
         Button {
             if let limit = store.collaborationRoomLimits, collaborationFiles.count >= limit {
@@ -161,7 +161,7 @@ struct CollaborationHome: View {
 
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func nameField() -> some View {
         TextField(
             .localizable(.collaborationHomeNameFieldLabel),

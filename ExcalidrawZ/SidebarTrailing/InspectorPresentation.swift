@@ -83,7 +83,7 @@ struct InspectorPresentationModifier: ViewModifier {
     /// condition means closing → reopening to the same tab is free,
     /// while switching to a different tab still rebuilds (which is
     /// what we want — different tabs have entirely different state).
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func inspectorContent() -> some View {
         switch layoutState.activeInspectorTab {
             case .aiChat:
@@ -122,7 +122,7 @@ struct InspectorPresentationModifier: ViewModifier {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func floatingInspector(content: Content) -> some View {
         ZStack {
             content

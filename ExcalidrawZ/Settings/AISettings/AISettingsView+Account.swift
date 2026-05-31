@@ -15,7 +15,7 @@ import UIKit
 #endif
 
 extension AISettingsView {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var aiAccountHeader: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(localizable: .settingsAIAccountTitle)
@@ -28,7 +28,7 @@ extension AISettingsView {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var aiAccountRows: some View {
         HStack {
             Text(localizable: .settingsAIAccountProviderLabel)

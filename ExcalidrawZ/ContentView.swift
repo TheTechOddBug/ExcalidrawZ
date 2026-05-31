@@ -90,6 +90,7 @@ struct ContentView: View {
             .onReceive(NotificationCenter.default.publisher(for: .toggleInspector)) { notification in
                 handleToggleInspector(notification)
             }
+            .modifier(LockedContentEventModifier(fileState: fileState))
             .onChange(of: fileState.currentActiveFile) { newValue in
                 // Going back to Home: nothing to inspect, so collapse the panel.
                 if newValue == nil, layoutState.isInspectorPresented {
@@ -127,7 +128,7 @@ struct ContentView: View {
             .task { await prepare() }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         ZStack {
             if horizontalSizeClass == .regular {
@@ -140,7 +141,7 @@ struct ContentView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func contentView() -> some View {
         if #available(macOS 13.0, *),
             appPreference.sidebarLayout == .sidebar {

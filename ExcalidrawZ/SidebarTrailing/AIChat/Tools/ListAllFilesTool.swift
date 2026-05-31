@@ -22,10 +22,11 @@ struct ListAllFilesTool: Tool {
 
     var description: String {
         """
-        List all available drawing files in the user's library (iCloud-synced \
-        files only — local-folder files aren't included). Each entry returns \
-        id, name, group, last-modified, and trash status. Use this to pick a \
-        file id for `query_file_history` / `restore_file_history`.
+        List available drawing files in the user's library (iCloud-synced \
+        files only — local-folder files and locked files aren't included). \
+        Each entry returns id, name, group, last-modified, and trash status. \
+        Use this to pick a file id for `query_file_history` / \
+        `restore_file_history`.
         """
     }
 
@@ -57,7 +58,7 @@ struct ListAllFilesTool: Tool {
         let limit = min(max(params.limit, 1), 200)
 
         let context = PersistenceController.shared.newTaskContext()
-        let entries: [FileEntry] = try await context.perform {
+        let candidates: [FileEntryCandidate] = try await context.perform {
             let fetchRequest = NSFetchRequest<File>(entityName: "File")
             if !params.includeTrashed {
                 fetchRequest.predicate = NSPredicate(format: "inTrash == NO OR inTrash == nil")
@@ -70,7 +71,8 @@ struct ListAllFilesTool: Tool {
 
             let files = try context.fetch(fetchRequest)
             return files.map { f in
-                FileEntry(
+                FileEntryCandidate(
+                    objectID: f.objectID,
                     id: f.id?.uuidString ?? "",
                     name: f.name ?? "Untitled",
                     group: f.group?.name,
@@ -80,10 +82,28 @@ struct ListAllFilesTool: Tool {
             }
         }
 
+        var entries: [FileEntry] = []
+        var omittedLockedFiles = 0
+        for candidate in candidates {
+            let isReadable: Bool
+            do {
+                isReadable = try await LockedContentAIGuard.isAIReadable(fileObjectID: candidate.objectID)
+            } catch {
+                isReadable = false
+            }
+            if isReadable {
+                entries.append(candidate.entry)
+            } else {
+                omittedLockedFiles += 1
+            }
+        }
+
         let payload = Output(
             files: entries,
             returned: entries.count,
-            limit: limit
+            limit: limit,
+            omittedLockedFiles: omittedLockedFiles,
+            lockedFilesPolicy: "Locked files are omitted because AI cannot access locked file content."
         )
         let data = try JSONEncoder().encode(payload)
         return .text(String(data: data, encoding: .utf8) ?? "[]")
@@ -113,6 +133,35 @@ struct ListAllFilesTool: Tool {
         let files: [FileEntry]
         let returned: Int
         let limit: Int
+        let omittedLockedFiles: Int
+        let lockedFilesPolicy: String
+
+        enum CodingKeys: String, CodingKey {
+            case files
+            case returned
+            case limit
+            case omittedLockedFiles = "omitted_locked_files"
+            case lockedFilesPolicy = "locked_files_policy"
+        }
+    }
+
+    private struct FileEntryCandidate {
+        let objectID: NSManagedObjectID
+        let id: String
+        let name: String
+        let group: String?
+        let updatedAt: String?
+        let inTrash: Bool
+
+        var entry: FileEntry {
+            FileEntry(
+                id: id,
+                name: name,
+                group: group,
+                updatedAt: updatedAt,
+                inTrash: inTrash
+            )
+        }
     }
 
     private struct FileEntry: Encodable {

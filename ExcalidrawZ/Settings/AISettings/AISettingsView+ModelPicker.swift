@@ -14,7 +14,7 @@ extension AISettingsView {
     /// Picker for `prefs.defaultTier`. The concrete model is resolved at
     /// send time from the current backend-allowed model list, so backend
     /// model rotation does not rewrite the user's preferred capability tier.
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var defaultModelPicker: some View {
         Toggle(isOn: aiEnabledBinding) {
             Text(localizable: .settingsAIEnableFeatureTitle)

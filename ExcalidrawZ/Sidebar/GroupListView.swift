@@ -86,7 +86,7 @@ struct GroupListView: View {
     @State private var scrollViewHeight: CGFloat = .zero
     @State private var scrollViewContentHeight: CGFloat = .zero
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
             ScrollViewReader { proxy in
@@ -214,7 +214,7 @@ struct GroupListView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func databaseGroupsList() -> some View {
         // ❕❕❕use `LazyVStack` will cause crash with error:
         //        FAULT: NSGenericException: The window has been marked as needing another Update Constraints in Window pass,
@@ -235,7 +235,7 @@ struct GroupListView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func contentToolbar() -> some View {
         HStack {
             SettingsViewButton()
@@ -255,7 +255,7 @@ struct GroupListView: View {
         // .background(.ultraThickMaterial)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func sortMenuButton() -> some View {
         Menu {
             Picker(
@@ -322,7 +322,7 @@ fileprivate struct ContentHeaderCreateButtonHoverModifier: ViewModifier {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func header() -> some View {
         HStack {
             Text(title)
@@ -390,7 +390,7 @@ fileprivate struct ContentHeaderCreateButtonHoverModifier: ViewModifier {
 
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func newGroupButton() -> some View {
         NewGroupButton(type: groupType, parentID: nil) { type in
             ZStack {

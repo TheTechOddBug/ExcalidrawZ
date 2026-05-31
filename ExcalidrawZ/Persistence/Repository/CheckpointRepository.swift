@@ -12,6 +12,17 @@ import Logging
 /// Actor responsible for FileCheckpoint entity operations with iCloud Drive integration
 actor CheckpointRepository {
     private let logger = Logger(label: "CheckpointRepository")
+    private let encryptedCheckpointContentType = "fileCheckpoint"
+
+    private struct RawCheckpointContentSnapshot {
+        let objectID: NSManagedObjectID
+        let checkpointID: UUID
+        let fileObjectID: NSManagedObjectID?
+        let filePath: String?
+        let content: Data?
+        let updatedAt: Date?
+        let fileName: String?
+    }
 
     // MARK: - Create Checkpoint
 
@@ -158,33 +169,270 @@ actor CheckpointRepository {
     /// Save checkpoint content to storage (local + auto iCloud sync)
     /// - Parameter checkpointObjectID: The checkpoint objectID
     func saveCheckpointToStorage(checkpointObjectID: NSManagedObjectID) async throws {
-        let context = PersistenceController.shared.newTaskContext()
+        try await saveCheckpointToStorage(
+            checkpointObjectID: checkpointObjectID,
+            recoveryKeyOverride: nil,
+            forceProtected: false
+        )
+    }
 
-        // Get checkpoint content, ID, and metadata from CoreData
-        let (content, checkpointID, updatedAt) = try await context.perform {
-            guard let checkpoint = context.object(with: checkpointObjectID) as? FileCheckpoint,
-                  let content = checkpoint.content,
-                  let checkpointID = checkpoint.id else {
-                throw FileCheckpointError.contentNotAvailable
+    func encryptCheckpoints(
+        for fileObjectID: NSManagedObjectID,
+        recoveryKey: RecoveryKey
+    ) async throws {
+        let checkpointObjectIDs = try await checkpointObjectIDs(for: fileObjectID)
+        for (index, checkpointObjectID) in checkpointObjectIDs.enumerated() {
+            try await checkpointBatchCheckpoint(index)
+            try await saveCheckpointToStorage(
+                checkpointObjectID: checkpointObjectID,
+                recoveryKeyOverride: recoveryKey,
+                forceProtected: true
+            )
+        }
+    }
+
+    func removeCheckpointLocks(for fileObjectID: NSManagedObjectID) async throws {
+        let checkpointObjectIDs = try await checkpointObjectIDs(for: fileObjectID)
+        for (index, checkpointObjectID) in checkpointObjectIDs.enumerated() {
+            try await checkpointBatchCheckpoint(index)
+            let snapshot = try await rawCheckpointContentSnapshot(checkpointObjectID: checkpointObjectID)
+            let rawContent = try await loadRawCheckpointContent(from: snapshot, preferFallbackContent: false)
+            guard EncryptedContentService.isEncryptedEnvelope(rawContent) else {
+                continue
             }
-            return (content, checkpointID, checkpoint.updatedAt)
+
+            let plaintext = try await LockedContentUnlockSession.shared.decrypt(
+                rawContent,
+                expectedContentType: encryptedCheckpointContentType,
+                expectedContentID: snapshot.checkpointID.uuidString
+            )
+            try await savePlainCheckpointContentToStorage(
+                snapshot: snapshot,
+                content: plaintext
+            )
+        }
+    }
+
+    func rewrapCheckpointsRecoveryKey(
+        for fileObjectID: NSManagedObjectID,
+        newRecoveryKey: RecoveryKey
+    ) async throws {
+        let checkpointObjectIDs = try await checkpointObjectIDs(for: fileObjectID)
+        for (index, checkpointObjectID) in checkpointObjectIDs.enumerated() {
+            try await checkpointBatchCheckpoint(index)
+            let snapshot = try await rawCheckpointContentSnapshot(checkpointObjectID: checkpointObjectID)
+            let rawContent = try await loadRawCheckpointContent(from: snapshot, preferFallbackContent: false)
+            guard EncryptedContentService.isEncryptedEnvelope(rawContent) else {
+                continue
+            }
+
+            let rewrappedContent = try await LockedContentUnlockSession.shared.rewrapRecoveryKey(
+                existingEnvelopeData: rawContent,
+                newRecoveryKey: newRecoveryKey,
+                expectedContentType: encryptedCheckpointContentType,
+                expectedContentID: snapshot.checkpointID.uuidString
+            )
+            try await saveRawCheckpointContentToStorage(
+                snapshot: snapshot,
+                content: rewrappedContent
+            )
+        }
+    }
+
+    private func checkpointBatchCheckpoint(_ index: Int) async throws {
+        try Task.checkCancellation()
+        if index > 0, index.isMultiple(of: 10) {
+            await Task.yield()
+        }
+    }
+
+    private func saveCheckpointToStorage(
+        checkpointObjectID: NSManagedObjectID,
+        recoveryKeyOverride: RecoveryKey?,
+        forceProtected: Bool
+    ) async throws {
+        let snapshot = try await rawCheckpointContentSnapshot(checkpointObjectID: checkpointObjectID)
+        let content = try await loadRawCheckpointContent(from: snapshot, preferFallbackContent: true)
+        let contentToSave = try await encryptedCheckpointContentIfNeeded(
+            content,
+            snapshot: snapshot,
+            recoveryKeyOverride: recoveryKeyOverride,
+            forceProtected: forceProtected
+        )
+        try await saveRawCheckpointContentToStorage(snapshot: snapshot, content: contentToSave)
+    }
+
+    private func checkpointObjectIDs(for fileObjectID: NSManagedObjectID) async throws -> [NSManagedObjectID] {
+        let context = PersistenceController.shared.newTaskContext()
+        return try await context.perform {
+            guard let file = context.object(with: fileObjectID) as? File else {
+                throw AppError.fileError(.notFound)
+            }
+            let fetchRequest = NSFetchRequest<FileCheckpoint>(entityName: "FileCheckpoint")
+            fetchRequest.predicate = NSPredicate(format: "file == %@", file)
+            fetchRequest.sortDescriptors = [NSSortDescriptor(key: "updatedAt", ascending: true)]
+            return try context.fetch(fetchRequest).map(\.objectID)
+        }
+    }
+
+    private func rawCheckpointContentSnapshot(
+        checkpointObjectID: NSManagedObjectID
+    ) async throws -> RawCheckpointContentSnapshot {
+        let context = PersistenceController.shared.newTaskContext()
+        return try await context.perform {
+            guard let checkpoint = context.object(with: checkpointObjectID) as? FileCheckpoint else {
+                throw AppError.fileError(.notFound)
+            }
+            guard let checkpointID = checkpoint.id else {
+                throw FileCheckpointError.missingID
+            }
+            return RawCheckpointContentSnapshot(
+                objectID: checkpoint.objectID,
+                checkpointID: checkpointID,
+                fileObjectID: checkpoint.file?.objectID,
+                filePath: checkpoint.filePath,
+                content: checkpoint.content,
+                updatedAt: checkpoint.updatedAt,
+                fileName: checkpoint.file?.name
+            )
+        }
+    }
+
+    private func loadRawCheckpointContent(
+        from snapshot: RawCheckpointContentSnapshot,
+        preferFallbackContent: Bool
+    ) async throws -> Data {
+        if preferFallbackContent, let content = snapshot.content {
+            return content
         }
 
-        // Save to storage (local + iCloud sync)
+        if let filePath = snapshot.filePath {
+            do {
+                return try await FileStorageManager.shared.loadContent(
+                    relativePath: filePath,
+                    fileID: snapshot.checkpointID.uuidString
+                )
+            } catch {
+                logger.warning("Failed to load checkpoint content from storage: \(error.localizedDescription). Falling back to CoreData.")
+            }
+        }
+
+        if let content = snapshot.content {
+            return content
+        }
+
+        throw AppError.fileError(.contentNotAvailable(filename: snapshot.fileName ?? String(localizable: .generalUnknown)))
+    }
+
+    private func encryptedCheckpointContentIfNeeded(
+        _ content: Data,
+        snapshot: RawCheckpointContentSnapshot,
+        recoveryKeyOverride: RecoveryKey?,
+        forceProtected: Bool
+    ) async throws -> Data {
+        let contentID = snapshot.checkpointID.uuidString
+
+        if EncryptedContentService.isEncryptedEnvelope(content) {
+            let envelope = try EncryptedContentService.decodeEnvelope(content)
+            guard envelope.contentType == encryptedCheckpointContentType,
+                  envelope.contentID == contentID else {
+                throw EncryptedContentError.contentIdentityMismatch(
+                    expectedType: encryptedCheckpointContentType,
+                    expectedID: contentID,
+                    actualType: envelope.contentType,
+                    actualID: envelope.contentID
+                )
+            }
+            return content
+        }
+
+        if let existingEncryptedContent = try await existingEncryptedCheckpointContent(snapshot: snapshot) {
+            return try await LockedContentUnlockSession.shared.resealPayload(
+                content,
+                existingEnvelopeData: existingEncryptedContent,
+                expectedContentType: encryptedCheckpointContentType,
+                expectedContentID: contentID
+            )
+        }
+
+        let shouldProtect = if forceProtected {
+            true
+        } else {
+            try await fileIsProtected(snapshot.fileObjectID)
+        }
+        guard shouldProtect else {
+            return content
+        }
+
+        let recoveryKey: RecoveryKey
+        if let recoveryKeyOverride {
+            recoveryKey = recoveryKeyOverride
+        } else if let currentRecoveryKey = await RecoveryKeyVault.shared.currentRecoveryKey() {
+            recoveryKey = currentRecoveryKey
+        } else {
+            throw EncryptedContentError.contentLocked(
+                contentType: encryptedCheckpointContentType,
+                contentID: contentID
+            )
+        }
+
+        return try EncryptedContentService.encryptAndVerifyRecovery(
+            content,
+            contentType: encryptedCheckpointContentType,
+            contentID: contentID,
+            recoveryKey: recoveryKey
+        )
+    }
+
+    private func existingEncryptedCheckpointContent(
+        snapshot: RawCheckpointContentSnapshot
+    ) async throws -> Data? {
+        guard let filePath = snapshot.filePath else {
+            return nil
+        }
+        do {
+            let existingContent = try await FileStorageManager.shared.loadContent(
+                relativePath: filePath,
+                fileID: snapshot.checkpointID.uuidString
+            )
+            return EncryptedContentService.isEncryptedEnvelope(existingContent) ? existingContent : nil
+        } catch {
+            logger.warning("Failed to inspect existing checkpoint content before save: \(error.localizedDescription).")
+            return nil
+        }
+    }
+
+    private func fileIsProtected(_ fileObjectID: NSManagedObjectID?) async throws -> Bool {
+        guard let fileObjectID else { return false }
+        return try await PersistenceController.shared.fileRepository
+            .isFileContentProtected(fileObjectID: fileObjectID)
+    }
+
+    private func saveRawCheckpointContentToStorage(
+        snapshot: RawCheckpointContentSnapshot,
+        content: Data
+    ) async throws {
         let relativePath = try await FileStorageManager.shared.saveContent(
             content,
-            fileID: checkpointID.uuidString,
+            fileID: snapshot.checkpointID.uuidString,
             type: .checkpoint,
-            updatedAt: updatedAt
+            updatedAt: snapshot.updatedAt
         )
 
-        // Update after successful save
+        let context = PersistenceController.shared.newTaskContext()
         try await context.perform {
-            guard let checkpoint = context.object(with: checkpointObjectID) as? FileCheckpoint else { return }
+            guard let checkpoint = context.object(with: snapshot.objectID) as? FileCheckpoint else { return }
             checkpoint.updateAfterSavingToStorage(filePath: relativePath)
             try context.save()
         }
         logger.info("Saved checkpoint to storage: \(relativePath)")
+    }
+
+    private func savePlainCheckpointContentToStorage(
+        snapshot: RawCheckpointContentSnapshot,
+        content: Data
+    ) async throws {
+        try await saveRawCheckpointContentToStorage(snapshot: snapshot, content: content)
     }
 
     // MARK: - Restore Checkpoint

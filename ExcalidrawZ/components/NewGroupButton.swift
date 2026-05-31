@@ -79,7 +79,7 @@ struct NewGroupButton: View {
             )
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         switch groupType ?? currentGroupType {
             case .group:

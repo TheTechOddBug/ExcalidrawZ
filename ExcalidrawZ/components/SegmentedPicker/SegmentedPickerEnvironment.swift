@@ -25,7 +25,7 @@ extension EnvironmentValues {
 
 
 extension View {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     public func segmentedPickerItem(_ value: any Hashable) -> some View {
         environment(\.segmentedPickerItem, value)
     }

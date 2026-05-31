@@ -93,7 +93,7 @@ struct GroupMenuProvider: View {
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func createSubFolderSheetView() -> some View {
         CreateGroupSheetView(
             name: $initialNewGroupName,

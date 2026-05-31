@@ -37,7 +37,17 @@ extension FileCheckpoint {
         // Try to load from storage first (local/iCloud with bidirectional sync)
         if let filePath = filePath, let checkpointID = checkpointID {
             do {
-                return try await FileStorageManager.shared.loadContent(relativePath: filePath, fileID: checkpointID.uuidString)
+                let data = try await FileStorageManager.shared.loadContent(relativePath: filePath, fileID: checkpointID.uuidString)
+                if EncryptedContentService.isEncryptedEnvelope(data) {
+                    return try await LockedContentUnlockSession.shared.decrypt(
+                        data,
+                        expectedContentType: "fileCheckpoint",
+                        expectedContentID: checkpointID.uuidString
+                    )
+                }
+                return data
+            } catch let error as EncryptedContentError {
+                throw error
             } catch {
                 Self.logger.warning("Failed to load checkpoint from storage, falling back to CoreData: \(error.localizedDescription)")
             }
@@ -45,6 +55,13 @@ extension FileCheckpoint {
 
         // Fallback to CoreData content
         if let content = content {
+            if let checkpointID, EncryptedContentService.isEncryptedEnvelope(content) {
+                return try await LockedContentUnlockSession.shared.decrypt(
+                    content,
+                    expectedContentType: "fileCheckpoint",
+                    expectedContentID: checkpointID.uuidString
+                )
+            }
             return content
         }
 
