@@ -106,6 +106,21 @@ final class EncryptedContentEnvelopeTests: XCTestCase {
         )
     }
 
+    func testLockedReadPolicyBlocksProtectedContentAccessInScope() async throws {
+        do {
+            try await LockedContentReadPolicy.withProtectedContentBlocked(message: "Blocked") {
+                try LockedContentReadPolicy.ensureProtectedContentAccessAllowed()
+            }
+            XCTFail("Protected content access should be blocked inside the policy scope")
+        } catch let error as LockedContentReadBlockedError {
+            XCTAssertEqual(error.message, "Blocked")
+        }
+    }
+
+    func testLockedReadPolicyAllowsProtectedContentAccessOutsideScope() throws {
+        XCTAssertNoThrow(try LockedContentReadPolicy.ensureProtectedContentAccessAllowed())
+    }
+
     func testUnlockSessionCachesFileKeyForSubsequentDecrypt() async throws {
         let session = LockedContentUnlockSession.shared
         await resetSharedEncryptionState()
@@ -284,6 +299,6 @@ final class EncryptedContentEnvelopeTests: XCTestCase {
 
     private func resetSharedEncryptionState() async {
         await LockedContentUnlockSession.shared.forgetAll()
-        await RecoveryKeyVault.shared.forget()
+        await RecoveryKeyVault.shared.forgetAll()
     }
 }

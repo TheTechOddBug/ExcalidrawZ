@@ -34,7 +34,15 @@ struct FileHomeItemLockPreviewModifier: ViewModifier {
                     .transition(.opacity.combined(with: .scale(scale: 0.985)))
                 }
             }
+            .overlay(alignment: .bottomTrailing) {
+                if lockState == .temporarilyUnlocked, lockOverlayState == nil {
+                    UnlockedFileCoverBadge(iconSize: iconSize)
+                        .padding(unlockedBadgePadding)
+                        .transition(.scale(scale: 0.92).combined(with: .opacity))
+                }
+            }
             .animation(.smooth(duration: 0.26), value: lockOverlayState)
+            .animation(.smooth(duration: 0.22), value: lockState)
             .task(id: file.id) {
                 await lockedContentState.refresh(file: file)
             }
@@ -130,6 +138,10 @@ struct FileHomeItemLockPreviewModifier: ViewModifier {
         guard lockState == .locked else { return }
         FileItemPreviewCache.shared.removePreviewCache(forID: file.id)
     }
+
+    private var unlockedBadgePadding: CGFloat {
+        max(6, min(10, iconSize * 0.24))
+    }
 }
 
 struct LockedFilePreviewPlaceholder: View {
@@ -170,7 +182,7 @@ struct LockedFilePreviewPlaceholder: View {
 
     @ViewBuilder
     private var lockIcon: some View {
-        let icon = Image(systemName: lockState == .locked ? "lock.shield" : "key.shield")
+        let icon = Image(systemName: lockState == .locked ? LockedContentSymbols.lockShield : LockedContentSymbols.keyShield)
             .font(.system(size: iconSize, weight: .semibold))
             .foregroundStyle(.secondary)
             .symbolRenderingMode(.hierarchical)
@@ -181,5 +193,38 @@ struct LockedFilePreviewPlaceholder: View {
         } else {
             icon
         }
+    }
+}
+
+private struct UnlockedFileCoverBadge: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    let iconSize: CGFloat
+
+    var body: some View {
+        Image(systemName: LockedContentSymbols.keyShield)
+            .font(.system(size: symbolSize, weight: .semibold))
+            .symbolRenderingMode(.hierarchical)
+            .foregroundStyle(Color.accentColor)
+            .frame(width: badgeSize, height: badgeSize)
+            .background {
+                Circle()
+                    .fill(.regularMaterial)
+            }
+            .overlay {
+                Circle()
+                    .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.18 : 0.42), lineWidth: 0.75)
+            }
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.14), radius: 7, y: 3)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+
+    private var badgeSize: CGFloat {
+        max(22, min(32, iconSize * 0.82))
+    }
+
+    private var symbolSize: CGFloat {
+        badgeSize * 0.56
     }
 }

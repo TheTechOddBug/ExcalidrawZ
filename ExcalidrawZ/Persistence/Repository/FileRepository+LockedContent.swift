@@ -24,6 +24,36 @@ struct LockedFileSummary: Identifiable {
     let lockState: FileContentLockState
 }
 
+enum LockedContentRecoveryKeyResetError: LocalizedError {
+    case encryptedBackupScanFailed
+    case previousRecoveryKeyUnavailableForEncryptedBackups
+    case encryptedBackupValidationFailed(failedCount: Int)
+    case encryptedBackupResetFailed(failedCount: Int)
+
+    var errorDescription: String? {
+        switch self {
+            case .encryptedBackupScanFailed:
+                "Encrypted backups could not be checked before resetting the Recovery Key."
+            case .previousRecoveryKeyUnavailableForEncryptedBackups:
+                "Locked content is not unlocked, so encrypted backups cannot be updated."
+            case .encryptedBackupValidationFailed(let failedCount):
+                "Failed to verify \(failedCount) encrypted backup file\(failedCount == 1 ? "" : "s") with the current Recovery Key."
+            case .encryptedBackupResetFailed(let failedCount):
+                "Failed to update \(failedCount) encrypted backup file\(failedCount == 1 ? "" : "s") with the new Recovery Key. Keep both the old and new Recovery Keys, then try again."
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+            case .encryptedBackupScanFailed,
+                    .previousRecoveryKeyUnavailableForEncryptedBackups,
+                    .encryptedBackupValidationFailed,
+                    .encryptedBackupResetFailed:
+                "Keep both the old and new Recovery Keys, then try again after unlocking locked content with the old key."
+        }
+    }
+}
+
 private struct RawFileContentSnapshot {
     let objectID: NSManagedObjectID
     let fileID: UUID
@@ -105,6 +135,9 @@ extension FileRepository {
         )
         await RecoveryKeyVault.shared.activate(recoveryKey)
         rememberRecoveryKeyForSystemUnlock(recoveryKey)
+#if canImport(AppKit)
+        await UnlockTriggeredBackupCoordinator.shared.noteLockedContentUnlocked()
+#endif
         return plaintext
     }
 
@@ -176,12 +209,12 @@ extension FileRepository {
             expectedContentID: contentID
         )
 
+        try await PersistenceController.shared.checkpointRepository.removeCheckpointLocks(
+            for: fileObjectID
+        )
         try await savePlainFileContentToStorage(
             fileObjectID: fileObjectID,
             content: plaintextContent
-        )
-        try await PersistenceController.shared.checkpointRepository.removeCheckpointLocks(
-            for: fileObjectID
         )
 
         await LockedContentUnlockSession.shared.forget(
@@ -226,46 +259,84 @@ extension FileRepository {
     ) async throws -> Int {
         let snapshots = try await rawFileContentSnapshots(includeTrash: includeTrash)
         let previousRecoveryKey = await RecoveryKeyVault.shared.currentRecoveryKey()
+        var rewrappedFiles: [(snapshot: RawFileContentSnapshot, content: Data)] = []
         var resetCount = 0
+
+#if canImport(AppKit)
+        let encryptedBackupCount: Int
+        do {
+            encryptedBackupCount = try await countEncryptedBackupExcalidrawFilesStrict()
+        } catch {
+            throw LockedContentRecoveryKeyResetError.encryptedBackupScanFailed
+        }
+
+        if encryptedBackupCount > 0 {
+            guard let previousRecoveryKey else {
+                throw LockedContentRecoveryKeyResetError.previousRecoveryKeyUnavailableForEncryptedBackups
+            }
+
+            let backupValidation = await validateEncryptedBackupExcalidrawFiles(
+                with: previousRecoveryKey
+            )
+            guard backupValidation.failedCount == 0 else {
+                throw LockedContentRecoveryKeyResetError.encryptedBackupValidationFailed(
+                    failedCount: backupValidation.failedCount
+                )
+            }
+        }
+#endif
 
         for (index, snapshot) in snapshots.enumerated() {
             try await lockedFileBatchCheckpoint(index)
             let contentID = snapshot.fileID.uuidString
-            do {
-                let rawContent = try await loadRawFileContent(from: snapshot)
-                guard EncryptedContentService.isEncryptedEnvelope(rawContent) else {
-                    continue
-                }
-                let isUnlocked = await LockedContentUnlockSession.shared.isUnlockedOrCanUnlock(
-                    rawContent,
-                    expectedContentType: "file",
-                    expectedContentID: contentID
-                )
-                guard isUnlocked else { continue }
-
-                let rewrappedContent = try await LockedContentUnlockSession.shared.rewrapRecoveryKey(
-                    existingEnvelopeData: rawContent,
-                    newRecoveryKey: newRecoveryKey,
-                    expectedContentType: "file",
-                    expectedContentID: contentID
-                )
-                try await saveFileContentToStorage(
-                    fileObjectID: snapshot.objectID,
-                    content: rewrappedContent
-                )
-                try await PersistenceController.shared.checkpointRepository.rewrapCheckpointsRecoveryKey(
-                    for: snapshot.objectID,
-                    newRecoveryKey: newRecoveryKey
-                )
-                resetCount += 1
-            } catch {
-                fileRepositoryLockedContentLogger.warning("Failed to reset Recovery Key for locked file: \(error.localizedDescription)")
+            let rawContent = try await loadRawFileContent(from: snapshot)
+            guard EncryptedContentService.isEncryptedEnvelope(rawContent) else {
+                continue
             }
+            let isUnlocked = await LockedContentUnlockSession.shared.isUnlockedOrCanUnlock(
+                rawContent,
+                expectedContentType: "file",
+                expectedContentID: contentID
+            )
+            guard isUnlocked else {
+                throw EncryptedContentError.contentLocked(
+                    contentType: "file",
+                    contentID: contentID
+                )
+            }
+
+            let rewrappedContent = try await LockedContentUnlockSession.shared.rewrapRecoveryKey(
+                existingEnvelopeData: rawContent,
+                newRecoveryKey: newRecoveryKey,
+                expectedContentType: "file",
+                expectedContentID: contentID
+            )
+            try await PersistenceController.shared.checkpointRepository.validateCheckpointsCanRewrapRecoveryKey(
+                for: snapshot.objectID,
+                newRecoveryKey: newRecoveryKey
+            )
+            rewrappedFiles.append((snapshot, rewrappedContent))
+        }
+
+        for (index, rewrappedFile) in rewrappedFiles.enumerated() {
+            try await lockedFileBatchCheckpoint(index)
+            try await saveFileContentToStorage(
+                fileObjectID: rewrappedFile.snapshot.objectID,
+                content: rewrappedFile.content
+            )
+            try await PersistenceController.shared.checkpointRepository.rewrapCheckpointsRecoveryKey(
+                for: rewrappedFile.snapshot.objectID,
+                newRecoveryKey: newRecoveryKey
+            )
+            resetCount += 1
         }
 
         if resetCount > 0 {
 #if canImport(AppKit)
-            if let previousRecoveryKey {
+            if encryptedBackupCount > 0 {
+                guard let previousRecoveryKey else {
+                    throw LockedContentRecoveryKeyResetError.previousRecoveryKeyUnavailableForEncryptedBackups
+                }
                 let backupResult = await rewrapEncryptedBackupFilesRecoveryKey(
                     oldRecoveryKey: previousRecoveryKey,
                     newRecoveryKey: newRecoveryKey
@@ -274,10 +345,10 @@ extension FileRepository {
                     fileRepositoryLockedContentLogger.info("Reset Recovery Key for \(backupResult.rewrappedCount) encrypted backup files")
                 }
                 if backupResult.failedCount > 0 {
-                    fileRepositoryLockedContentLogger.warning("Failed to reset Recovery Key for \(backupResult.failedCount) encrypted backup files")
+                    throw LockedContentRecoveryKeyResetError.encryptedBackupResetFailed(
+                        failedCount: backupResult.failedCount
+                    )
                 }
-            } else {
-                fileRepositoryLockedContentLogger.warning("Skipped encrypted backup Recovery Key reset because the previous Recovery Key is not available in memory")
             }
 #endif
             await RecoveryKeyVault.shared.activate(newRecoveryKey)

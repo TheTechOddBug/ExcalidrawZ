@@ -63,6 +63,15 @@ enum EncryptedContentError: LocalizedError, Equatable {
 }
 
 extension EncryptedContentError {
+    var isContentLocked: Bool {
+        switch self {
+            case .contentLocked:
+                return true
+            default:
+                return false
+        }
+    }
+
     var allowsPermanentDeleteFallback: Bool {
         switch self {
             case .contentLocked, .encryptionFailed, .recoveryVerificationFailed:
@@ -72,9 +81,10 @@ extension EncryptedContentError {
                     .unsupportedVersion,
                     .unsupportedAlgorithm,
                     .invalidRecoveryMetadata,
-                    .invalidWrappedFileKey,
-                    .decryptionFailed:
+                    .invalidWrappedFileKey:
                 return true
+            case .decryptionFailed:
+                return false
         }
     }
 }

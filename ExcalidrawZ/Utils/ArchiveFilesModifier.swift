@@ -463,11 +463,17 @@ func backupAllCloudFiles(to url: URL, context: NSManagedObjectContext) async thr
                     retryCount += 1
                 }
                 let filePath: String = fileURL.filePath
-                if !filemanager.createFile(atPath: filePath, contents: archiveData.content) {
+                let backupContent = try EncryptedBackupService.encrypt(archiveData.content)
+                if !filemanager.createFile(atPath: filePath, contents: backupContent) {
                     print("backup file \(filePath) failed")
                 } else {
                     print("Backup file to url<\(filePath)> done")
                 }
+            } catch let error as EncryptedContentError {
+                if error.isContentLocked {
+                    throw error
+                }
+                errorDuringBackup = error
             } catch {
                 errorDuringBackup = error
             }
@@ -479,6 +485,39 @@ func backupAllCloudFiles(to url: URL, context: NSManagedObjectContext) async thr
     }
 }
 
+func cloudBackupHasLockedContentUnavailable(context: NSManagedObjectContext) async throws -> Bool {
+    let allFiles: [PersistenceController.ExcalidrawGroup: [File]] = try PersistenceController.shared.listAllFiles(context: context)
+    for file in allFiles.values.flatMap({ $0 }) {
+        let snapshot: ArchiveFileSnapshot
+        do {
+            snapshot = try await archiveFileSnapshot(for: file)
+        } catch {
+            continue
+        }
+
+        let encryptedContent: Data?
+        do {
+            encryptedContent = try await storedEncryptedContentIfPresent(from: snapshot)
+        } catch {
+            continue
+        }
+        guard let encryptedContent else { continue }
+
+        guard let fileID = snapshot.fileID else {
+            return true
+        }
+        let canBackup = await LockedContentUnlockSession.shared.isUnlockedOrCanUnlock(
+            encryptedContent,
+            expectedContentType: "file",
+            expectedContentID: fileID.uuidString
+        )
+        if !canBackup {
+            return true
+        }
+    }
+    return false
+}
+
 private func backupFileData(
     for file: File,
     context: NSManagedObjectContext
@@ -487,7 +526,22 @@ private func backupFileData(
     let fallbackName = snapshot.name ?? String(localizable: .newFileNamePlaceholder)
 
     if let encryptedContent = try await storedEncryptedContentIfPresent(from: snapshot) {
-        return ArchivedFileData(name: fallbackName, content: encryptedContent)
+        guard let fileID = snapshot.fileID else {
+            throw EncryptedContentError.invalidEnvelope
+        }
+        let plaintext = try await LockedContentUnlockSession.shared.decrypt(
+            encryptedContent,
+            expectedContentType: "file",
+            expectedContentID: fileID.uuidString
+        )
+        var excalidrawFile = try ExcalidrawFile(data: plaintext, id: fileID.uuidString)
+        excalidrawFile.name = fallbackName
+        try await excalidrawFile.syncFiles(context: context)
+
+        return ArchivedFileData(
+            name: excalidrawFile.name ?? fallbackName,
+            content: excalidrawFile.content ?? Data()
+        )
     }
 
     guard let archiveData = try await archivedFileData(for: file, context: context) else {

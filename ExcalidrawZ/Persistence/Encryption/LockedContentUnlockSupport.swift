@@ -29,6 +29,19 @@ enum LockedContentSecurityDelay {
     }
 }
 
+enum LockedContentSymbols {
+    static let lockShield = "lock.shield"
+    static let removeLock = "shield.slash"
+
+    static var keyShield: String {
+        if #available(macOS 26.0, iOS 26.0, *) {
+            return "key.shield"
+        } else {
+            return "key"
+        }
+    }
+}
+
 struct LockedContentSystemUnlockAvailability: Equatable {
     let isAvailable: Bool
     let buttonTitle: String
@@ -38,7 +51,7 @@ struct LockedContentSystemUnlockAvailability: Equatable {
         .init(
             isAvailable: false,
             buttonTitle: "Unlock with Mac Password",
-            systemImage: "key.shield"
+            systemImage: LockedContentSymbols.keyShield
         )
     }
 }
@@ -143,20 +156,20 @@ enum LockedContentSystemUnlockStore {
                 return .init(
                     isAvailable: true,
                     buttonTitle: "Unlock with Mac Password",
-                    systemImage: "key.shield"
+                    systemImage: LockedContentSymbols.keyShield
                 )
 #else
                 return .init(
                     isAvailable: true,
                     buttonTitle: "Unlock with Device Passcode",
-                    systemImage: "key.shield"
+                    systemImage: LockedContentSymbols.keyShield
                 )
 #endif
             @unknown default:
                 return .init(
                     isAvailable: true,
                     buttonTitle: "Unlock with System Authentication",
-                    systemImage: "key.shield"
+                    systemImage: LockedContentSymbols.keyShield
                 )
         }
     }

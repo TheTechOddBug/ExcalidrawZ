@@ -262,25 +262,27 @@ extension AIChatView {
                     conversationID: id,
                     model: model
                 )
-                guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                let context = try await makeInvocationContext(model: model)
-                let metadata = await makeTransactionMetadata(
-                    conversationID: id,
-                    userMessageID: retryContent?.id ?? messageID,
-                    requestKind: .regenerateMessage,
-                    model: model,
-                    context: context,
-                    attachmentCount: retryContent?.files?.count ?? 0
-                )
-                guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                try await llmState.regenerateMessage(
-                    in: id,
-                    fromMessageID: messageID,
-                    model: model,
-                    stream: true,
-                    metadata: metadata,
-                    context: context
-                )
+                try await LockedContentAIGuard.withProtectedContentAccessDenied {
+                    guard AIChatAvailability.canUseAI else { throw CancellationError() }
+                    let context = try await makeInvocationContext(model: model)
+                    let metadata = await makeTransactionMetadata(
+                        conversationID: id,
+                        userMessageID: retryContent?.id ?? messageID,
+                        requestKind: .regenerateMessage,
+                        model: model,
+                        context: context,
+                        attachmentCount: retryContent?.files?.count ?? 0
+                    )
+                    guard AIChatAvailability.canUseAI else { throw CancellationError() }
+                    try await llmState.regenerateMessage(
+                        in: id,
+                        fromMessageID: messageID,
+                        model: model,
+                        stream: true,
+                        metadata: metadata,
+                        context: context
+                    )
+                }
             } catch {
                 await MainActor.run {
                     aiChatState.presentTransientError(
@@ -317,24 +319,26 @@ extension AIChatView {
                     conversationID: id,
                     model: model
                 )
-                guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                let context = try await makeInvocationContext(model: model)
-                let metadata = await makeTransactionMetadata(
-                    conversationID: id,
-                    userMessageID: retryContent?.id ?? "",
-                    requestKind: .resumeGeneration,
-                    model: model,
-                    context: context,
-                    attachmentCount: retryContent?.files?.count ?? 0
-                )
-                guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                try await llmState.resumeGeneration(
-                    in: id,
-                    model: model,
-                    stream: true,
-                    metadata: metadata,
-                    context: context
-                )
+                try await LockedContentAIGuard.withProtectedContentAccessDenied {
+                    guard AIChatAvailability.canUseAI else { throw CancellationError() }
+                    let context = try await makeInvocationContext(model: model)
+                    let metadata = await makeTransactionMetadata(
+                        conversationID: id,
+                        userMessageID: retryContent?.id ?? "",
+                        requestKind: .resumeGeneration,
+                        model: model,
+                        context: context,
+                        attachmentCount: retryContent?.files?.count ?? 0
+                    )
+                    guard AIChatAvailability.canUseAI else { throw CancellationError() }
+                    try await llmState.resumeGeneration(
+                        in: id,
+                        model: model,
+                        stream: true,
+                        metadata: metadata,
+                        context: context
+                    )
+                }
             } catch {
                 await MainActor.run {
                     aiChatState.presentTransientError(

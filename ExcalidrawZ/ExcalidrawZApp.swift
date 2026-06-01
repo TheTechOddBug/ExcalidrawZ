@@ -139,7 +139,7 @@ struct ExcalidrawZApp: App {
             QueryLibraryItemTool(),
             AddLibraryItemToCanvasTool(),
             FinalAnswerTool()
-        ]
+        ].map(LockedContentProtectedTool.init)
         ToolDisplayNameCache.register(tools)
         Task {
             await toolRegistry.register(tools)

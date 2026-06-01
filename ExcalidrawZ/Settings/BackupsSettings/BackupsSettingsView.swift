@@ -7,6 +7,9 @@
 
 import SwiftUI
 import CoreData
+#if os(macOS)
+import AppKit
+#endif
 
 import ChocofordUI
 
@@ -92,7 +95,9 @@ struct BackupsSettingsView: View {
                         ExcalidrawRenderer(file: unlockedBackupPreview.file)
                     } else if let excalidrawFile = try? ExcalidrawFile(contentsOf: selectedFile) {
                         ExcalidrawRenderer(file: excalidrawFile)
-                    } else if isEncryptedBackupFile(selectedFile) {
+                    } else if isAppEncryptedBackupFile(selectedFile) {
+                        backupEncryptedPreviewLoadingView()
+                    } else if isRecoveryKeyEncryptedBackupFile(selectedFile) {
                         encryptedBackupFileView(selectedFile)
                     } else if let selectedBackup {
                         backupHomeView(selectedBackup)
@@ -109,9 +114,15 @@ struct BackupsSettingsView: View {
             unlockedBackupPreview = nil
             backupPreviewErrorMessage = nil
             isBackupPreviewRecoveryKeySheetPresented = false
-            guard let newValue, isEncryptedBackupFile(newValue) else { return }
-            Task {
-                await unlockBackupPreviewWithSystemAuthentication(newValue, isAutomatic: true)
+            guard let newValue else { return }
+            if isAppEncryptedBackupFile(newValue) {
+                Task {
+                    await loadBackupPreviewWithBackupKey(newValue)
+                }
+            } else if isRecoveryKeyEncryptedBackupFile(newValue) {
+                Task {
+                    await unlockBackupPreviewWithSystemAuthentication(newValue, isAutomatic: true)
+                }
             }
         }
         .confirmationDialog(
@@ -188,84 +199,53 @@ struct BackupsSettingsView: View {
     
     @ViewBuilder
     private func placeholderView() -> some View {
-        VStack {
-            Text(.localizable(.settingsBackupsName)).font(.largeTitle)
-            VStack(alignment: .leading) {
-                Text(.localizable(.settingsBackupsDescription))
-                Divider()
-                Text(.localizable(.settingsBackupsDescriptionSecondary))
-            }
-            .padding()
-            .background {
-                let roundedRectangle = RoundedRectangle(cornerRadius: 8)
-                ZStack {
-                    roundedRectangle.fill(.regularMaterial)
-                    roundedRectangle.stroke(.separator)
-                }
-            }
-        }
-        .frame(maxWidth: 400)
+        BackupsPlaceholderView()
     }
 
     @ViewBuilder
     private func encryptedBackupFileView(_ url: URL) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "lock.shield")
-                .font(.system(size: 44, weight: .semibold))
-                .foregroundStyle(Color.accentColor)
-
-            Text("Encrypted backup file")
-                .font(.title3.weight(.semibold))
-
-            Text("This file is protected. Restore or open it in ExcalidrawZ, then unlock it with the Recovery Key.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 360)
-
-            VStack(spacing: 6) {
-                Button {
-                    Task {
-                        await unlockBackupPreviewWithSystemAuthentication(url)
-                    }
-                } label: {
-                    if isUnlockingBackupPreview {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Label("Unlock Preview", systemImage: systemUnlockAvailability.systemImage)
-                    }
-                }
-                .modernButtonStyle(style: .glassProminent, size: .large, shape: .capsule)
-                .disabled(isUnlockingBackupPreview || !systemUnlockAvailability.isAvailable)
-                .help(systemUnlockAvailability.buttonTitle)
-
-                Button {
-                    isBackupPreviewRecoveryKeySheetPresented = true
-                } label: {
-                    Text("Use Recovery Key")
-                        .font(.callout.weight(.medium))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(Color.accentColor)
-                .disabled(isUnlockingBackupPreview)
+        BackupLockedPreviewView(
+            isUnlocking: isUnlockingBackupPreview,
+            errorMessage: backupPreviewErrorMessage,
+            systemUnlockAvailability: systemUnlockAvailability
+        ) {
+            Task {
+                await unlockBackupPreviewWithSystemAuthentication(url)
             }
-            .padding(.top, 4)
-
-            if let backupPreviewErrorMessage {
-                Label(backupPreviewErrorMessage, systemImage: "exclamationmark.triangle")
-                    .font(.callout)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 360)
-            }
+        } onUseRecoveryKey: {
+            isBackupPreviewRecoveryKeySheetPresented = true
         }
-        .padding()
     }
 
-    private func isEncryptedBackupFile(_ url: URL) -> Bool {
-        guard let data = try? Data(contentsOf: url) else { return false }
-        return EncryptedContentService.isEncryptedEnvelope(data)
+    @ViewBuilder
+    private func backupEncryptedPreviewLoadingView() -> some View {
+        BackupEncryptedPreviewLoadingView(
+            isUnlocking: isUnlockingBackupPreview,
+            errorMessage: backupPreviewErrorMessage
+        )
+    }
+
+    @MainActor
+    private func loadBackupPreviewWithBackupKey(_ url: URL) async {
+        guard selectedFile == url else { return }
+        guard !isUnlockingBackupPreview else { return }
+        backupPreviewErrorMessage = nil
+
+        isUnlockingBackupPreview = true
+        defer { isUnlockingBackupPreview = false }
+
+        do {
+            let file = try await backupExcalidrawFile(
+                from: url,
+                context: viewContext,
+                recoveryKey: nil
+            )
+            guard selectedFile == url else { return }
+            unlockedBackupPreview = BackupFilePreview(url: url, file: file)
+        } catch {
+            guard selectedFile == url else { return }
+            backupPreviewErrorMessage = LockedContentErrorPresenter.message(for: error)
+        }
     }
 
     @MainActor
@@ -328,47 +308,20 @@ struct BackupsSettingsView: View {
 
     @ViewBuilder
     private func backupHomeView(_ backup: URL) -> some View {
-        let title = String(
-            localizable: .backupName(
-                (try? backup.resourceValues(forKeys: [.creationDateKey]).creationDate?.formatted()) ?? String(localizable: .generalUnknown)
-            )
-        )
-    
-        VStack {
-            Text(title).font(.title)
-            
-            Text(String(localizable: .generalTotalSizeLabel) + selectedBackupSize.formatted(.byteCount(style: .file)))
-            
-            HStack {
-                Button {
-                    Task {
-                        await exportBackup(backup, title: title)
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        if isExportingBackup {
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-                        Label(.localizable(.backupButtonExport), systemSymbol: .squareAndArrowUp)
-                    }
-                }
-                .disabled(isExportingBackup)
-
-#if DEBUG
-                Button {
-                    NSWorkspace.shared.activateFileViewerSelecting([backup])
-                } label: {
-                    Label(.localizable(.generalButtonRevealInFinder), systemSymbol: .docViewfinder)
-                }
-#endif
-
-                Button(role: .destructive) {
-                    backupToBeDeleted = backup
-                } label: {
-                    Label(.localizable(.backupButtonDelete), systemSymbol: .trash)
-                }
+        BackupHomeView(
+            backup: backup,
+            selectedBackupSize: selectedBackupSize,
+            isExporting: isExportingBackup
+        ) { title in
+            Task {
+                await exportBackup(backup, title: title)
             }
+        } onRevealInFinder: {
+#if DEBUG
+            NSWorkspace.shared.activateFileViewerSelecting([backup])
+#endif
+        } onDelete: {
+            backupToBeDeleted = backup
         }
     }
 
@@ -423,7 +376,7 @@ struct BackupsSettingsView: View {
             alertToast(error)
         }
     }
-    
+
     private func loadBackups() {
         do {
             let backupsDir = try getBackupsDir()
@@ -460,144 +413,6 @@ struct BackupsSettingsView: View {
             alertToast(error)
         }
     }
-}
-
-private func backupContainsEncryptedExcalidrawFiles(_ backup: URL) throws -> Bool {
-    try backupDirectoryContainsEncryptedExcalidrawFiles(backup)
-}
-
-private func exportBackupRecord(
-    from backup: URL,
-    to targetURL: URL,
-    context: NSManagedObjectContext,
-    recoveryKey: RecoveryKey?
-) async throws {
-    let fileManager = FileManager.default
-    let replacementDirectory = try fileManager.url(
-        for: .itemReplacementDirectory,
-        in: .userDomainMask,
-        appropriateFor: targetURL.deletingLastPathComponent(),
-        create: true
-    )
-    defer {
-        try? fileManager.removeItem(at: replacementDirectory)
-    }
-
-    let stagingURL = replacementDirectory.appendingPathComponent(targetURL.lastPathComponent, conformingTo: .directory)
-    try await writeExportedBackupRecord(
-        from: backup,
-        to: stagingURL,
-        context: context,
-        recoveryKey: recoveryKey
-    )
-
-    if fileManager.fileExists(atPath: targetURL.path) {
-        try fileManager.removeItem(at: targetURL)
-    }
-    try fileManager.copyItem(at: stagingURL, to: targetURL)
-}
-
-private func writeExportedBackupRecord(
-    from backup: URL,
-    to targetURL: URL,
-    context: NSManagedObjectContext,
-    recoveryKey: RecoveryKey?
-) async throws {
-    let fileManager = FileManager.default
-    try fileManager.createDirectory(at: targetURL, withIntermediateDirectories: false)
-
-    guard let enumerator = fileManager.enumerator(
-        at: backup,
-        includingPropertiesForKeys: [.isDirectoryKey],
-        options: [.skipsHiddenFiles]
-    ) else {
-        return
-    }
-
-    while let sourceURL = enumerator.nextObject() as? URL {
-        let destinationURL = exportedBackupDestinationURL(
-            sourceURL: sourceURL,
-            backupRoot: backup,
-            exportRoot: targetURL
-        )
-        let isDirectory = (try? sourceURL.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
-
-        if isDirectory {
-            try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true)
-            continue
-        }
-
-        try fileManager.createDirectory(
-            at: destinationURL.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
-
-        if sourceURL.pathExtension == "excalidraw" {
-            let data = try await exportedBackupExcalidrawFileData(
-                from: sourceURL,
-                context: context,
-                recoveryKey: recoveryKey
-            )
-            try data.write(to: destinationURL, options: .atomic)
-        } else {
-            try fileManager.copyItem(at: sourceURL, to: destinationURL)
-        }
-    }
-}
-
-private func exportedBackupDestinationURL(
-    sourceURL: URL,
-    backupRoot: URL,
-    exportRoot: URL
-) -> URL {
-    let backupComponents = backupRoot.standardizedFileURL.pathComponents
-    let sourceComponents = sourceURL.standardizedFileURL.pathComponents
-    let relativeComponents = sourceComponents.dropFirst(backupComponents.count)
-
-    return relativeComponents.reduce(exportRoot) { partialResult, component in
-        partialResult.appendingPathComponent(component)
-    }
-}
-
-private func exportedBackupExcalidrawFileData(
-    from sourceURL: URL,
-    context: NSManagedObjectContext,
-    recoveryKey: RecoveryKey?
-) async throws -> Data {
-    let storedData = try Data(contentsOf: sourceURL)
-
-    guard EncryptedContentService.isEncryptedEnvelope(storedData) else {
-        return storedData
-    }
-
-    guard let recoveryKey else {
-        throw LockedContentSystemUnlockError.noSavedRecoveryKey
-    }
-
-    let excalidrawFile = try await unlockedEncryptedBackupExcalidrawFile(
-        from: sourceURL,
-        context: context,
-        recoveryKey: recoveryKey
-    )
-    return excalidrawFile.content ?? storedData
-}
-
-private func unlockedEncryptedBackupExcalidrawFile(
-    from sourceURL: URL,
-    context: NSManagedObjectContext,
-    recoveryKey: RecoveryKey
-) async throws -> ExcalidrawFile {
-    let storedData = try Data(contentsOf: sourceURL)
-    let envelope = try EncryptedContentService.decodeEnvelope(storedData)
-    let plaintext = try EncryptedContentService.decrypt(storedData, recoveryKey: recoveryKey)
-    let fileID = envelope.contentType == "file" ? envelope.contentID : nil
-
-    var excalidrawFile = try ExcalidrawFile(data: plaintext, id: fileID)
-    if excalidrawFile.name == nil {
-        excalidrawFile.name = sourceURL.deletingPathExtension().lastPathComponent
-    }
-    try await excalidrawFile.syncFiles(context: context)
-    return excalidrawFile
 }
 
 #elseif os(iOS)

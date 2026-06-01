@@ -18,6 +18,26 @@ actor LockedContentUnlockSession {
         expectedContentType: String,
         expectedContentID: String
     ) throws -> Data {
+        let unlockedKey = try unlockContentKey(
+            encryptedData,
+            recoveryKey: recoveryKey,
+            expectedContentType: expectedContentType,
+            expectedContentID: expectedContentID
+        )
+        return try EncryptedContentService.decrypt(
+            encryptedData,
+            unlockedKey: unlockedKey,
+            expectedContentType: expectedContentType,
+            expectedContentID: expectedContentID
+        )
+    }
+
+    func unlockContentKey(
+        _ encryptedData: Data,
+        recoveryKey: RecoveryKey,
+        expectedContentType: String,
+        expectedContentID: String
+    ) throws -> UnlockedContentKey {
         let unlockedKey = try EncryptedContentService.unlockContentKey(
             encryptedData,
             recoveryKey: recoveryKey,
@@ -25,12 +45,7 @@ actor LockedContentUnlockSession {
             expectedContentID: expectedContentID
         )
         unlockedKeys[cacheKey(contentType: unlockedKey.contentType, contentID: unlockedKey.contentID)] = unlockedKey
-        return try EncryptedContentService.decrypt(
-            encryptedData,
-            unlockedKey: unlockedKey,
-            expectedContentType: expectedContentType,
-            expectedContentID: expectedContentID
-        )
+        return unlockedKey
     }
 
     func decrypt(
@@ -130,18 +145,18 @@ actor LockedContentUnlockSession {
             return unlockedKey
         }
 
-        guard let recoveryKey = await RecoveryKeyVault.shared.currentRecoveryKey() else {
-            throw EncryptedContentError.contentLocked(contentType: expectedContentType, contentID: expectedContentID)
+        if let recoveryKey = await RecoveryKeyVault.shared.currentRecoveryKey() {
+            let unlockedKey = try EncryptedContentService.unlockContentKey(
+                encryptedData,
+                recoveryKey: recoveryKey,
+                expectedContentType: expectedContentType,
+                expectedContentID: expectedContentID
+            )
+            unlockedKeys[key] = unlockedKey
+            return unlockedKey
         }
 
-        let unlockedKey = try EncryptedContentService.unlockContentKey(
-            encryptedData,
-            recoveryKey: recoveryKey,
-            expectedContentType: expectedContentType,
-            expectedContentID: expectedContentID
-        )
-        unlockedKeys[key] = unlockedKey
-        return unlockedKey
+        throw EncryptedContentError.contentLocked(contentType: expectedContentType, contentID: expectedContentID)
     }
 
     private func cacheKey(contentType: String, contentID: String) -> String {

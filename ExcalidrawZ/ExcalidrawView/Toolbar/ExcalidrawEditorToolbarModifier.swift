@@ -218,10 +218,10 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                     await removeFileLock(fileObjectID: fileObjectID)
                 }
             } label: {
-                Label("Remove Lock", systemImage: "shield.slash")
+                Label("Remove Lock", systemImage: LockedContentSymbols.removeLock)
             }
         } label: {
-            Label("File Unlocked", systemImage: "key.shield")
+            Label("File Unlocked", systemImage: LockedContentSymbols.keyShield)
         } primaryAction: {
             Task { @MainActor in
                 await relockUnlockedContent()

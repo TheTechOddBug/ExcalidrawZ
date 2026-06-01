@@ -193,6 +193,8 @@ actor CheckpointRepository {
 
     func removeCheckpointLocks(for fileObjectID: NSManagedObjectID) async throws {
         let checkpointObjectIDs = try await checkpointObjectIDs(for: fileObjectID)
+        var unlockedCheckpoints: [(snapshot: RawCheckpointContentSnapshot, content: Data)] = []
+
         for (index, checkpointObjectID) in checkpointObjectIDs.enumerated() {
             try await checkpointBatchCheckpoint(index)
             let snapshot = try await rawCheckpointContentSnapshot(checkpointObjectID: checkpointObjectID)
@@ -206,9 +208,14 @@ actor CheckpointRepository {
                 expectedContentType: encryptedCheckpointContentType,
                 expectedContentID: snapshot.checkpointID.uuidString
             )
+            unlockedCheckpoints.append((snapshot, plaintext))
+        }
+
+        for (index, checkpoint) in unlockedCheckpoints.enumerated() {
+            try await checkpointBatchCheckpoint(index)
             try await savePlainCheckpointContentToStorage(
-                snapshot: snapshot,
-                content: plaintext
+                snapshot: checkpoint.snapshot,
+                content: checkpoint.content
             )
         }
     }
@@ -218,6 +225,8 @@ actor CheckpointRepository {
         newRecoveryKey: RecoveryKey
     ) async throws {
         let checkpointObjectIDs = try await checkpointObjectIDs(for: fileObjectID)
+        var rewrappedCheckpoints: [(snapshot: RawCheckpointContentSnapshot, content: Data)] = []
+
         for (index, checkpointObjectID) in checkpointObjectIDs.enumerated() {
             try await checkpointBatchCheckpoint(index)
             let snapshot = try await rawCheckpointContentSnapshot(checkpointObjectID: checkpointObjectID)
@@ -232,9 +241,36 @@ actor CheckpointRepository {
                 expectedContentType: encryptedCheckpointContentType,
                 expectedContentID: snapshot.checkpointID.uuidString
             )
+            rewrappedCheckpoints.append((snapshot, rewrappedContent))
+        }
+
+        for (index, checkpoint) in rewrappedCheckpoints.enumerated() {
+            try await checkpointBatchCheckpoint(index)
             try await saveRawCheckpointContentToStorage(
-                snapshot: snapshot,
-                content: rewrappedContent
+                snapshot: checkpoint.snapshot,
+                content: checkpoint.content
+            )
+        }
+    }
+
+    func validateCheckpointsCanRewrapRecoveryKey(
+        for fileObjectID: NSManagedObjectID,
+        newRecoveryKey: RecoveryKey
+    ) async throws {
+        let checkpointObjectIDs = try await checkpointObjectIDs(for: fileObjectID)
+        for (index, checkpointObjectID) in checkpointObjectIDs.enumerated() {
+            try await checkpointBatchCheckpoint(index)
+            let snapshot = try await rawCheckpointContentSnapshot(checkpointObjectID: checkpointObjectID)
+            let rawContent = try await loadRawCheckpointContent(from: snapshot, preferFallbackContent: false)
+            guard EncryptedContentService.isEncryptedEnvelope(rawContent) else {
+                continue
+            }
+
+            _ = try await LockedContentUnlockSession.shared.rewrapRecoveryKey(
+                existingEnvelopeData: rawContent,
+                newRecoveryKey: newRecoveryKey,
+                expectedContentType: encryptedCheckpointContentType,
+                expectedContentID: snapshot.checkpointID.uuidString
             )
         }
     }

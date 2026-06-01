@@ -775,7 +775,7 @@ private struct LockedFileSettingsRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: isUnlocked ? "key.shield" : "lock.shield")
+            Image(systemName: isUnlocked ? LockedContentSymbols.keyShield : LockedContentSymbols.lockShield)
                 .font(.body.weight(.semibold))
                 .foregroundStyle(isUnlocked ? Color.accentColor : Color.secondary)
                 .frame(width: 24)
@@ -802,13 +802,13 @@ private struct LockedFileSettingsRow: View {
                     Button(role: .destructive) {
                         onRemoveLock()
                     } label: {
-                        Label("Remove Lock", systemImage: "shield.slash")
+                        Label("Remove Lock", systemImage: LockedContentSymbols.removeLock)
                     }
                 } else {
                     Button {
                         onUnlock()
                     } label: {
-                        Label("Unlock...", systemImage: "key.shield")
+                        Label("Unlock...", systemImage: LockedContentSymbols.keyShield)
                     }
                 }
             } label: {
@@ -842,7 +842,7 @@ private struct RecoveryKeyResetSheet: View {
             VStack(alignment: .leading, spacing: 18) {
                 header
 
-                Text("Save this new Recovery Key before continuing. Locked files, checkpoints, and encrypted backups will be updated to use it.")
+                Text("Save this new Recovery Key before continuing. Locked files and checkpoints will be updated to use it.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

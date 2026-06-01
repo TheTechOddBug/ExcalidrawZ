@@ -39,6 +39,7 @@ extension FileCheckpoint {
             do {
                 let data = try await FileStorageManager.shared.loadContent(relativePath: filePath, fileID: checkpointID.uuidString)
                 if EncryptedContentService.isEncryptedEnvelope(data) {
+                    try LockedContentReadPolicy.ensureProtectedContentAccessAllowed()
                     return try await LockedContentUnlockSession.shared.decrypt(
                         data,
                         expectedContentType: "fileCheckpoint",
@@ -56,6 +57,7 @@ extension FileCheckpoint {
         // Fallback to CoreData content
         if let content = content {
             if let checkpointID, EncryptedContentService.isEncryptedEnvelope(content) {
+                try LockedContentReadPolicy.ensureProtectedContentAccessAllowed()
                 return try await LockedContentUnlockSession.shared.decrypt(
                     content,
                     expectedContentType: "fileCheckpoint",

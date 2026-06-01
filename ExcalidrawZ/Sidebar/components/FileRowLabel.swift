@@ -104,7 +104,7 @@ struct FileRowLabel: View {
             case .locked:
                 "lock.shield"
             case .temporarilyUnlocked:
-                "key.shield"
+                LockedContentSymbols.keyShield
             case .plaintext:
                 "lock.shield"
         }

@@ -86,7 +86,7 @@ struct BackupFoldersView: View {
                     return BackupFolderItem(
                         url: url,
                         isDirectory: isDirectory,
-                        isEncrypted: isDirectory ? false : isEncryptedBackupFile(url)
+                        isEncrypted: isDirectory ? false : isLegacyLockedBackupFile(url)
                     )
                 }
             } catch {
@@ -95,7 +95,7 @@ struct BackupFoldersView: View {
         }
     }
 
-    private func isEncryptedBackupFile(_ url: URL) -> Bool {
+    private func isLegacyLockedBackupFile(_ url: URL) -> Bool {
         guard url.pathExtension == "excalidraw",
               let data = try? Data(contentsOf: url) else {
             return false

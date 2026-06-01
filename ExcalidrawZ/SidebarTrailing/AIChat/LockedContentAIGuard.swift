@@ -27,6 +27,32 @@ enum LockedContentAIGuard {
         .text(LockedContentAIError.message)
     }
 
+    static func withProtectedContentAccessDenied<T>(
+        operation: () async throws -> T
+    ) async rethrows -> T {
+        try await LockedContentReadPolicy.withProtectedContentBlocked(
+            message: LockedContentAIError.message,
+            operation: operation
+        )
+    }
+
+    static func lockedToolResultIfNeeded(
+        input: String,
+        context: (any ChatInvocationContext)?
+    ) async throws -> ToolResult? {
+        if let currentFileID = (context as? ExcalidrawChatInvocationContext)?.currentFileID,
+           !(try await canToolAccess(fileID: currentFileID)) {
+            return lockedToolResult
+        }
+
+        if let fileID = fileIDFromToolInput(input),
+           !(try await canToolAccess(fileID: fileID)) {
+            return lockedToolResult
+        }
+
+        return nil
+    }
+
     @MainActor
     static func ensureAIReadable(activeFile: FileState.ActiveFile?) async throws {
         guard case .file(let file) = activeFile else { return }
@@ -86,6 +112,31 @@ enum LockedContentAIGuard {
             fetchRequest.predicate = NSPredicate(format: "id == %@", fileID as CVarArg)
             fetchRequest.fetchLimit = 1
             return try context.fetch(fetchRequest).first?.objectID
+        }
+    }
+
+    private static func fileIDFromToolInput(_ input: String) -> UUID? {
+        guard let data = input.data(using: .utf8),
+              let probe = try? JSONDecoder().decode(FileIDProbe.self, from: data),
+              let rawFileID = probe.fileID
+        else {
+            return nil
+        }
+        return UUID(uuidString: rawFileID)
+    }
+
+    private struct FileIDProbe: Decodable {
+        let fileID: String?
+
+        enum CodingKeys: String, CodingKey {
+            case fileID = "fileID"
+            case snakeFileID = "file_id"
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            fileID = try container.decodeIfPresent(String.self, forKey: .snakeFileID)
+                ?? container.decodeIfPresent(String.self, forKey: .fileID)
         }
     }
 }

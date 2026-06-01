@@ -170,7 +170,7 @@ struct LockedFileAccessSheet: View {
     private var headerIcon: some View {
         let tint = LockSecurityPalette.safe
 
-        Image(systemName: request.mode == .lock ? "lock.shield" : "key.shield")
+        Image(systemName: request.mode == .lock ? LockedContentSymbols.lockShield : LockedContentSymbols.keyShield)
             .font(.system(size: 20, weight: .semibold))
             .foregroundStyle(tint)
             .frame(width: 46, height: 46)

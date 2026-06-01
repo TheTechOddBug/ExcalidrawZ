@@ -300,6 +300,7 @@ struct LockedFileUnlockView: View {
             if allowsPermanentDeleteAfterFailure {
                 lockedContentState.markUnlockFailed(fileID: request.fileID)
             }
+            return false
         }
 
         return true
