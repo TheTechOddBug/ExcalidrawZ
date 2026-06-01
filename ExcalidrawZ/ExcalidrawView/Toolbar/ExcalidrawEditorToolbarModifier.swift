@@ -180,17 +180,30 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                 }
                 ShareToolbarButton()
                     .disabled(lockedContentState.activeFileLockState == .locked)
-            } else if aiChatPreferences.isAIEnabled && AIChatAvailability.isAvailable {
-                Button {
-                    store.togglePaywall(reason: .manaully)
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemSymbol: .sparkles)
-                        if let balance = llmState.creditsInfo?.balance, balance > 0 {
-                            Text(balance.formatted(.number.precision(.fractionLength(2))))
+            } else {
+                if lockedContentState.hasActiveUnlockSession {
+                    Button {
+                        Task { @MainActor in
+                            await relockUnlockedContent()
                         }
+                    } label: {
+                        Label("File Unlocked", systemImage: LockedContentSymbols.keyShield)
                     }
-                    .foregroundStyle(AIAppearancePalette.foregroundGradient)
+                    .help("Lock Files")
+                }
+
+                if aiChatPreferences.isAIEnabled && AIChatAvailability.isAvailable {
+                    Button {
+                        store.togglePaywall(reason: .manaully)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemSymbol: .sparkles)
+                            if let balance = llmState.creditsInfo?.balance, balance > 0 {
+                                Text(balance.formatted(.number.precision(.fractionLength(2))))
+                            }
+                        }
+                        .foregroundStyle(AIAppearancePalette.foregroundGradient)
+                    }
                 }
             }
         }

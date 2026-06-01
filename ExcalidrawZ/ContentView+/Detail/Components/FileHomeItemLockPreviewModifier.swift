@@ -34,15 +34,7 @@ struct FileHomeItemLockPreviewModifier: ViewModifier {
                     .transition(.opacity.combined(with: .scale(scale: 0.985)))
                 }
             }
-            .overlay(alignment: .bottomTrailing) {
-                if lockState == .temporarilyUnlocked, lockOverlayState == nil {
-                    UnlockedFileCoverBadge(iconSize: iconSize)
-                        .padding(unlockedBadgePadding)
-                        .transition(.scale(scale: 0.92).combined(with: .opacity))
-                }
-            }
             .animation(.smooth(duration: 0.26), value: lockOverlayState)
-            .animation(.smooth(duration: 0.22), value: lockState)
             .task(id: file.id) {
                 await lockedContentState.refresh(file: file)
             }
@@ -138,10 +130,6 @@ struct FileHomeItemLockPreviewModifier: ViewModifier {
         guard lockState == .locked else { return }
         FileItemPreviewCache.shared.removePreviewCache(forID: file.id)
     }
-
-    private var unlockedBadgePadding: CGFloat {
-        max(6, min(10, iconSize * 0.24))
-    }
 }
 
 struct LockedFilePreviewPlaceholder: View {
@@ -196,7 +184,7 @@ struct LockedFilePreviewPlaceholder: View {
     }
 }
 
-private struct UnlockedFileCoverBadge: View {
+struct UnlockedFileCoverBadge: View {
     @Environment(\.colorScheme) private var colorScheme
 
     let iconSize: CGFloat

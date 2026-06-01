@@ -229,6 +229,7 @@ private struct FileHomeItemContentView: View {
     @EnvironmentObject private var layoutState: LayoutState
     @EnvironmentObject private var fileState: FileState
     @EnvironmentObject private var fileHomeItemTransitionItemState: FileHomeItemTransitionItemState
+    @EnvironmentObject private var lockedContentState: LockedContentStateStore
 
     var style: FileHomeItemStyle
     var file: FileState.ActiveFile
@@ -362,6 +363,12 @@ private struct FileHomeItemContentView: View {
                                     .controlSize(.mini)
                                     .foregroundStyle(.secondary)
                             }
+
+                            if lockedContentState.previewLockState(for: file) == .temporarilyUnlocked {
+                                Spacer()
+                                Image(systemName: LockedContentSymbols.keyShield)
+                                    .transition(.scale(scale: 0.92).combined(with: .opacity))
+                            }
                         }
                         .font(
                             containerHorizontalSizeClass == .regular
@@ -414,6 +421,7 @@ private struct FileHomeItemContentView: View {
                 }
             }
         }
+        .animation(.smooth(duration: 0.22), value: lockedContentState.previewLockState(for: file))
         .padding(.horizontal, containerHorizontalSizeClass == .regular ? 8 : 6)
         .padding(.vertical, containerHorizontalSizeClass == .regular ? 8 : 6)
         // Costing too much performance
@@ -426,6 +434,10 @@ private struct FileHomeItemContentView: View {
 
     private var lockOverlayIconSize: CGFloat {
         style == .file && layoutState.compactBrowserLayout == .list ? 22 : 34
+    }
+
+    private var titleUnlockedBadgeIconSize: CGFloat {
+        style == .file && layoutState.compactBrowserLayout == .list ? 20 : 22
     }
 
     @ViewBuilder
