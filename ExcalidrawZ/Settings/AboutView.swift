@@ -78,17 +78,6 @@ struct AboutView: View {
             }
         } header: {
             HStack {
-                WithAsyncValue(isChinaAppStore) { isChina, error in
-                    if isChina == true {
-                        HStack {
-                            Spacer()
-                            Link(destination: URL(string: "https://beian.miit.gov.cn/")!) {
-                                Text("粤ICP备2023139330号-5A")
-                            }
-                        }
-                    }
-                }
-
                 Spacer(minLength: 0)
                 VStack(spacing: 0) {
                     Image("AppIcon-macOS")
@@ -103,17 +92,28 @@ struct AboutView: View {
             .padding(.bottom)
         } footer: {
             HStack {
+                WithAsyncValue(isChinaAppStore) { isChina, error in
+                    if isChina == true {
+                        Link(destination: URL(string: "https://beian.miit.gov.cn/")!) {
+                            Text("粤ICP备2023139330号-5A")
+                        }
+                        .hoverCursor(.link)
+                    }
+                }
+
                 Spacer()
-                if let privacyPolicy = URL(string: "https://excalidrawz.chocoford.com/privacy/") {
-                    Link(.localizable(.generalButtonPrivacyPolicy), destination: privacyPolicy)
-                        .hoverCursor(.link)
+
+                HStack(spacing: 6) {
+                    if let privacyPolicy = URL(string: "https://excalidrawz.chocoford.com/privacy/") {
+                        Link(.localizable(.generalButtonPrivacyPolicy), destination: privacyPolicy)
+                            .hoverCursor(.link)
+                    }
+                    Text("·")
+                    if let termsOfUse = URL(string: "https://excalidrawz.chocoford.com/terms/") {
+                        Link(.localizable(.generalButtonTermsOfUse), destination: termsOfUse)
+                            .hoverCursor(.link)
+                    }
                 }
-                Text("·")
-                if let termsOfUse = URL(string: "https://excalidrawz.chocoford.com/terms/") {
-                    Link(.localizable(.generalButtonTermsOfUse), destination: termsOfUse)
-                        .hoverCursor(.link)
-                }
-                
             }
         }
     }

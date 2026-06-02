@@ -228,7 +228,7 @@ extension SettingsView {
                 case .backups:
                     return .localizable(.settingsBackupsName)
                 case .security:
-                    return "Security"
+                    return .localizable(.settingsSecurityName)
                 case .ai:
                     // TODO: localize once a key is added.
                     return "AI"

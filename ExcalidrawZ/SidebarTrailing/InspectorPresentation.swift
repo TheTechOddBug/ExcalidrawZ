@@ -47,6 +47,11 @@ struct InspectorPresentationModifier: ViewModifier {
         layoutState.activeInspectorTab != .history
     }
 
+    private var shouldShowInspectorPresentation: Bool {
+        layoutState.isInspectorPresented &&
+        !fileState.activeCollaborationFileIsLoading
+    }
+
     func body(content: Content) -> some View {
         ZStack {
             if shouldUseFloatingInspector {
@@ -135,7 +140,7 @@ struct InspectorPresentationModifier: ViewModifier {
             content
             HStack {
                 Spacer()
-                if layoutState.isInspectorPresented {
+                if shouldShowInspectorPresentation {
                     VStack {
                         Text(inspectorTitle)
                             .foregroundStyle(.secondary)
@@ -165,7 +170,7 @@ struct InspectorPresentationModifier: ViewModifier {
                     .transition(.move(edge: .trailing))
                 }
             }
-            .animation(.easeOut, value: layoutState.isInspectorPresented)
+            .animation(.easeOut, value: shouldShowInspectorPresentation)
 #if os(macOS)
             .padding(.top, 10)
             .padding(.bottom, 40)
@@ -176,12 +181,12 @@ struct InspectorPresentationModifier: ViewModifier {
             .ignoresSafeArea(edges: .bottom)
         }
         .overlay(alignment: .topTrailing) {
-            if layoutState.isInspectorPresented {
+            if shouldShowInspectorPresentation {
                 ExcalidrawTrailingControls()
                     .transition(.opacity)
             }
         }
-        .animation(.easeOut, value: layoutState.isInspectorPresented)
+        .animation(.easeOut, value: shouldShowInspectorPresentation)
     }
 }
 

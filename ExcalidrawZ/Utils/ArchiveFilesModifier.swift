@@ -30,7 +30,7 @@ struct ArchiveFilesModifier: ViewModifier {
     @Binding var isPresented: Bool
     let context: NSManagedObjectContext
     let includeLockedFiles: Bool
-    let recoveryKey: RecoveryKey?
+    @Binding var recoveryKey: RecoveryKey?
     let onComplete: (Result<ArchiveResult, Error>) -> Void
     var onCancellation: () -> Void
 
@@ -259,7 +259,7 @@ extension View {
         isPresented: Binding<Bool>,
         context: NSManagedObjectContext,
         includeLockedFiles: Bool = false,
-        recoveryKey: RecoveryKey? = nil,
+        recoveryKey: Binding<RecoveryKey?> = .constant(nil),
         onComplete: @escaping (Result<ArchiveResult, Error>) -> Void,
         onCancellation: @escaping () -> Void = {}
     ) -> some View {
@@ -388,22 +388,30 @@ private func archivedFileData(
 
     if let encryptedContent = try await storedEncryptedContentIfPresent(from: snapshot) {
         guard includeLockedFiles else { return nil }
-        guard let recoveryKey else {
+        let plaintext: Data
+        if let recoveryKey {
+            let unlockedKey = try EncryptedContentService.unlockContentKey(
+                encryptedContent,
+                recoveryKey: recoveryKey,
+                expectedContentType: "file",
+                expectedContentID: snapshot.fileID?.uuidString
+            )
+            plaintext = try EncryptedContentService.decrypt(
+                encryptedContent,
+                unlockedKey: unlockedKey,
+                expectedContentType: "file",
+                expectedContentID: snapshot.fileID?.uuidString
+            )
+        } else if let fileID = snapshot.fileID {
+            plaintext = try await LockedContentUnlockSession.shared.decrypt(
+                encryptedContent,
+                expectedContentType: "file",
+                expectedContentID: fileID.uuidString
+            )
+        } else {
             throw LockedContentSystemUnlockError.noSavedRecoveryKey
         }
 
-        let unlockedKey = try EncryptedContentService.unlockContentKey(
-            encryptedContent,
-            recoveryKey: recoveryKey,
-            expectedContentType: "file",
-            expectedContentID: snapshot.fileID?.uuidString
-        )
-        let plaintext = try EncryptedContentService.decrypt(
-            encryptedContent,
-            unlockedKey: unlockedKey,
-            expectedContentType: "file",
-            expectedContentID: snapshot.fileID?.uuidString
-        )
         var excalidrawFile = try ExcalidrawFile(
             data: plaintext,
             id: snapshot.fileID?.uuidString

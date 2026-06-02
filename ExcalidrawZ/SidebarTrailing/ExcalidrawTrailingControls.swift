@@ -20,6 +20,12 @@ struct ExcalidrawTrailingControls: View {
         fileState.currentActiveFile == nil
     }
 
+    private var shouldShowControls: Bool {
+        containerHorizontalSizeClass != .compact &&
+        fileState.currentActiveFile != nil &&
+        !fileState.activeCollaborationFileIsLoading
+    }
+
     private func isDisabled(tab: LayoutState.InspectorTab) -> Bool {
         switch tab {
             case .history:
@@ -30,7 +36,7 @@ struct ExcalidrawTrailingControls: View {
     }
 
     var body: some View {
-        if containerHorizontalSizeClass != .compact, fileState.currentActiveFile != nil {
+        if shouldShowControls {
             VStack(alignment: .trailing, spacing: 10) {
                 InspectorTabButton(
                     tab: .preference,

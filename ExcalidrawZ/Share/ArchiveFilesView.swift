@@ -48,7 +48,7 @@ struct ArchiveFilesView: View {
             isPresented: $isArchiveFilesExporterPresented,
             context: viewContext,
             includeLockedFiles: includeLockedFilesInArchive,
-            recoveryKey: archiveRecoveryKey,
+            recoveryKey: $archiveRecoveryKey,
             onComplete: { result in
                 isArchiving = false
                 archiveRecoveryKey = nil
@@ -208,9 +208,7 @@ struct ArchiveFilesView: View {
         let shouldIncludeLockedFiles = includeLockedFilesInArchive && (lockedFileCountForArchive ?? 0) > 0
         if shouldIncludeLockedFiles {
             do {
-                archiveRecoveryKey = try await LockedContentSystemUnlockStore.loadRecoveryKey(
-                    reason: LockedContentSystemUnlockReason.archiveLockedFiles
-                )
+                archiveRecoveryKey = try await recoveryKeyForArchive()
             } catch let unlockError as LockedContentSystemUnlockError {
                 isArchiving = false
                 archiveRecoveryKey = nil
@@ -229,5 +227,17 @@ struct ArchiveFilesView: View {
         }
 
         isArchiveFilesExporterPresented = true
+    }
+
+    private func recoveryKeyForArchive() async throws -> RecoveryKey {
+        if let recoveryKey = await RecoveryKeyVault.shared.currentRecoveryKey() {
+            return recoveryKey
+        }
+
+        let recoveryKey = try await LockedContentSystemUnlockStore.loadRecoveryKey(
+            reason: LockedContentSystemUnlockReason.archiveLockedFiles
+        )
+        await RecoveryKeyVault.shared.activate(recoveryKey)
+        return recoveryKey
     }
 }

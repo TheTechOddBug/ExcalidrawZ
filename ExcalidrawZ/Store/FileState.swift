@@ -311,6 +311,9 @@ final class FileState: ObservableObject {
                     if !collaboratingFiles.contains(room) {
                         collaboratingFiles.append(room)
                     }
+                    if collaboratingFilesState[room] == nil {
+                        collaboratingFilesState[room] = .loading
+                    }
                 }
         }
     }
@@ -403,6 +406,20 @@ final class FileState: ObservableObject {
     @Published var collaboratingFiles: [CollaborationFile] = []
     @Published var collaboratingFilesState: [CollaborationFile : ExcalidrawCanvasView.LoadingState] = [:]
     @Published var collaborators: [CollaborationFile : [Collaborator]] = [:]
+
+    var activeCollaborationFileIsLoading: Bool {
+        guard case .collaborationFile(let file) = currentActiveFile else {
+            return false
+        }
+
+        switch collaboratingFilesState[file] {
+            case .loaded, .error:
+                return false
+            case .idle, .loading, .none:
+                return true
+        }
+    }
+
     enum CollborationRoute: Hashable {
         case home
         case room(CollaborationFile)
