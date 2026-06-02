@@ -12,16 +12,46 @@ import TipKit
 #endif
 
 enum FeatureDiscoveryTips {
+    private static let resetPendingDefaultsKey = "FeatureDiscoveryTipsResetPending"
+
+    static var isAvailable: Bool {
+#if canImport(TipKit)
+        if #available(macOS 14.0, iOS 17.0, *) {
+            return true
+        }
+#endif
+        return false
+    }
+
     @MainActor
     static func configureIfAvailable() {
 #if canImport(TipKit)
         if #available(macOS 14.0, iOS 17.0, *) {
+            resetDatastoreBeforeConfigureIfNeeded()
             try? Tips.configure([
                 .datastoreLocation(.applicationDefault)
             ])
         }
 #endif
     }
+
+    static func requestResetOnNextLaunch() {
+        UserDefaults.standard.set(true, forKey: resetPendingDefaultsKey)
+    }
+
+#if canImport(TipKit)
+    @available(macOS 14.0, iOS 17.0, *)
+    private static func resetDatastoreBeforeConfigureIfNeeded() {
+        guard UserDefaults.standard.bool(forKey: resetPendingDefaultsKey) else { return }
+
+        do {
+            try Tips.resetDatastore()
+            UserDefaults.standard.removeObject(forKey: resetPendingDefaultsKey)
+        } catch {
+            print("Failed to reset TipKit datastore before configure:", error)
+        }
+    }
+#endif
 }
 
 enum FeatureDiscoveryTipKind {
@@ -60,11 +90,11 @@ struct FeatureDiscoveryTipModifier: ViewModifier {
 @available(macOS 14.0, iOS 17.0, *)
 private struct AIFileVisibilityDiscoveryTip: Tip {
     var title: Text {
-        Text("AI File Visibility")
+        Text(.localizable(.featureTipsAIFileVisibilityTitle))
     }
 
     var message: Text? {
-        Text("Control whether AI can read the current file. When hidden, AI can still answer general questions and create proposal edits.")
+        Text(.localizable(.featureTipsAIFileVisibilityMessage))
     }
 
     var image: Image? {
@@ -75,11 +105,11 @@ private struct AIFileVisibilityDiscoveryTip: Tip {
 @available(macOS 14.0, iOS 17.0, *)
 private struct LockFileDiscoveryTip: Tip {
     var title: Text {
-        Text("Lock File")
+        Text(.localizable(.featureTipsLockFileTitle))
     }
 
     var message: Text? {
-        Text("Encrypt this file to protect its saved content. Locked files also stay unavailable to AI.")
+        Text(.localizable(.featureTipsLockFileMessage))
     }
 
     var image: Image? {

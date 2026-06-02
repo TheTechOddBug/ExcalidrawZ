@@ -27015,6 +27015,83 @@
         }
       }
     },
+    "featureTipsAIFileVisibilityMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control whether AI can read the current file. When hidden, AI can still answer general questions and create proposal edits."
+          }
+        }
+      }
+    },
+    "featureTipsAIFileVisibilityTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI File Visibility"
+          }
+        }
+      }
+    },
+    "featureTipsLockFileMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encrypt this file to protect its saved content. Locked files also stay unavailable to AI."
+          }
+        }
+      }
+    },
+    "featureTipsLockFileTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock File"
+          }
+        }
+      }
+    },
+    "featureTipsResetButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Feature Tips Again"
+          }
+        }
+      }
+    },
+    "featureTipsResetToastTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feature tips will be shown again the next time you open ExcalidrawZ."
+          }
+        }
+      }
+    },
+    "generalHelpTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Help"
+          }
+        }
+      }
+    },
     "generalButtonCancel": {
       "extractionState": "manual",
       "localizations": {
