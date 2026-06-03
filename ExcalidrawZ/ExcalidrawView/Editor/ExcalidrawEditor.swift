@@ -36,6 +36,7 @@ struct ExcalidrawEditor: View {
     @State private var excalidrawFile: ExcalidrawFile?
     @State private var isLoadingFile = false
     @State private var loadingTask: Task<Void, Never>?
+    @State private var fileLoadRevealTask: Task<Void, Never>?
     @State private var documentLoadCompletion: ExcalidrawDocumentLoadCompletion?
 
     @State private var conflictFileURL: URL?
@@ -115,6 +116,7 @@ struct ExcalidrawEditor: View {
                     interactionEnabled: interactionEnabled,
                     onDocumentLoadFinished: { fileID in
                         documentLoadCompletion = ExcalidrawDocumentLoadCompletion(fileID: fileID)
+                        revealLoadedFileAfterRender(fileID: fileID)
                     }
                 ) { error in
                     alertToast(error)
@@ -211,9 +213,41 @@ struct ExcalidrawEditor: View {
         guard layoutState.isAIChatIslandMode else { return }
         layoutState.isAIChatIslandMode = false
     }
+
+    private func beginFileLoadRevealGuard(fileID: String) {
+        fileLoadRevealTask?.cancel()
+        isLoadingFile = true
+        fileLoadRevealTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 4_000_000_000)
+            guard !Task.isCancelled,
+                  activeFile?.id == fileID else { return }
+            isLoadingFile = false
+            fileLoadRevealTask = nil
+        }
+    }
+
+    private func revealLoadedFileAfterRender(fileID: String) {
+        guard activeFile?.id == fileID else { return }
+
+        fileLoadRevealTask?.cancel()
+        fileLoadRevealTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            guard !Task.isCancelled,
+                  activeFile?.id == fileID else { return }
+            isLoadingFile = false
+            fileLoadRevealTask = nil
+        }
+    }
+
+    private func cancelFileLoadRevealGuard() {
+        fileLoadRevealTask?.cancel()
+        fileLoadRevealTask = nil
+        isLoadingFile = false
+    }
     
     private func loadExcalidrawFile(from activeFile: FileState.ActiveFile?) async {
         guard let activeFile else {
+            cancelFileLoadRevealGuard()
             self.excalidrawFile = ExcalidrawFile()
             fileState.excalidrawWebCoordinator?.documentSyncController.setTargetFileID(nil)
             return
@@ -223,30 +257,10 @@ struct ExcalidrawEditor: View {
             case .file(_), .localFile(_), .temporaryFile(_):
                 fileState.excalidrawWebCoordinator?.documentSyncController
                     .setTargetFileID(activeFile.id)
+                beginFileLoadRevealGuard(fileID: activeFile.id)
             default:
+                cancelFileLoadRevealGuard()
                 fileState.excalidrawWebCoordinator?.documentSyncController.setTargetFileID(nil)
-        }
-        
-        var canSetLoading = true
-        // Set loading state
-        Task {
-            try? await Task.sleep(nanoseconds: UInt64(1e+9 * 0.5))
-            await MainActor.run {
-                if canSetLoading {
-                    self.isLoadingFile = true
-                }
-            }
-        }
-        
-        defer {
-            canSetLoading = false
-            Task {
-                await MainActor.run {
-                    if self.conflictFileURL == nil {
-                        self.isLoadingFile = false
-                    }
-                }
-            }
         }
         
         do {
@@ -283,11 +297,13 @@ struct ExcalidrawEditor: View {
         } catch EncryptedContentError.contentLocked(_, _) {
             await MainActor.run {
                 guard self.activeFile?.id == activeFile.id else { return }
+                cancelFileLoadRevealGuard()
                 prepareEditorForLockedFile()
             }
         } catch is EncryptedContentError {
             await MainActor.run {
                 guard self.activeFile?.id == activeFile.id else { return }
+                cancelFileLoadRevealGuard()
                 lockedContentState.markUnlockFailed(fileID: activeFile.id)
                 prepareEditorForLockedFile()
             }
@@ -295,6 +311,7 @@ struct ExcalidrawEditor: View {
             fileState.excalidrawWebCoordinator?.documentSyncController.setTargetFileID(nil)
             alertToast(error)
             await MainActor.run {
+                cancelFileLoadRevealGuard()
                 self.excalidrawFile = nil
             }
         }
