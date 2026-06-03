@@ -4869,6 +4869,108 @@
             "state": "translated",
             "value": "AI can read and edit this file. Click to prevent file access and use proposal edits instead."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يمكن للذكاء الاصطناعي قراءة وتعديل هذا الملف. انقر لمنع الوصول إلى الملف واستخدام التعديلات المقترحة بدلاً من ذلك."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die KI kann diese Datei lesen und bearbeiten. Klicken Sie hier, um den Dateizugriff zu verhindern und stattdessen Vorschlagsänderungen zu verwenden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La IA puede leer y editar este archivo. Haz clic para evitar el acceso al archivo y utilizar propuestas de edición en su lugar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'IA peut lire et modifier ce fichier. Cliquez pour empêcher l'accès au fichier et utilisez plutôt les modifications proposées."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI इस फ़ाइल को पढ़ और संपादित कर सकता है। फ़ाइल पहुँच को रोकने और इसके बजाय प्रस्ताव संपादन का उपयोग करने के लिए क्लिक करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'AI può leggere e modificare questo file. Clicca per impedire l'accesso al file e utilizzare invece le modifiche proposte."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AIはこのファイルを読み取りおよび編集できます。ファイルアクセスを防ぎ、代わりに提案編集を使用するにはクリックしてください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI는 이 파일을 읽고 수정할 수 있습니다. 파일 접근을 차단하고 제안 수정을 사용하려면 클릭하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI kan dit bestand lezen en bewerken. Klik om toegang tot het bestand te voorkomen en gebruik in plaats daarvan voorstelwijzigingen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI może odczytywać i edytować ten plik. Kliknij, aby zapobiec dostępowi do pliku i zamiast tego użyć edycji propozycji."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A IA pode ler e editar este arquivo. Clique para impedir o acesso ao arquivo e usar edições de proposta em vez disso."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Искусственный интеллект может читать и редактировать этот файл. Щелкните, чтобы запретить доступ к файлу и использовать редактирование предложений вместо этого."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI สามารถอ่านและแก้ไขไฟล์นี้ได้ คลิกเพื่อป้องกันการเข้าถึงไฟล์และใช้การแก้ไขโดยข้อเสนอแทน"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yapay zeka bu dosyayı okuyabilir ve düzenleyebilir. Dosya erişimini engellemek ve bunun yerine öneri düzenlemeleri kullanmak için tıklayın."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI có thể đọc và chỉnh sửa tệp này. Nhấn để ngăn chặn truy cập tệp và sử dụng chỉnh sửa đề xuất thay thế."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 可以读取和编辑此文件。点击以阻止文件访问并使用提案编辑。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 可以讀取和編輯此文件。點擊以防止文件訪問，改用提案編輯。"
+          }
         }
       }
     },
@@ -4879,6 +4981,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "AI cannot read or edit this file. Click to allow direct file access and editing."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا يمكن للذكاء الاصطناعي قراءة أو تعديل هذا الملف. انقر للسماح بالوصول المباشر إلى الملف وتعديله."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die KI kann diese Datei nicht lesen oder bearbeiten. Klicken Sie hier, um den direkten Dateizugriff und die Bearbeitung zu erlauben."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La IA no puede leer ni editar este archivo. Haz clic para permitir el acceso directo al archivo y la edición."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'IA ne peut pas lire ou modifier ce fichier. Cliquez pour autoriser l'accès direct au fichier et à la modification."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI इस फ़ाइल को पढ़ या संपादित नहीं कर सकता है। सीधे फ़ाइल पहुँच और संपादन की अनुमति देने के लिए क्लिक करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'AI non può leggere o modificare questo file. Clicca per consentire l'accesso diretto al file e la modifica."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AIはこのファイルを読み取ったり編集したりできません。直接ファイルアクセスと編集を許可するにはクリックしてください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI는 이 파일을 읽거나 수정할 수 없습니다. 직접 파일 접근 및 수정을 허용하려면 클릭하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI kan dit bestand niet lezen of bewerken. Klik om directe toegang tot het bestand en bewerking toe te staan."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI nie może odczytywać ani edytować tego pliku. Kliknij, aby zezwolić na bezpośredni dostęp do pliku i edytowanie."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A IA não pode ler ou editar este arquivo. Clique para permitir o acesso direto ao arquivo e edição."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Искусственный интеллект не может читать или редактировать этот файл. Щелкните, чтобы разрешить прямой доступ к файлу и редактирование."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI ไม่สามารถอ่านหรือแก้ไขไฟล์นี้ได้ คลิกเพื่ออนุญาตให้เข้าถึงและแก้ไขไฟล์โดยตรง"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yapay zeka bu dosyayı okuyamaz veya düzenleyemez. Doğrudan dosya erişimine ve düzenlemeye izin vermek için tıklayın."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI không thể đọc hoặc chỉnh sửa tệp này. Nhấn để cho phép truy cập và chỉnh sửa tệp trực tiếp."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 无法读取或编辑此文件。点击以允许直接文件访问和编辑。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 無法讀取或編輯此文件。點擊以允許直接訪問和編輯文件。"
           }
         }
       }
@@ -4891,6 +5095,108 @@
             "state": "translated",
             "value": "This file is locked. AI cannot read or edit it; generated changes use a proposal canvas."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا الملف مقفل. لا يمكن للذكاء الاصطناعي قراءته أو تعديله؛ التغييرات التي تم إنشاؤها تستخدم لوحة الاقتراحات."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Datei ist gesperrt. Die KI kann sie nicht lesen oder bearbeiten; erzeugte Änderungen verwenden eine Vorschlagsoberfläche."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este archivo está bloqueado. La IA no puede leerlo ni editarlo; los cambios generados utilizan un lienzo de propuesta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce fichier est verrouillé. L'IA ne peut pas le lire ou le modifier ; les modifications générées utilisent un canevas de proposition."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह फ़ाइल लॉक की गई है। AI इसे पढ़ या संपादित नहीं कर सकता; उत्पन्न परिवर्तनों में एक प्रस्ताव कैनवास का उपयोग होता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questo file è bloccato. L'AI non può leggerlo o modificarlo; le modifiche generate utilizzano una tela di proposta."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このファイルはロックされています。AIはそれを読み取ったり編集したりできません; 生成された変更は提案キャンバスを使用します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 파일은 잠겨 있습니다. AI는 이 파일을 읽거나 수정할 수 없으며, 생성된 변경 사항은 제안 캔버스를 사용합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dit bestand is vergrendeld. AI kan het niet lezen of bewerken; gegenereerde wijzigingen gebruiken een voorstelcanvas."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ten plik jest zablokowany. AI nie może go odczytywać ani edytować; generowane zmiany używają kanwy propozycji."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este arquivo está bloqueado. A IA não pode lê-lo ou editá-lo; as alterações geradas usam uma tela de proposta."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этот файл заблокирован. Искусственный интеллект не может его читать или редактировать; сгенерированные изменения используют холст предложений."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ไฟล์นี้ถูกล็อค AI ไม่สามารถอ่านหรือแก้ไขได้ การเปลี่ยนแปลงที่สร้างขึ้นจะใช้ผืนผ้าใบการเสนอ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu dosya kilitli. Yapay zeka bunu okuyamaz veya düzenleyemez; oluşturulan değişiklikler öneri tuvalini kullanır."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tệp này đang bị khóa. AI không thể đọc hoặc chỉnh sửa nó; các thay đổi được tạo ra sẽ sử dụng canvas đề xuất."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该文件已锁定。AI 无法读取或编辑它；生成的更改使用提案画布。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此文件已鎖定。AI 無法讀取或編輯它；生成的更改使用提案畫布。"
+          }
         }
       }
     },
@@ -4901,6 +5207,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "No file is open. AI can answer without file access."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا يوجد ملف مفتوح. يمكن للذكاء الاصطناعي الإجابة بدون الوصول إلى الملف."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Es ist keine Datei geöffnet. Die KI kann ohne Dateizugriff antworten."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay ningún archivo abierto. La IA puede responder sin acceso al archivo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun fichier n'est ouvert. L'IA peut répondre sans accès au fichier."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कोई फ़ाइल खुली नहीं है। AI फ़ाइल पहुँच के बिना उत्तर दे सकता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessun file è aperto. L'AI può rispondere senza accesso al file."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開いているファイルがありません。AIはファイルアクセスなしで回答できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "열린 파일이 없습니다. AI는 파일 접근 없이도 답변할 수 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Er is geen bestand geopend. AI kan antwoorden zonder toegang tot het bestand."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Żaden plik nie jest otwarty. AI może odpowiadać bez dostępu do pliku."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhum arquivo está aberto. A IA pode responder sem acesso ao arquivo."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет открытого файла. Искусственный интеллект может отвечать без доступа к файлу."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ไม่มีไฟล์ที่เปิดอยู่ AI สามารถตอบได้โดยไม่ต้องเข้าถึงไฟล์"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Açık bir dosya yok. Yapay zeka dosya erişimi olmadan yanıt verebilir."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Không có tệp nào đang mở. AI có thể trả lời mà không cần truy cập tệp."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有打开的文件。AI 可以在没有文件访问的情况下回答。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒有打開的文件。AI 可以在沒有文件訪問的情況下回答。"
           }
         }
       }
@@ -7287,6 +7695,108 @@
             "state": "translated",
             "value": "File Access Status"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حالة وصول الملف"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dateizugriffsstatus"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estado de Acceso al Archivo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Statut de l'accès au fichier"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फ़ाइल पहुँच स्थिति"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stato di Accesso al File"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルアクセスステータス"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파일 접근 상태"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bestandstoegangsstatus"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status dostępu do pliku"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status de Acesso ao Arquivo"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Статус доступа к файлу"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "สถานะการเข้าถึงไฟล์"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosya Erişim Durumu"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trạng thái truy cập tệp"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件访问状态"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件訪問狀態"
+          }
         }
       }
     },
@@ -8642,6 +9152,119 @@
           "stringUnit": {
             "state": "translated",
             "value": "恢復檔案"
+          }
+        }
+      }
+    },
+    "aiChatToolWebSearchName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web Search"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بحث ويب"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Websuche"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Búsqueda en la Web"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche sur le Web"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वेब खोज"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ricerca Web"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウェブ検索"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "웹 검색"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Webzoektocht"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyszukiwanie w sieci"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesquisa na Web"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поиск в интернете"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ค้นหาทางเว็บ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web Arama"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tìm kiếm trên web"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网页搜索"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網頁搜索"
           }
         }
       }

@@ -32,6 +32,18 @@ enum ToolDisplayNameCache {
     /// if the tool isn't registered (third-party / forgotten override) so
     /// the UI never shows an empty string — just unfriendly text.
     static func displayName(for toolName: String) -> String {
-        map[toolName] ?? toolName
+        if let localDisplayName = localDisplayNameOverride(for: toolName) {
+            return localDisplayName
+        }
+        return map[toolName] ?? toolName
+    }
+
+    private static func localDisplayNameOverride(for toolName: String) -> String? {
+        switch toolName {
+            case "web_search":
+                return String(localizable: .aiChatToolWebSearchName)
+            default:
+                return nil
+        }
     }
 }
