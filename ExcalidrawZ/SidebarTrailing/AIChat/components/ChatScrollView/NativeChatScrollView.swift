@@ -654,7 +654,6 @@ private struct UIKitChatScrollHost<Content: View>: UIViewRepresentable {
         }
 
         func contentSizeDidChange(oldSize: CGSize, newSize: CGSize) {
-            guard let scrollView else { return }
             let oldHeight = oldSize.height
             let newHeight = newSize.height
 

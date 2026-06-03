@@ -627,7 +627,7 @@ struct MigrationItemRow: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 24))
         .compositingGroup()
-        .onChange(of: item.status) { newValue in
+        .watch(value: item.status) { newValue in
             withAnimation {
                 if case .migrating = newValue {
                     isExpanded =  true

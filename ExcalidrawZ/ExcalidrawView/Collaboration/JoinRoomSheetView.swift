@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 import CoreData
 
 struct JoinRoomSheetView: View {
@@ -51,7 +52,7 @@ struct JoinRoomSheetView: View {
                     prompt: Text("https://excalidraw.com/#room=...")
                 )
                 .textFieldStyle(.roundedBorder)
-                .onChange(of: invitationLink) { newValue in
+                .watch(value: invitationLink) { newValue in
                     DispatchQueue.main.async {
                         parseLink()
                     }

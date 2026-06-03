@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import ChocofordUI
 import Logging
 import UniformTypeIdentifiers
 
@@ -121,23 +122,23 @@ struct ExcalidrawCanvasView: View {
                     await captureCurrentDrawingSettings()
                 }
             }
-            .onChange(of: interactionEnabled) { enabled in
+            .watch(value: interactionEnabled) { enabled in
                 Task {
                     try? await excalidrawCore.toggleWebPointerEvents(enabled: enabled)
                 }
             }
-            .onChange(of: file) { newFile in
+            .watch(value: file) { newFile in
                 handleFileChange(newFile)
             }
-            .onChange(of: colorScheme) { newValue in
+            .watch(value: colorScheme) { newValue in
                 // self.logger.info("color scheme changed: \(newValue)")
                 // will trigger when ios move app to background
                 applyColorMode(colorScheme: newValue)
             }
-            .onChange(of: appPreference.excalidrawAppearance) { _ in
+            .watch(value: appPreference.excalidrawAppearance) { _ in
                 applyColorMode()
             }
-            .onChange(of: loadingState) { state in
+            .watch(value: loadingState) { state in
                 if state == .loaded {
                     applyAllSettings()
                     if let file {
@@ -146,7 +147,7 @@ struct ExcalidrawCanvasView: View {
                 }
             }
 #if os(iOS)
-            .onChange(of: scenePhase) { scenePhase in
+            .watch(value: scenePhase) { scenePhase in
                 if scenePhase == .active {
                     applyColorMode(scenePhase: scenePhase)
                 }

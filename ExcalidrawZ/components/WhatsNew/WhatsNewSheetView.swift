@@ -52,7 +52,7 @@ struct WhatsNewSheetViewModifier: ViewModifier {
                 sheetContent()
             }
             .bindWindow($window)
-            .onChange(of: migrationState.phase) { newValue in
+            .watch(value: migrationState.phase) { newValue in
                 if newValue == .closed {
 #if DEBUG
                     isPresented = true
@@ -193,7 +193,7 @@ struct WhatsNewView: View {
                     }
                 }
             }
-            .onChange(of: navigationPath) { newValue in
+            .watch(value: navigationPath) { newValue in
 #if os(macOS)
                 activeRoute = newValue.last
 #endif
@@ -206,7 +206,7 @@ struct WhatsNewView: View {
             .onAppear {
                 updateSheetHeight(to: preferredSheetHeight, animated: false)
             }
-            .onChange(of: preferredSheetHeight) { newValue in
+            .watch(value: preferredSheetHeight) { newValue in
                 updateSheetHeight(to: newValue, animated: true)
             }
 #endif

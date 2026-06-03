@@ -568,13 +568,13 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
                     .modifier(HomeFolderItemDropModifier(group: group))
                 }
             }
-            .onChange(of: fileState.selectedFiles.isEmpty) { isEmpty in
+            .watch(value: fileState.selectedFiles.isEmpty) { isEmpty in
                 if !isEmpty { selection = nil }
             }
-            .onChange(of: fileState.selectedLocalFiles.isEmpty) { isEmpty in
+            .watch(value: fileState.selectedLocalFiles.isEmpty) { isEmpty in
                 if !isEmpty { selection = nil }
             }
-            .onChange(of: fileState.selectedTemporaryFiles.isEmpty) { isEmpty in
+            .watch(value: fileState.selectedTemporaryFiles.isEmpty) { isEmpty in
                 if !isEmpty { selection = nil }
             }
             

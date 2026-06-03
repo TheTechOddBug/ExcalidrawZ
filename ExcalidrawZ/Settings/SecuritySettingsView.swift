@@ -40,7 +40,7 @@ struct SecuritySettingsView: View {
         .task {
             await loadSecuritySettings()
         }
-        .onChange(of: lockedContentState.hasActiveUnlockSession) { _ in
+        .watch(value: lockedContentState.hasActiveUnlockSession) { _ in
             Task { @MainActor in
                 await refreshLockedFiles()
             }

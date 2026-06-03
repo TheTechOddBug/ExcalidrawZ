@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 import CoreData
 
 private struct FileStatusObserverModifier: ViewModifier {
@@ -84,7 +85,7 @@ private struct FileStatusObserverModifier: ViewModifier {
                 // Start periodic iCloud check for CoreData files
                 startCloudCheckIfNeeded()
             }
-            .onChange(of: activeFile) { _ in
+            .watch(value: activeFile) { _ in
                 // Restart check when file changes
                 cloudCheckTask?.cancel()
                 startCloudCheckIfNeeded()

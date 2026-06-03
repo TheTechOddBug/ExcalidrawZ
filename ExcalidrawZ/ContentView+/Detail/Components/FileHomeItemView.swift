@@ -381,7 +381,7 @@ private struct FileHomeItemContentView: View {
                         HStack {
                             Text(localUpdatedAt?.formatted() ?? String(localizable: .generalFileNeverModified))
                                 .lineLimit(1)
-                                .onChange(of: updatedAt) { newValue in
+                                .watch(value: updatedAt) { newValue in
                                     localUpdatedAt = newValue
                                 }
                             
@@ -540,7 +540,7 @@ private struct MissingFileHomeItemViewModifier: ViewModifier {
 //            .onDisappear {
 //                isVisible = false
 //            }
-//            .onChange(of: isActive) { newValue in
+//            .watch(value: isActive) { newValue in
 //                if newValue && isVisible {
 //                    startBreathingAnimation()
 //                }

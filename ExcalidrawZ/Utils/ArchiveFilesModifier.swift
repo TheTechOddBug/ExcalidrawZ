@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 import CoreData
 import UniformTypeIdentifiers
 import Logging
@@ -55,7 +56,7 @@ struct ArchiveFilesModifier: ViewModifier {
                 } onCancellation: {
                     onCancellation()
                 }
-                .onChange(of: isPresented) { newValue in
+                .watch(value: isPresented) { newValue in
                     if newValue {
                         Task {
                             await prepareArchive()
@@ -72,7 +73,7 @@ struct ArchiveFilesModifier: ViewModifier {
                 ) { result in
                     handleExportResult(result)
                 }
-                .onChange(of: isPresented) { newValue in
+                .watch(value: isPresented) { newValue in
                     if newValue {
                         Task {
                             await prepareArchive()

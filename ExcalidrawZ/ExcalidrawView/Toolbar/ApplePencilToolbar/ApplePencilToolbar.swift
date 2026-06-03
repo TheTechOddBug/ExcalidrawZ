@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 
 extension Notification.Name {
     static let didPencilConnected = Notification.Name("didPencilConnected")

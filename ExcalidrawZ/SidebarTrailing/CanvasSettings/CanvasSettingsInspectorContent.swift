@@ -67,7 +67,7 @@ struct CanvasSettingsInspectorContent: View {
             }
             .padding(16)
         }
-        .onChange(of: fileState.currentActiveFile) { _ in
+        .watch(value: fileState.currentActiveFile) { _ in
             // New file → drop the manual override so the toggle reflects the new
             // canvas's actual relationship to the global defaults.
             customizeDrawingSettingsOverride = false

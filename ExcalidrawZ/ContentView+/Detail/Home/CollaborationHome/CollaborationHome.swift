@@ -174,7 +174,7 @@ struct CollaborationHome: View {
         )
         .textFieldStyle(.outlined)
         .focused($focusFied, equals: FocusField.username)
-        .onChange(of: focusFied) { _ in
+        .watch(value: focusFied) { _ in
             selections.removeAll()
         }
     }

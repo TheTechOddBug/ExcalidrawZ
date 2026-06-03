@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 
 struct TemporaryFileRowView: View {
     @Environment(\.managedObjectContext) private var viewContext

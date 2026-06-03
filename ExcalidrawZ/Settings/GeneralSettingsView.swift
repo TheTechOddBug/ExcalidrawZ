@@ -87,7 +87,7 @@ struct GeneralSettingsView: View {
                 .labelsHidden()
                 .pickerStyle(.segmented)
                 .fixedSize()
-                .onChange(of: folderStructStyle) { newValue in
+                .watch(value: folderStructStyle) { newValue in
                     if #available(macOS 13.0, *) { } else {
                         if newValue == .disclosureGroup {
                             isDisclosureGroupUnspportedAlertPresented.toggle()

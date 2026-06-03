@@ -51,7 +51,7 @@ struct SearchInspectorContent: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .onChange(of: query) { newValue in
+        .watch(value: query) { newValue in
             scheduleSearch(for: newValue)
         }
         .onDisappear {
@@ -185,7 +185,7 @@ struct SearchInspectorContent: View {
                         }
                     }
                 }
-                .onChange(of: selectedIndex) { newIndex in
+                .watch(value: selectedIndex) { newIndex in
                     guard let newIndex, results.indices.contains(newIndex) else { return }
                     let id = results[newIndex].id
                     withAnimation(.easeOut(duration: 0.2)) {

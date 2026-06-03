@@ -188,7 +188,7 @@ struct AIChatView: View {
             guard isAIAvailable, prefs.isAIEnabled else { return }
             await LLMCreditsRefreshCoordinator.shared.refreshCredits(reason: .aiChatAppear)
         }
-        .onChange(of: prefs.isAIEnabled) { isEnabled in
+        .watch(value: prefs.isAIEnabled) { isEnabled in
             guard !isEnabled else { return }
             cancelAIWorkForDisabledAI()
         }

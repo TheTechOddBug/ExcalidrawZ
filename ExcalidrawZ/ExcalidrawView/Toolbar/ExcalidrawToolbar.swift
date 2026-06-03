@@ -250,7 +250,7 @@ struct ExcalidrawToolbar: View {
                                 .stroke(.secondary, lineWidth: 0.5)
                         }
                     }
-                    .onChange(of: toolState.activatedTool) { newValue in
+                    .watch(value: toolState.activatedTool) { newValue in
                         if let newValue, secondaryPickerItems.contains(newValue) {
                             lastActivatedSecondaryTool = newValue
                         }
@@ -585,6 +585,7 @@ struct ExcalidrawToolbar: View {
                 Text(.localizable(.toolbarText2Diagram))
             }
 #endif
+#endif
             Button {
                 Task {
                     try? await toolState.excalidrawWebCoordinator?.toggleToolbarAction(tool: .mermaid)
@@ -654,12 +655,11 @@ struct ExcalidrawToolbarToolContainer<Content: View>: View {
                                 self.sizeClass = newSizeClass
                             }
                         }
-                        .onChange(of: layoutState.isInspectorPresented) { _ in
                             DispatchQueue.main.async {
                                 self.sizeClass = getSizeClass(containerSize.width)
                             }
                         }
-                        .onChange(of: layoutState.isSidebarPresented) { _ in
+                        .watch(value: layoutState.isSidebarPresented) { _ in
                             DispatchQueue.main.async {
                                 self.sizeClass = getSizeClass(containerSize.width)
                             }

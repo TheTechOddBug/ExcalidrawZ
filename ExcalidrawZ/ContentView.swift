@@ -88,13 +88,13 @@ struct ContentView: View {
                 handleToggleInspector(notification)
             }
             .modifier(LockedContentEventModifier(fileState: fileState))
-            .onChange(of: fileState.currentActiveFile) { newValue in
+            .watch(value: fileState.currentActiveFile) { newValue in
                 // Going back to Home: nothing to inspect, so collapse the panel.
                 if newValue == nil, layoutState.isInspectorPresented {
                     layoutState.isInspectorPresented = false
                 }
             }
-            .onChange(of: aiChatPreferences.isAIEnabled) { isEnabled in
+            .watch(value: aiChatPreferences.isAIEnabled) { isEnabled in
                 guard !isEnabled else { return }
                 cancelActiveAIGenerationForDisabledAI()
             }
@@ -198,7 +198,7 @@ private struct ActiveFileSwitchBlockedToastModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onChange(of: fileState.activeFileSwitchBlockedToken) { _ in
+            .watch(value: fileState.activeFileSwitchBlockedToken) { _ in
                 showToast()
             }
     }

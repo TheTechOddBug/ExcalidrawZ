@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SFSafeSymbols
+import ChocofordUI
 
 #if os(iOS)
 @available(iOS 26.0, *)

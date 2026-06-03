@@ -198,7 +198,7 @@ struct GroupListView: View {
                         }
                     }
                 }
-                .onChange(of: fileState.currentActiveGroup) { newValue in
+                .watch(value: fileState.currentActiveGroup) { newValue in
                     if newValue == nil {
                         withAnimation(.smooth(duration: 0.2)) {
                             proxy.scrollTo("home")
@@ -225,7 +225,7 @@ struct GroupListView: View {
                 GroupsView(group: group, sortField: fileState.sortField)
             }
         }
-        .onChange(of: trashedFilesCount) { count in
+        .watch(value: trashedFilesCount) { count in
             if count == 0,
                case .group(let group) = fileState.currentActiveGroup,
                group.groupType == .trash {

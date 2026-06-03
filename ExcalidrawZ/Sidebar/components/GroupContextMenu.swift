@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 import CoreData
 import Logging
 
@@ -88,7 +89,7 @@ struct GroupMenuProvider: View {
             .sheet(isPresented: $isCreateSubfolderSheetPresented) {
                 createSubFolderSheetView()
             }
-            .onChange(of: childrenGroups.count) { _ in
+            .watch(value: childrenGroups.count) { _ in
                 self.initialNewGroupName = getNextGroupName()
             }
             .onAppear {

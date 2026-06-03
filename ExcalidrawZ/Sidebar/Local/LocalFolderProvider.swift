@@ -72,7 +72,7 @@ struct LocalFoldersProvider<Content: View>: View {
                 }
             }
 #elseif os(iOS)
-            .onChange(of: scenePhase) { newValue in
+            .watch(value: scenePhase) { newValue in
                 if newValue == .active {
                     do {
                         try self.refreshFoldersContent()

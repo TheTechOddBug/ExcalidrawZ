@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 
 struct FileHomeItemLockPreviewModifier: ViewModifier {
     @EnvironmentObject private var lockedContentState: LockedContentStateStore
@@ -43,7 +44,7 @@ struct FileHomeItemLockPreviewModifier: ViewModifier {
                 clearPreviewCacheIfLocked(lockState)
                 setLockOverlayState(for: lockState, animated: false)
             }
-            .onChange(of: lockState) { newValue in
+            .watch(value: lockState) { newValue in
                 let shouldAnimate = hasResolvedLockState
                 hasResolvedLockState = newValue != nil
                 clearPreviewCacheIfLocked(newValue)

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 import CoreData
 
 #if os(iOS)
@@ -81,7 +82,7 @@ struct CompactBrowserContentView<HomeGroup: ExcalidrawGroup>: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .animation(.smooth, value: layoutState.compactBrowserLayout)
-        .onChange(of: fileState.currentActiveFile) { activeFile in
+        .watch(value: fileState.currentActiveFile) { activeFile in
             Task {
                 if activeFile == nil {
                     await setLocalFilesMonitoringLevel(
@@ -96,7 +97,7 @@ struct CompactBrowserContentView<HomeGroup: ExcalidrawGroup>: View {
                 }
             }
         }
-        .onChange(of: scenePhase) { newValue in
+        .watch(value: scenePhase) { newValue in
             Task {
                 if newValue == .active {
                     await setLocalFilesMonitoringLevel(

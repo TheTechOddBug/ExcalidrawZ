@@ -186,17 +186,17 @@ struct ExcalidrawEditor: View {
             await pullUpdatingFromCloud(latestData: latestData)
         }
 #endif
-        .onChange(of: activeFile) { (newFile: FileState.ActiveFile?) in
+        .watch(value: activeFile) { (newFile: FileState.ActiveFile?) in
             loadingTask?.cancel()
             loadingTask = Task {
                 await lockedContentState.prepareForActiveFileChange(to: newFile)
                 await loadExcalidrawFile(from: newFile)
             }
         }
-        .onChange(of: fileState.currentActiveFileIsInTrash) { _ in
+        .watch(value: fileState.currentActiveFileIsInTrash) { _ in
             collapseAIChatIslandIfCurrentFileIsTrashed()
         }
-        .onChange(of: layoutState.isAIChatIslandMode) { _ in
+        .watch(value: layoutState.isAIChatIslandMode) { _ in
             collapseAIChatIslandIfCurrentFileIsTrashed()
         }
         .task {

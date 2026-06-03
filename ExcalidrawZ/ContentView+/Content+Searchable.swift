@@ -251,7 +251,7 @@ struct SerachContent: View {
                     }
                     .padding()
                 }
-                .onChange(of: selectionIndex) { newValue in
+                .watch(value: selectionIndex) { newValue in
                     if let newValue {
                         withAnimation {
                             if newValue < searchCollaborationFiles.count {

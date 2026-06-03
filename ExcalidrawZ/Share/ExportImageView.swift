@@ -91,22 +91,22 @@ struct ExportImageView: View {
 #endif
             }
         }
-        .onChange(of: keepEditable) { newValue in
+        .watch(value: keepEditable) { newValue in
             exportImageData()
         }
-        .onChange(of: exportWithBackground) { newValue in
+        .watch(value: exportWithBackground) { newValue in
             exportImageData(initial: true)
         }
-        .onChange(of: imageType) { newValue in
+        .watch(value: imageType) { newValue in
             exportImageData()
         }
-        .onChange(of: exportScale) { _ in
+        .watch(value: exportScale) { _ in
             exportImageData(initial: true)
         }
-        .onChange(of: exportColorScheme) { _ in
+        .watch(value: exportColorScheme) { _ in
             exportImageData(initial: true)
         }
-        .onChange(of: exportType) { _ in
+        .watch(value: exportType) { _ in
             exportColorScheme = .light
         }
         .onAppear {

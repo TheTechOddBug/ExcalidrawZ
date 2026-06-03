@@ -236,13 +236,13 @@ struct RecentlyFilesProvider: View {
             .onHover { isHovered in
                 if isHovered { getRecentlyFiles() }
             }
-            .onChange(of: filesRefreshKey) { _ in
+            .watch(value: filesRefreshKey) { _ in
                 getRecentlyFiles()
             }
-            .onChange(of: collaborationFilesRefreshKey) { _ in
+            .watch(value: collaborationFilesRefreshKey) { _ in
                 getRecentlyFiles()
             }
-            .onChange(of: scenePhase) { _ in
+            .watch(value: scenePhase) { _ in
                 getRecentlyFiles()
             }
             .onAppear {

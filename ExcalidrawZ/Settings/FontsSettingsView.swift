@@ -142,7 +142,7 @@ struct MultiFontPickerView: View {
         .sheet(isPresented: $showPicker) {
             FontSelectorView(selections: $addedFonts)
         }
-        .onChange(of: addedFonts) { newValue in
+        .watch(value: addedFonts) { newValue in
             addedFontsData = (try? JSONEncoder().encode(newValue)) ?? Data()
         }
         .watch(value: addedFontsData) { newValue in
