@@ -160,7 +160,7 @@ extension PromptInputView {
     /// (success or failure) it clears the slot and drains the queue.
     func startSend(prompt: String, files: [ChatMessageContent.File] = []) {
         guard AIChatAvailability.canUseAI else { return }
-        let preferredInteractionMode = prefs.interactionMode
+        let preferredInteractionMode = prefs.interactionMode(for: fileState.currentActiveFile)
         let newConversationID = UUID().uuidString
         let conversationIDForSession: String = self.conversationID ?? newConversationID
         aiChatState.clearGenerationCancellation(for: conversationIDForSession)

@@ -249,14 +249,16 @@ struct LocalFilesProvider<Content: View>: View {
     private func deleteAIConversations(forLocalFileAtPath path: String) {
         let url = URL(fileURLWithPath: path)
         Task.detached {
+            let scope = AIConversationFileScope(
+                kind: .localFile,
+                id: url.absoluteString
+            )
             do {
                 try await PersistenceController.shared.aiConversationRepository
                     .deleteConversations(
-                        forFileScope: AIConversationFileScope(
-                            kind: .localFile,
-                            id: url.absoluteString
-                        )
+                        forFileScope: scope
                     )
+                await AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
             } catch {
                 print("Warning: Failed to delete AI conversations for removed local file \(path): \(error)")
             }

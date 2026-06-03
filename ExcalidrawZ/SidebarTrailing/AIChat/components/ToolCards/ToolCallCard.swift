@@ -82,25 +82,25 @@ private struct ToolCallVisualStyle {
             case "adjust_elements":
                 return ToolCallVisualStyle(icon: .hammerFill, accent: .purple)
             case "read_file":
-                return ToolCallVisualStyle(icon: .docText, accent: .green)
+                return ToolCallVisualStyle(icon: .docText, accent: .indigo)
             case "read_canvas_image":
                 return ToolCallVisualStyle(icon: .photo, accent: .teal)
             case "file_access_status":
-                return ToolCallVisualStyle(icon: .eye, accent: .indigo)
+                return ToolCallVisualStyle(icon: .eye, accent: .gray)
             case "rename_file":
                 return ToolCallVisualStyle(icon: .pencil, accent: .orange)
             case "list_all_files":
-                return ToolCallVisualStyle(icon: .listBulletIndent, accent: .orange)
+                return ToolCallVisualStyle(icon: .listBulletIndent, accent: .indigo)
             case "query_file_history":
                 return ToolCallVisualStyle(icon: .clock, accent: .orange)
             case "restore_file_history":
                 return ToolCallVisualStyle(icon: .clockArrowCirclepath, accent: .orange)
             case "list_libraries", "list_library_items", "query_library_item", "add_library_item_to_canvas":
-                return ToolCallVisualStyle(icon: .book, accent: .teal)
+                return ToolCallVisualStyle(icon: .book, accent: .mint)
             case "calculator":
-                return ToolCallVisualStyle(icon: .xSquareroot, accent: .indigo)
+                return ToolCallVisualStyle(icon: .xSquareroot, accent: .brown)
             case "datetime":
-                return ToolCallVisualStyle(icon: .clock, accent: .indigo)
+                return ToolCallVisualStyle(icon: .clock, accent: .brown)
             case "final_answer":
                 return ToolCallVisualStyle(icon: .sparkles, accent: .accentColor)
             default:

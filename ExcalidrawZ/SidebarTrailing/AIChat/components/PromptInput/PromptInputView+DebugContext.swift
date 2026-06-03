@@ -148,7 +148,7 @@ extension PromptInputView {
         let canIncludeActiveFileContext = await activeFileAllowsAIContext()
         let invocationPlan = AIChatInvocationPlan.make(
             fileState: fileState,
-            preferredInteractionMode: prefs.interactionMode,
+            preferredInteractionMode: prefs.interactionMode(for: fileState.currentActiveFile),
             includesCurrentFileContext: canIncludeActiveFileContext
         )
         try await refreshExistingConversationToolsIfNeeded(

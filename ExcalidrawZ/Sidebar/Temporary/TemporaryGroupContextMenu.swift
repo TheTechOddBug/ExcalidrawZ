@@ -80,14 +80,16 @@ struct TemporaryGroupMenuItems: View {
     private func deleteAIConversations(for temporaryFiles: [URL]) {
         Task.detached {
             for file in temporaryFiles {
+                let scope = AIConversationFileScope(
+                    kind: .temporaryFile,
+                    id: file.absoluteString
+                )
                 do {
                     try await PersistenceController.shared.aiConversationRepository
                         .deleteConversations(
-                            forFileScope: AIConversationFileScope(
-                                kind: .temporaryFile,
-                                id: file.absoluteString
-                            )
+                            forFileScope: scope
                         )
+                    await AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
                 } catch {
                     print("Warning: Failed to delete AI conversations for temporary file \(file): \(error)")
                 }
@@ -121,9 +123,15 @@ struct TemporaryGroupMenuItems: View {
                     }
                     if let newFileScopeID {
                         do {
+                            let oldScope = AIConversationFileScope(kind: .temporaryFile, id: file.absoluteString)
+                            let newScope = AIConversationFileScope(kind: .libraryFile, id: newFileScopeID)
                             try await PersistenceController.shared.aiConversationRepository.rebindConversations(
-                                from: AIConversationFileScope(kind: .temporaryFile, id: file.absoluteString),
-                                to: AIConversationFileScope(kind: .libraryFile, id: newFileScopeID)
+                                from: oldScope,
+                                to: newScope
+                            )
+                            await AIChatPreferences.shared.rebindFileAccessOverride(
+                                from: oldScope,
+                                to: newScope
                             )
                         } catch {
                             print("Warning: Failed to rebind AI conversations for saved temporary file: \(error)")

@@ -118,9 +118,9 @@ struct AIChatView: View {
 
     @MainActor
     func activeFileAllowsAIContext() async -> Bool {
-        guard prefs.allowsFileAccess else { return false }
-        guard fileState.currentActiveFile != nil else { return false }
-        return await LockedContentAIGuard.canAIRead(activeFile: fileState.currentActiveFile)
+        guard let activeFile = fileState.currentActiveFile else { return false }
+        guard prefs.allowsFileAccess(for: activeFile) else { return false }
+        return await LockedContentAIGuard.canAIRead(activeFile: activeFile)
     }
 
     var shouldBlockAIForPreference: Bool {

@@ -252,7 +252,7 @@ extension AIChatView {
         aiChatState.clearTransientError(for: id)
         aiChatState.clearGenerationCancellation(for: id)
         aiActionTask?.cancel()
-        let preferredInteractionMode = prefs.interactionMode
+        let preferredInteractionMode = prefs.interactionMode(for: fileState.currentActiveFile)
         aiActionTask = Task {
             var attemptedModel: SupportedModel?
             do {
@@ -319,7 +319,7 @@ extension AIChatView {
         aiChatState.clearTransientError(for: id)
         aiChatState.clearGenerationCancellation(for: id)
         aiActionTask?.cancel()
-        let preferredInteractionMode = prefs.interactionMode
+        let preferredInteractionMode = prefs.interactionMode(for: fileState.currentActiveFile)
         aiActionTask = Task {
             var attemptedModel: SupportedModel?
             do {

@@ -239,9 +239,10 @@ struct PromptInputView<Background: View, Header: View>: View {
 
     @MainActor
     var activeFileAccessAllowsAI: Bool {
-        hasActiveFileForAIAccessControl
-            && canToggleAIFileAccess
-            && prefs.allowsFileAccess
+        prefs.effectiveAllowsFileAccess(
+            for: fileState.currentActiveFile,
+            lockState: lockedContentState.activeFileLockState
+        )
     }
 
     @MainActor
@@ -256,9 +257,9 @@ struct PromptInputView<Background: View, Header: View>: View {
 
     @MainActor
     func activeFileAllowsAIContext() async -> Bool {
-        guard prefs.allowsFileAccess else { return false }
-        guard fileState.currentActiveFile != nil else { return false }
-        return await LockedContentAIGuard.canAIRead(activeFile: fileState.currentActiveFile)
+        guard let activeFile = fileState.currentActiveFile else { return false }
+        guard prefs.allowsFileAccess(for: activeFile) else { return false }
+        return await LockedContentAIGuard.canAIRead(activeFile: activeFile)
     }
 
     /// Resolved model used for the next request, in priority order:

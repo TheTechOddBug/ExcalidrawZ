@@ -8,13 +8,16 @@
 //     AI request or account/credits refresh is made.
 //   - `defaultTier`: the model tier used when a conversation has no
 //     explicit pick yet. Mutated from the Settings tab's picker.
+//   - `fileAccessOverrides`: per-file AI visibility overrides. Missing
+//     values use the default: unlocked files are visible to AI; locked
+//     files remain invisible through the lock-state guard.
 //   - `conversationTierOverrides`: per-conversation tier assignments.
 //     Set when the user opens a conversation's picker; survives across
 //     launches so reopening a conversation always picks back up with the
 //     tier the user last chose for it.
 //
-//  Both are persisted to `UserDefaults` rather than Core Data — they're
-//  small (a single string + a flat dict), and don't need iCloud sync (a
+//  These are persisted to `UserDefaults` rather than Core Data — they're
+//  small (simple strings + flat dicts), and don't need iCloud sync (a
 //  per-device pick is the right default; syncing a model setting between
 //  devices the user might've configured differently would surprise more
 //  than help).
@@ -69,6 +72,11 @@ final class AIChatPreferences: ObservableObject {
         set { interactionMode = newValue ? .agent : .ask }
     }
 
+    /// Per-file AI visibility overrides. Missing value means "use the safe
+    /// default": unlocked files are visible to AI, locked files are forced
+    /// invisible by the caller's lock-state check.
+    @Published private(set) var fileAccessOverrides: [String: Bool]
+
     /// Per-conversation tier picks, keyed by conversation id. Updated
     /// from `PromptInputView`'s inline picker; the side-effect goes
     /// through `setTier(_:for:)` so persistence stays in one place.
@@ -77,6 +85,7 @@ final class AIChatPreferences: ObservableObject {
     private let defaultTierKey = "AIChat.defaultModelTier"
     private let overridesTierKey = "AIChat.conversationModelTierOverrides"
     private let interactionModeKey = "AIChat.interactionMode"
+    private let fileAccessOverridesKey = "AIChat.fileAccessOverrides"
 
     /// Legacy concrete-model keys. Kept only for one-way migration from
     /// versions that persisted a specific upstream model instead of a tier.
@@ -104,6 +113,9 @@ final class AIChatPreferences: ObservableObject {
             self.interactionMode = .agent
         }
 
+        let rawFileAccessOverrides = defaults.dictionary(forKey: fileAccessOverridesKey) ?? [:]
+        self.fileAccessOverrides = rawFileAccessOverrides.compactMapValues { $0 as? Bool }
+
         if let dict = defaults.dictionary(forKey: overridesTierKey) as? [String: String] {
             self.conversationTierOverrides = dict.compactMapValues {
                 ExcalidrawModelTier(rawValue: $0)
@@ -128,6 +140,44 @@ final class AIChatPreferences: ObservableObject {
         saveTierOverrides()
     }
 
+    func allowsFileAccess(for activeFile: FileState.ActiveFile?) -> Bool {
+        guard let activeFile else { return false }
+        return fileAccessOverrides[fileAccessKey(for: activeFile.aiConversationFileScope)] ?? true
+    }
+
+    func effectiveAllowsFileAccess(
+        for activeFile: FileState.ActiveFile?,
+        lockState: FileContentLockState
+    ) -> Bool {
+        guard lockState == .plaintext else { return false }
+        return allowsFileAccess(for: activeFile)
+    }
+
+    func interactionMode(for activeFile: FileState.ActiveFile?) -> AIChatInteractionMode {
+        allowsFileAccess(for: activeFile) ? .agent : .ask
+    }
+
+    func setAllowsFileAccess(_ allowsFileAccess: Bool, for activeFile: FileState.ActiveFile?) {
+        guard let activeFile else { return }
+        fileAccessOverrides[fileAccessKey(for: activeFile.aiConversationFileScope)] = allowsFileAccess
+        saveFileAccessOverrides()
+    }
+
+    func rebindFileAccessOverride(
+        from oldScope: AIConversationFileScope,
+        to newScope: AIConversationFileScope
+    ) {
+        let oldKey = fileAccessKey(for: oldScope)
+        guard let value = fileAccessOverrides.removeValue(forKey: oldKey) else { return }
+        fileAccessOverrides[fileAccessKey(for: newScope)] = value
+        saveFileAccessOverrides()
+    }
+
+    func deleteFileAccessOverride(for scope: AIConversationFileScope) {
+        guard fileAccessOverrides.removeValue(forKey: fileAccessKey(for: scope)) != nil else { return }
+        saveFileAccessOverrides()
+    }
+
     /// Drop the override for a removed conversation. Called from anywhere
     /// that deletes / clears a conversation so the dict doesn't grow
     /// indefinitely with dead keys.
@@ -148,6 +198,14 @@ final class AIChatPreferences: ObservableObject {
 
     private func saveInteractionMode() {
         UserDefaults.standard.set(interactionMode.rawValue, forKey: interactionModeKey)
+    }
+
+    private func saveFileAccessOverrides() {
+        UserDefaults.standard.set(fileAccessOverrides, forKey: fileAccessOverridesKey)
+    }
+
+    private func fileAccessKey(for scope: AIConversationFileScope) -> String {
+        "\(scope.kind.rawValue):\(scope.id)"
     }
 
     private func saveTierOverrides() {

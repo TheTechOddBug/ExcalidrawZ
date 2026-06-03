@@ -80,7 +80,10 @@ extension PromptInputView {
     @MainActor
     func toggleAIFileAccess() {
         guard hasActiveFileForAIAccessControl, canToggleAIFileAccess else { return }
-        prefs.allowsFileAccess.toggle()
+        prefs.setAllowsFileAccess(
+            !activeFileAccessAllowsAI,
+            for: fileState.currentActiveFile
+        )
     }
 
     @MainActor

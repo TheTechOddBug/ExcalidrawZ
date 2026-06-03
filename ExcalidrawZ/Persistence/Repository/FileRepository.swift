@@ -592,14 +592,16 @@ actor FileRepository {
         }
 
         if let fileScopeID {
+            let scope = AIConversationFileScope(
+                kind: .libraryFile,
+                id: fileScopeID
+            )
             do {
                 try await PersistenceController.shared.aiConversationRepository
                     .deleteConversations(
-                        forFileScope: AIConversationFileScope(
-                            kind: .libraryFile,
-                            id: fileScopeID
-                        )
+                        forFileScope: scope
                     )
+                await AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
             } catch {
                 print("Warning: Failed to delete AI conversations for file \(fileScopeID): \(error)")
             }
