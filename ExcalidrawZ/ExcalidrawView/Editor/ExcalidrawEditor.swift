@@ -133,8 +133,7 @@ struct ExcalidrawEditor: View {
                     .opacity(isInCollaborationSpace ? 1 : 0)
                     .allowsHitTesting(isInCollaborationSpace && !isLoadingFile)
             }
-            .opacity(isLoadingFile ? 0 : 1)
-            .animation(.smooth, value: isLoadingFile)
+            .allowsHitTesting(!isLoadingFile)
 
             ExcalidrawTrailingControls()
                 .opacity(isLoadingFile ? 0 : 1)
