@@ -547,8 +547,8 @@ struct ExportImageView: View {
             defaultFilename: fileName
         ) { result in
             switch result {
-                case .success(let success):
-                    print(success)
+                case .success:
+                    break
                 case .failure(let failure):
                     alertToast(failure)
             }
@@ -660,23 +660,10 @@ struct ImageFile: FileDocument {
 
     // this will be called when the system wants to write our data to disk
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        print("contentType:" , configuration.contentType)
-        print("url:" , url)
         let fileWrapper = try FileWrapper(regularFileWithContents: Data(contentsOf: url))
-//        print(fileWrapper, fileWrapper.filename, fileWrapper.preferredFilename)
         return fileWrapper
     }
 }
-//print(url, fileWrapper.filename)
-//        if let filename = fileWrapper.filename,
-//           configuration.contentType == .excalidrawPNG || configuration.contentType == .excalidrawSVG {
-//            let newFilename = String(
-//                filename.prefix(filename.count - (configuration.contentType.preferredFilenameExtension?.count ?? 1) - 1)
-//            )
-//            fileWrapper.filename = newFilename
-//            fileWrapper.preferredFilename = newFilename
-//            print(newFilename, fileWrapper.fileAttributes)
-//        }
 // no permission
 class ExcalidrawFileWrapper: FileWrapper {
     var isImage: Bool
@@ -691,7 +678,6 @@ class ExcalidrawFileWrapper: FileWrapper {
     }
     
     override func write(to url: URL, options: FileWrapper.WritingOptions = [], originalContentsURL: URL?) throws {
-        print(#function, url)
         var lastComponent = url.lastPathComponent
         let pattern = "(\\.excalidraw)(?=.*\\.excalidraw)"
         if let regex = try? NSRegularExpression(pattern: pattern) {
@@ -700,7 +686,6 @@ class ExcalidrawFileWrapper: FileWrapper {
             lastComponent = regex.stringByReplacingMatches(in: lastComponent, options: [], range: range, withTemplate: "")
         }
         let newURL = url.deletingLastPathComponent().appendingPathComponent(lastComponent, conformingTo: .fileURL)
-        print(newURL)
         try super.write(
             to: newURL,
             options: options,

@@ -152,6 +152,7 @@ class Store: ObservableObject {
     
     // MARK: - Store info
     func listenForTransactions() -> Task<Void, Error> {
+        let storeLogger = logger
         return Task.detached {
             // Iterate through any transactions that don't come from a direct call to `purchase()`.
             for await result in Transaction.updates {
@@ -165,7 +166,7 @@ class Store: ObservableObject {
                     await transaction.finish()
                 } catch {
                     // StoreKit has a transaction that fails verification. Don't deliver content to the user.
-                    print("Transaction failed verification.")
+                    storeLogger.warning("Transaction failed verification: \(error)")
                 }
             }
         }
@@ -190,8 +191,7 @@ class Store: ObservableObject {
                             newMemberships.append(product)
                         }
                     default:
-                        // Ignore this product.
-                        print("Unknown product.")
+                        break
                 }
             }
 
@@ -200,7 +200,7 @@ class Store: ObservableObject {
             memberships = sortByPrice(newMemberships)
 
         } catch {
-            print("Failed product request from the App Store server. \(error)")
+            logger.error("Failed product request from the App Store server: \(error)")
         }
     }
     

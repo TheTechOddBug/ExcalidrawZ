@@ -167,7 +167,7 @@ public actor FileCoordinator {
     ///   - data: The data to write
     /// - Throws: Error if unable to write file
     public func coordinatedWrite(url: URL, data: Data) async throws {
-        logger.info("Writing file: \(url.lastPathComponent) (\(data.count) bytes)")
+        logger.debug("Writing file: \(url.lastPathComponent) (\(data.count) bytes)")
 
         return try await withCheckedThrowingContinuation { continuation in
             var coordinationError: NSError?
@@ -184,7 +184,7 @@ public actor FileCoordinator {
             ) { coordinatedURL in
                 do {
                     try data.write(to: coordinatedURL, options: .atomic)
-                    logger.info("Successfully wrote file: \(url.lastPathComponent) (fileExists: \(fileExists))")
+                    logger.debug("Successfully wrote file: \(url.lastPathComponent) (fileExists: \(fileExists))")
                     continuation.resume()
                 } catch {
                     logger.error("Failed to write file: \(url.lastPathComponent) - \(error)")

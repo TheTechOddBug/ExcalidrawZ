@@ -272,7 +272,7 @@ final class FileState: ObservableObject {
                         do {
                             try await FileSyncCoordinator.shared.downloadFile(url)
                         } catch {
-                            print(error)
+                            logger.error("Failed to download local file \(url.lastPathComponent): \(error)")
                         }
                     }
                 }
@@ -489,7 +489,6 @@ final class FileState: ObservableObject {
                 self.recoverWatchUpdate()
                 return
             }
-            print("recoverWatchUpdateWorkItem: \(Date.now.timeIntervalSince1970)")
             self.shouldIgnoreUpdate = false
             self.didUpdateFile = false
         }
@@ -584,13 +583,8 @@ final class FileState: ObservableObject {
     
     @discardableResult
     func updateFile(_ file: File, with excalidrawFile: ExcalidrawFile) -> Bool {
-        // DIAG: third checkpoint in the update chain — confirms what flags
-        // are in play when a Swift-side save would be issued, and whether
-        // `shouldIgnoreUpdate` / `inTrash` are silently dropping updates.
         let didUpdateFlag = didUpdateFileState[.file(file)] ?? false
-        print("[aiDiag] updateFile elements=\(excalidrawFile.elements.count) shouldIgnore=\(shouldIgnoreUpdate) aiSession=\(aiChatSession != nil) didUpdateFile=\(didUpdateFlag) inTrash=\(file.inTrash)")
         guard !shouldIgnoreUpdate, !file.inTrash else {
-            print("[aiDiag] updateFile → DROPPED by guard")
             return false
         }
         let didUpdateFile = didUpdateFlag
@@ -621,13 +615,13 @@ final class FileState: ObservableObject {
                     fileData: content,
                     checkpoint: checkpointPolicy
                 )
-                self.logger.info("updateFile done...")
+                self.logger.debug("File update saved")
                 await MainActor.run {
                     // already throttled
                     self.objectWillChange.send()
                 }
             } catch {
-                print(error)
+                self.logger.error("Failed to update file \(file.name ?? "Untitled"): \(error)")
             }
         }
         return true
@@ -768,7 +762,7 @@ final class FileState: ObservableObject {
                     self.didUpdateFile = true
                 }
             } catch {
-                print(error)
+                self.logger.error("Failed to update collaboration file: \(error)")
             }
         }
     }
@@ -1181,7 +1175,6 @@ final class FileState: ObservableObject {
                         }
                     }
                 }
-                print("expandToGroup: \(groupIDs.map { $0.description })")
                 Task { [groupIDs, expandSelf] in
                     for groupId in groupIDs {
                         await MainActor.run {

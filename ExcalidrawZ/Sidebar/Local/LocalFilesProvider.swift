@@ -7,8 +7,11 @@
 
 import SwiftUI
 import CoreData
+import Logging
 
 import ChocofordUI
+
+private let localFilesProviderLogger = Logger(label: "LocalFilesProvider")
 
 struct LocalFilesProvider<Content: View>: View {
     @Environment(\.scenePhase) private var scenePhase
@@ -260,7 +263,7 @@ struct LocalFilesProvider<Content: View>: View {
                     )
                 await AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
             } catch {
-                print("Warning: Failed to delete AI conversations for removed local file \(path): \(error)")
+                localFilesProviderLogger.warning("Failed to delete AI conversations for removed local file \(path): \(error)")
             }
         }
     }

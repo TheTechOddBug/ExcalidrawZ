@@ -235,7 +235,6 @@ struct CollaborationHomeBackground: View {
         .opacity(0.7)
 #endif
         .onAppear {
-            print(horizontalSizeClass == .compact)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 withAnimation(.smooth(duration: 1.2)) {
                     isPresented = true

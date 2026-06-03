@@ -119,8 +119,6 @@ struct ExcalidrawFileCover: View {
             ) { notification in
                 guard let fileID = notification.object as? String,
                       self.fileID == fileID else { return }
-                
-                print("Refreshing preview for file: \(fileID)")
 
                 cache.removePreviewCache(forID: fileID)
                 self.generateCover(forceRefresh: true)

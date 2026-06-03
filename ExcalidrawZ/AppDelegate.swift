@@ -28,7 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             do {
                 try await backupFiles(context: PersistenceController.shared.container.viewContext)
             } catch {
-                print(error)
+                logger.error("Backup before app termination failed: \(error)")
             }
             try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
             if NSApp.windows.filter({$0.canBecomeMain}).isEmpty {
@@ -49,7 +49,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func application(_ sender: Any, openFileWithoutUI filename: String) -> Bool {
-        print(#function)
         return true
     }
     

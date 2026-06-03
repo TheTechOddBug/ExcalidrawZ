@@ -327,7 +327,7 @@ struct ExcalidrawCanvasView: View {
                 } else {
                     isDark = (appPreference.excalidrawAppearance.colorScheme ?? colorScheme) == .dark
                 }
-                self.logger.info("apply color mode: \(isDark ? "dark" : "light")")
+                self.logger.debug("Apply color mode: \(isDark ? "dark" : "light")")
                 try await excalidrawCore.changeColorMode(dark: isDark)
             } catch {
                 onError(error)

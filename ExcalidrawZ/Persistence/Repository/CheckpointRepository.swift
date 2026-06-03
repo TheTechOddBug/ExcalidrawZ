@@ -159,7 +159,7 @@ actor CheckpointRepository {
                 try await FileStorageManager.shared.deleteContent(relativePath: relativePath, fileID: fileID.uuidString)
             } catch {
                 // Log but don't throw - database record is already deleted
-                print("Warning: Failed to delete checkpoint file from storage: \(error)")
+                logger.warning("Failed to delete checkpoint file from storage: \(error)")
             }
         }
     }
@@ -461,7 +461,7 @@ actor CheckpointRepository {
             checkpoint.updateAfterSavingToStorage(filePath: relativePath)
             try context.save()
         }
-        logger.info("Saved checkpoint to storage: \(relativePath)")
+        logger.debug("Saved checkpoint to storage: \(relativePath)")
     }
 
     private func savePlainCheckpointContentToStorage(

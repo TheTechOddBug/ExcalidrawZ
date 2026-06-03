@@ -72,7 +72,7 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
     func load(_ file: ExcalidrawFile?, force: Bool = false) async -> LoadOutcome {
         guard let file, let data = file.content else {
             core.map {
-                logLoadFileDiag($0.logger, "[LoadFileDiag] documentLoad skipped: missing file or content", level: .warning)
+                logFileLoad($0.logger, "Document load skipped: missing file or content", level: .warning)
             }
             return .failed
         }
@@ -156,7 +156,7 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         guard let core else { return }
 
         if let rejectionReason = receivedStateChangedRejectionReason(isCoreLoading: core.isLoading) {
-            core.logger.debug("[LoadFileDiag] ignored stateChanged: \(rejectionReason)")
+            core.logger.debug("Ignored stateChanged during file load: \(rejectionReason)")
             return
         }
 
@@ -224,7 +224,7 @@ final class ExcalidrawDocumentSyncController: @unchecked Sendable {
         }
 
         guard await core.waitUntilReadyForFileLoad(fileID: fileID) else {
-            logLoadFileDiag(core.logger, "[LoadFileDiag] coreLoad notReady id=\(fileID)", level: .warning)
+            logFileLoad(core.logger, "File load skipped: core not ready id=\(fileID)", level: .warning)
             return nil
         }
 

@@ -8,6 +8,9 @@
 import SwiftUI
 import Combine
 import CoreData
+import Logging
+
+private let localFolderStateLogger = Logger(label: "LocalFolderState")
 
 final class LocalFolderState: ObservableObject {
     var refreshFilesPublisher = PassthroughSubject<Void, Never>()
@@ -68,7 +71,7 @@ final class LocalFolderState: ObservableObject {
                     try? await Task.sleep(nanoseconds: UInt64(1e+9 * 0.2))
                 }
             } catch {
-                print(error)
+                localFolderStateLogger.error("Failed to move local folder: \(error)")
             }
         }
     }
@@ -173,7 +176,7 @@ class LocalFileUtils {
                     try context.save()
                 }
             } catch {
-                print(error)
+                localFolderStateLogger.error("Failed to update local checkpoints after URL change: \(error)")
             }
         }
     }
@@ -233,7 +236,7 @@ class LocalFileUtils {
                         to: newLocalScope
                     )
                 } catch {
-                    print("Warning: Failed to rebind AI conversations for moved local file: \(error)")
+                    localFolderStateLogger.warning("Failed to rebind AI conversations for moved local file: \(error)")
                 }
 
                 urlMapping[file] = newURL

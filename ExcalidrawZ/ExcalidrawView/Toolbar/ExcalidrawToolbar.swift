@@ -647,7 +647,6 @@ struct ExcalidrawToolbarToolContainer<Content: View>: View {
         content(sizeClass)
             .background {
                 WithContainerSize { containerSize in
-                    // let _ = print(containerSize)
                     Color.clear
                         .watch(value: containerSize) { _, newValue in
                             let newSizeClass = getSizeClass(containerSize.width)

@@ -773,7 +773,7 @@ extension ExcalidrawCore {
     func loadFile(from file: ExcalidrawFile?, force: Bool = false) async -> LoadFileResult? {
         guard let file = file,
               let data = file.content else {
-            logLoadFileDiag(logger, "[LoadFileDiag] coreLoad skipped: missing file or content", level: .warning)
+            logFileLoad(logger, "File load skipped: missing file or content", level: .warning)
             return nil
         }
         let outcome = await documentSyncController.load(
@@ -1248,7 +1248,6 @@ extension ExcalidrawCore {
     
     @MainActor
     func toggleToolbarAction(key: Int) async throws {
-        print(#function, key)
         _ = try await webView.callAsyncJavaScript(
             "window.excalidrawZHelper.toggleToolbarAction(\(key));",
             arguments: [:],
@@ -1259,7 +1258,6 @@ extension ExcalidrawCore {
     @MainActor
     func toggleToolbarAction(key: Character) async throws {
         guard !self.isLoading else { return }
-        print(#function, key)
         let toolbarKey: String
         if key == "\u{1B}" {
             toolbarKey = "Escape"
@@ -1295,7 +1293,6 @@ extension ExcalidrawCore {
     @MainActor
     func toggleToolbarAction(tool: ExtraTool) async throws {
         guard !self.isLoading else { return }
-        print(#function, tool)
         _ = try await webView.callAsyncJavaScript(
             "window.excalidrawZHelper.toggleToolbarAction('\(tool.rawValue)');",
             arguments: [:],
@@ -1416,7 +1413,7 @@ extension ExcalidrawCore {
                 
                 return finalResult
             } catch {
-                print("Error creating regex: \(error)")
+                logger.warning("Failed to rewrite SVG dimensions: \(error)")
                 return svgContent
             }
         }

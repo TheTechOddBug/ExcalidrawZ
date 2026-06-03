@@ -7,8 +7,11 @@
 
 import SwiftUI
 import CoreData
+import Logging
 
 import ChocofordUI
+
+private let temporaryFileMenuLogger = Logger(label: "TemporaryFileMenu")
 
 struct TemporaryFileContextMenuModifier: ViewModifier {
     var file: URL
@@ -188,7 +191,7 @@ struct TemporaryFileMenuItems: View {
                         )
                     await AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
                 } catch {
-                    print("Warning: Failed to delete AI conversations for temporary file \(file): \(error)")
+                    temporaryFileMenuLogger.warning("Failed to delete AI conversations for temporary file \(file): \(error)")
                 }
             }
         }
@@ -248,7 +251,7 @@ struct TemporaryFileMenuItems: View {
                                 to: newScope
                             )
                         } catch {
-                            print("Warning: Failed to rebind AI conversations for saved temporary file: \(error)")
+                            temporaryFileMenuLogger.warning("Failed to rebind AI conversations for saved temporary file: \(error)")
                         }
                     }
                 }

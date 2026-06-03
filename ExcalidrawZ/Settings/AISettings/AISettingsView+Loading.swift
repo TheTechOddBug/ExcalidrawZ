@@ -65,7 +65,6 @@ extension AISettingsView {
 
             allTransactions = collected
             allTransactionCount = totalCount
-            debugLogTransactionMetadata(collected, source: "all-transactions")
         } catch is CancellationError {
         } catch {
             allTransactionLoadError = error
@@ -94,45 +93,10 @@ extension AISettingsView {
             }
             totalTransactionCount = history.totalCount
             loadedPage = page
-            debugLogTransactionMetadata(history.transactions, source: "page-\(page)")
         } catch is CancellationError {
         } catch {
             transactionLoadError = error
         }
     }
 
-    func debugLogTransactionMetadata(
-        _ transactions: [CreditsTransaction],
-        source: String
-    ) {
-#if DEBUG
-        print("[AISettings] \(source) metadata dump: \(transactions.count) transaction(s)")
-        for (index, tx) in transactions.enumerated() {
-            print(
-                "[AISettings] tx[\(index)] type=\(tx.type) amount=\(tx.amount) createdAt=\(tx.createdAt) metadata=\(debugMetadataDescription(for: tx))"
-            )
-        }
-#endif
-    }
-
-    func debugMetadataDescription(for tx: CreditsTransaction) -> String {
-#if DEBUG
-        let directMetadata = tx.metadata?.description ?? "<nil>"
-        let userMetadata = tx.decodedUserMetadata(as: ExcalidrawAITransactionMetadata.self)
-            .map { String(describing: $0) } ?? "<nil>"
-        let context = tx.chatContext().map { String(describing: $0) } ?? "<nil>"
-        let usage = tx.usage().map { String(describing: $0) } ?? "<nil>"
-        let deductionSources = tx.deductionSources().map { String(describing: $0) } ?? "<nil>"
-
-        return [
-            "raw=\(directMetadata)",
-            "userInfo=\(userMetadata)",
-            "context=\(context)",
-            "usage=\(usage)",
-            "deductionSources=\(deductionSources)"
-        ].joined(separator: " | ")
-#else
-        return ""
-#endif
-    }
 }

@@ -37,15 +37,9 @@ extension ExcalidrawCore: UIPencilInteractionDelegate {
     
     @available(iOS 17.5, *)
     func pencilInteraction(_ interaction: UIPencilInteraction, didReceiveSqueeze squeeze: UIPencilInteraction.Squeeze) {
-        print(#function, interaction, squeeze)
     }
     
     func pencilInteractionDidTap(_ interaction: UIPencilInteraction) {
-        if #available(iOS 17.5, *) {
-            print(#function, interaction, "#available(iOS 17.5, *)")
-        } else {
-            print(#function, interaction)
-        }
     }
 }
 #endif

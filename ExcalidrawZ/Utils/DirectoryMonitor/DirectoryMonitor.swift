@@ -50,7 +50,6 @@ final class DirectoryObserver {
 //            monitorSource.object.activate()
 //            
 //        } catch {
-//            print("addObservationDestination failed: ", error, path)
 //        }
         
         let monitor = DirectoryMonitor(url: url) { event in
@@ -137,22 +136,18 @@ public class DirectoryMonitor {
         FSEventStreamStart(eventStream)
         logger.info("[DirectoryMonitor] Started monitoring directory: \(String(describing: self.presentedItemURL.filePath))")
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            print("[DirectoryMonitor] Stream description: \(FSEventStreamCopyDescription(eventStream))")
-        }
-        
     }
 
     public func stop() {
         guard let eventStream = eventStream else {
-            print("No event stream to stop.")
+            logger.debug("[DirectoryMonitor] No event stream to stop.")
             return
         }
 
         FSEventStreamStop(eventStream)
         FSEventStreamInvalidate(eventStream)
         FSEventStreamRelease(eventStream)
-        print("Stopped monitoring directory: \(presentedItemURL.filePath)")
+        logger.info("[DirectoryMonitor] Stopped monitoring directory: \(presentedItemURL.filePath)")
     }
 
     // FSEventStream callback with @convention(c)

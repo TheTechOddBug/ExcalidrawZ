@@ -31,7 +31,6 @@ extension ExcalidrawFile: FileDocument {
            }
         }
         self = try ExcalidrawFile(data: data)
-        print("Init from ReadConfiguration: \(String(describing: self))")
     }
     
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {

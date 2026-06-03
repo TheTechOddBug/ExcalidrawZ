@@ -137,7 +137,7 @@ actor CollaborationFileRepository {
             collaborationFile.updateAfterSavingToStorage(filePath: relativePath)
             try context.save()
         }
-        logger.info("Saved collaboration file to storage: \(relativePath)")
+        logger.debug("Saved collaboration file to storage: \(relativePath)")
     }
 
     // MARK: - Checkpoint Management
@@ -402,7 +402,7 @@ actor CollaborationFileRepository {
                 do {
                     try await FileStorageManager.shared.deleteContent(relativePath: checkpointPath, fileID: checkpointID.uuidString)
                 } catch {
-                    print("Warning: Failed to delete checkpoint file from storage: \(error)")
+                    logger.warning("Failed to delete checkpoint file from storage: \(error)")
                 }
             }
 
@@ -410,7 +410,7 @@ actor CollaborationFileRepository {
             do {
                 try await FileStorageManager.shared.deleteContent(relativePath: relativePath, fileID: fileUUID.uuidString)
             } catch {
-                print("Warning: Failed to delete collaboration file from storage: \(error)")
+                logger.warning("Failed to delete collaboration file from storage: \(error)")
             }
         }
 
@@ -426,7 +426,7 @@ actor CollaborationFileRepository {
                     )
                 await AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
             } catch {
-                print("Warning: Failed to delete AI conversations for collaboration file \(fileScopeID): \(error)")
+                logger.warning("Failed to delete AI conversations for collaboration file \(fileScopeID): \(error)")
             }
         }
     }

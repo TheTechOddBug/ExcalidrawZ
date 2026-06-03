@@ -10,6 +10,8 @@ import CoreData
 import UniformTypeIdentifiers
 import Logging
 
+private let archiveFilesLogger = Logger(label: "ArchiveFiles")
+
 /// Information about a file that failed to archive
 struct FailedFileInfo: Identifiable {
     let id = UUID()
@@ -290,7 +292,7 @@ func archiveAllFiles(context: NSManagedObjectContext, completionHandler: (() -> 
                 try await archiveAllCloudFiles(to: exportURL, context: context)
                 completionHandler?()
             } catch {
-                print(error)
+                archiveFilesLogger.error("Failed to archive all files: \(error)")
                 throw error
             }
         } else {
@@ -350,9 +352,7 @@ func archiveAllCloudFiles(
                 }
                 let filePath: String = fileURL.filePath
                 if !filemanager.createFile(atPath: filePath, contents: archiveData.content) {
-                    print("export file \(filePath) failed")
-                } else {
-                    print("Export file to url<\(filePath)> done")
+                    archiveFilesLogger.error("Failed to export file to \(filePath)")
                 }
             } catch {
                 errorDuringArchive = error
@@ -473,9 +473,7 @@ func backupAllCloudFiles(to url: URL, context: NSManagedObjectContext) async thr
                 let filePath: String = fileURL.filePath
                 let backupContent = try EncryptedBackupService.encrypt(archiveData.content)
                 if !filemanager.createFile(atPath: filePath, contents: backupContent) {
-                    print("backup file \(filePath) failed")
-                } else {
-                    print("Backup file to url<\(filePath)> done")
+                    archiveFilesLogger.error("Failed to write backup file to \(filePath)")
                 }
             } catch let error as EncryptedContentError {
                 if error.isContentLocked {

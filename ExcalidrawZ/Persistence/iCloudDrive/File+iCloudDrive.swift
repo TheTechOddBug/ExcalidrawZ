@@ -38,7 +38,7 @@ extension File {
         if let filePath = filePath, let fileID = fileID {
             do {
                 let data = try await FileStorageManager.shared.loadContent(relativePath: filePath, fileID: fileID.uuidString)
-                Self.logger.info("[LoadFileDiag] fileLoadContent source=storage id=\(fileID.uuidString) bytes=\(data.count.formatted(.byteCount(style: .file))) \(loadFileDataSummary(data))")
+                Self.logger.debug("Loaded file content from storage id=\(fileID.uuidString) bytes=\(data.count.formatted(.byteCount(style: .file))) \(loadFileDataSummary(data))")
                 if EncryptedContentService.isEncryptedEnvelope(data) {
                     try LockedContentReadPolicy.ensureProtectedContentAccessAllowed()
                     return try await LockedContentUnlockSession.shared.decrypt(
@@ -58,7 +58,7 @@ extension File {
         // Fallback to CoreData content
         if let content = content {
             if let fileID {
-                Self.logger.warning("[LoadFileDiag] fileLoadContent fallback=coreData id=\(fileID.uuidString) bytes=\(content.count.formatted(.byteCount(style: .file))) \(loadFileDataSummary(content))")
+                Self.logger.warning("Falling back to Core Data file content id=\(fileID.uuidString) bytes=\(content.count.formatted(.byteCount(style: .file))) \(loadFileDataSummary(content))")
                 if EncryptedContentService.isEncryptedEnvelope(content) {
                     try LockedContentReadPolicy.ensureProtectedContentAccessAllowed()
                     return try await LockedContentUnlockSession.shared.decrypt(
@@ -68,7 +68,7 @@ extension File {
                     )
                 }
             } else {
-                Self.logger.warning("[LoadFileDiag] fileLoadContent fallback=coreData id=nil bytes=\(content.count.formatted(.byteCount(style: .file))) \(loadFileDataSummary(content))")
+                Self.logger.warning("Falling back to Core Data file content id=nil bytes=\(content.count.formatted(.byteCount(style: .file))) \(loadFileDataSummary(content))")
             }
             return content
         }

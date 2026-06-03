@@ -42,8 +42,6 @@ struct UserActivityHandlerModifier: ViewModifier {
     private func handleUserSearchableItemAction(userActivity: NSUserActivity) {
         guard let userinfo = userActivity.userInfo as? [String : Any] else { return }
         let identifier = userinfo["kCSSearchableItemActivityIdentifier"] as? String ?? ""
-        let queryString = userinfo["kCSSearchQueryString"] as? String ?? ""
-        print(identifier,queryString)
         
         let uri = URL(string:identifier)!
         let container = PersistenceController.shared.container

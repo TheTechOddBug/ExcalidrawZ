@@ -74,7 +74,6 @@ struct TemporaryFileRowView: View {
                 self.modifiedDate = modifiedDate
             }
         } catch {
-            print(error)
             DispatchQueue.main.async {
                 alertToast(error)
             }

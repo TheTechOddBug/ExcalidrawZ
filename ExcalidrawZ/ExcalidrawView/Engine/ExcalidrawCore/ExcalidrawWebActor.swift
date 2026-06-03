@@ -17,14 +17,22 @@ private func jsDouble(_ dict: [String: Any], _ key: String) -> Double {
     (dict[key] as? Double) ?? Double((dict[key] as? Int) ?? 0)
 }
 
-func logLoadFileDiag(_ logger: Logger, _ message: String, level: Logger.Level = .info) {
+func logFileLoad(_ logger: Logger, _ message: String, level: Logger.Level = .debug) {
     switch level {
+        case .trace:
+            logger.trace("\(message)")
+        case .debug:
+            logger.debug("\(message)")
+        case .info:
+            logger.info("\(message)")
         case .warning:
             logger.warning("\(message)")
         case .error:
             logger.error("\(message)")
+        case .critical:
+            logger.critical("\(message)")
         default:
-            logger.info("\(message)")
+            logger.debug("\(message)")
     }
 }
 
@@ -113,9 +121,9 @@ actor ExcalidrawWebActor {
         let webView = webView
         let targetSummary = loadFileDataSummary(data)
         guard loadedFileID != id || force else {
-            logLoadFileDiag(
+            logFileLoad(
                 self.logger,
-                "[LoadFileDiag] skip id=\(id) loadedFileID=\(self.loadedFileID ?? "nil") force=\(force) target=\(targetSummary)"
+                "File load skipped id=\(id) loadedFileID=\(self.loadedFileID ?? "nil") force=\(force) target=\(targetSummary)"
             )
             return nil
         }
@@ -138,9 +146,9 @@ actor ExcalidrawWebActor {
             let resultFileID = result?.fileId ?? "nil"
             let jsElements = result.map { String($0.elementCount) } ?? "nil"
             let durationMs = result.map { String(format: "%.1f", $0.durationMs) } ?? "nil"
-            logLoadFileDiag(
+            logFileLoad(
                 self.logger,
-                "[LoadFileDiag] loaded id=\(id) bytes=\(data.count.formatted(.byteCount(style: .file))) resultFileId=\(resultFileID) jsElements=\(jsElements) durationMs=\(durationMs)"
+                "File loaded id=\(id) bytes=\(data.count.formatted(.byteCount(style: .file))) resultFileId=\(resultFileID) jsElements=\(jsElements) durationMs=\(durationMs)"
             )
             return result
         } catch {
@@ -163,17 +171,17 @@ actor ExcalidrawWebActor {
             // user draws and AI tool mutations) gets dropped for the
             // lifetime of the editor on this file.
             if Self.isLoadTimeoutError(error) {
-                logLoadFileDiag(
+                logFileLoad(
                     self.logger,
-                    "[LoadFileDiag] timeout-suppressed id=\(id) target=\(targetSummary) error=\(String(describing: error))",
+                    "File load timeout suppressed id=\(id) target=\(targetSummary) error=\(String(describing: error))",
                     level: .warning
                 )
                 self.loadedFileID = id
                 return nil
             }
-            logLoadFileDiag(
+            logFileLoad(
                 self.logger,
-                "[LoadFileDiag] failure id=\(id) target=\(targetSummary) error=\(String(describing: error))",
+                "File load failed id=\(id) target=\(targetSummary) error=\(String(describing: error))",
                 level: .error
             )
             throw error

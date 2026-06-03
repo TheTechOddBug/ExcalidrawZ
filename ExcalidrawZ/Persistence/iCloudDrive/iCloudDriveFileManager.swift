@@ -443,7 +443,7 @@ actor iCloudDriveFileManager {
         let date = localUpdatedAt ?? Date()
         try? FileManager.default.setAttributes([.modificationDate: date], ofItemAtPath: iCloudURL.filePath)
 
-        logger.info("Successfully uploaded to iCloud: \(relativePath)")
+        logger.debug("Successfully uploaded to iCloud: \(relativePath)")
         return relativePath
     }
 

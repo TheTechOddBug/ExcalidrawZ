@@ -51,7 +51,6 @@ class ExcalidrawSVGDecoder: ExcalidrawImageDecoder {
                 return nil
             }
         } catch {
-            print(error)
             return nil
         }
     }

@@ -8,11 +8,14 @@
 import Foundation
 import SwiftUI
 import CoreData
+import Logging
 #if canImport(AppKit)
 import AppKit
 #endif
 
 import WebKit
+
+private let utilitiesLogger = Logger(label: "Utilities")
 
 func loadResource<T: Decodable>(_ filename: String) -> T {
     let data: Data
@@ -83,12 +86,12 @@ func backupFiles(
     switch reason {
         case .regular:
             if try await cloudBackupHasEncryptedContent(context: context) {
-                print("[Backup Files] Skipping regular backup: encrypted files exist.")
+                utilitiesLogger.debug("Skipping regular backup because encrypted files exist")
                 return false
             }
         case .unlockedContent:
             if try await cloudBackupHasLockedContentUnavailable(context: context) {
-                print("[Backup Files] Skipping unlock-triggered backup: locked files are not unlocked.")
+                utilitiesLogger.debug("Skipping unlock-triggered backup because locked files are not unlocked")
                 return false
             }
     }
@@ -112,24 +115,24 @@ func backupFiles(
     // Cloud
     let cloudExportURL = workingExportURL.appendingPathComponent("Cloud", conformingTo: .directory)
     do {
-        print("[Backup Files] Start... \(cloudExportURL)")
+        utilitiesLogger.debug("Starting cloud backup at \(cloudExportURL.path)")
         try fileManager.createDirectory(at: cloudExportURL, withIntermediateDirectories: true)
         try await backupAllCloudFiles(to: cloudExportURL, context: context)
     } catch let error as EncryptedContentError where error.isContentLocked {
-        print("[Backup Files] Skipping backup: locked files are not unlocked.")
+        utilitiesLogger.debug("Skipping backup because locked files are not unlocked")
         try? fileManager.removeItem(at: workingExportURL)
         return false
     } catch {
-        print("[Backup Files] backup cloud files done, but with error: \(error)")
+        utilitiesLogger.warning("Cloud backup completed with error: \(error)")
     }
     // Local
     let localExportURL = workingExportURL.appendingPathComponent("Local", conformingTo: .directory)
     do {
-        print("[Backup Files] Start... \(localExportURL)")
+        utilitiesLogger.debug("Starting local backup at \(localExportURL.path)")
         try fileManager.createDirectory(at: localExportURL, withIntermediateDirectories: true)
         try await backupLocalFolders(to: localExportURL)
     } catch {
-        print("[Backup Files] backup local files done, but with error: \(error)")
+        utilitiesLogger.warning("Local backup completed with error: \(error)")
     }
 
     if replaceExistingToday {
@@ -176,12 +179,12 @@ func backupFiles(
         }
     }
     let foldersToDelete = Set(sortedFolders.map { $0.0 }).subtracting(foldersToKeep)
-    print("[Backup files] folder to keep: \(foldersToKeep.count), folder to delete: \(foldersToDelete.count)")
+    utilitiesLogger.debug("Backup retention keeps \(foldersToKeep.count) folder(s), deletes \(foldersToDelete.count)")
     for folder in foldersToDelete {
         do {
             try fileManager.removeItem(at: folder)
         } catch {
-            print(error)
+            utilitiesLogger.warning("Failed to remove old backup folder \(folder.path): \(error)")
         }
     }
 
@@ -206,7 +209,7 @@ private func backupLocalFolders(to localExportURL: URL) async throws {
                             to: localExportURL.appendingPathComponent(url.lastPathComponent, conformingTo: .directory)
                         )
                     } catch {
-                        print("[Backup Files] error occured when copy local folder: \(url)")
+                        utilitiesLogger.warning("Failed to copy local folder during backup \(url.path): \(error)")
                     }
                 }
                 if let coordinationError {
@@ -267,7 +270,7 @@ func backupsContainEncryptedExcalidrawFiles() async -> Bool {
         do {
             return try backupDirectoryContainsEncryptedExcalidrawFiles(try getBackupsDir())
         } catch {
-            print("[Backup Files] Failed to scan backups for locked content: \(error)")
+            utilitiesLogger.warning("Failed to scan backups for locked content: \(error)")
             return false
         }
     }.value
@@ -278,7 +281,7 @@ func countEncryptedBackupExcalidrawFiles() async -> Int {
         do {
             return try countEncryptedExcalidrawFiles(in: try getBackupsDir())
         } catch {
-            print("[Backup Files] Failed to count encrypted backup files: \(error)")
+            utilitiesLogger.warning("Failed to count encrypted backup files: \(error)")
             return 0
         }
     }.value
@@ -298,7 +301,7 @@ func validateEncryptedBackupExcalidrawFiles(with recoveryKey: RecoveryKey) async
                 recoveryKey: recoveryKey
             )
         } catch {
-            print("[Backup Files] Failed to validate encrypted backup files: \(error)")
+            utilitiesLogger.warning("Failed to validate encrypted backup files: \(error)")
             return BackupEncryptedFileValidationResult(validCount: 0, failedCount: 1)
         }
     }.value
@@ -309,7 +312,7 @@ func deleteEncryptedBackupExcalidrawFiles() async -> BackupEncryptedFileDeletion
         do {
             return try deleteEncryptedExcalidrawFiles(in: try getBackupsDir())
         } catch {
-            print("[Backup Files] Failed to delete encrypted backup files: \(error)")
+            utilitiesLogger.warning("Failed to delete encrypted backup files: \(error)")
             return BackupEncryptedFileDeletionResult(deletedCount: 0, failedCount: 1)
         }
     }.value
@@ -323,7 +326,7 @@ func canUnlockEncryptedBackupExcalidrawFile(with recoveryKey: RecoveryKey) async
                 recoveryKey: recoveryKey
             )
         } catch {
-            print("[Backup Files] Failed to validate encrypted backup Recovery Key: \(error)")
+            utilitiesLogger.warning("Failed to validate encrypted backup Recovery Key: \(error)")
             return false
         }
     }.value
@@ -447,7 +450,7 @@ private func deleteEncryptedExcalidrawFiles(in directory: URL) throws -> BackupE
             deletedCount += 1
         } catch {
             failedCount += 1
-            print("[Backup Files] Failed to delete encrypted backup file \(url.path): \(error)")
+            utilitiesLogger.warning("Failed to delete encrypted backup file \(url.path): \(error)")
         }
     }
 
@@ -545,7 +548,7 @@ func rewrapEncryptedBackupFilesRecoveryKey(
                 rewrappedCount += 1
             } catch {
                 failedCount += 1
-                print("[Backup Files] Failed to reset Recovery Key for backup file \(url.path): \(error)")
+                utilitiesLogger.warning("Failed to reset Recovery Key for backup file \(url.path): \(error)")
             }
         }
 
@@ -554,7 +557,7 @@ func rewrapEncryptedBackupFilesRecoveryKey(
             failedCount: failedCount
         )
     } catch {
-        print("[Backup Files] Failed to scan backups for Recovery Key reset: \(error)")
+        utilitiesLogger.warning("Failed to scan backups for Recovery Key reset: \(error)")
         return BackupRecoveryKeyRewrapResult(rewrappedCount: 0, failedCount: 1)
     }
 }
@@ -690,10 +693,9 @@ func exportPDF(image: UIImage, name: String? = nil, to url: URL? = nil) throws -
             }
         }
         
-        print("PDF saved to: \(pdfURL)")
         return pdfURL
     } catch {
-        print("Failed to create PDF: \(error)")
+        utilitiesLogger.warning("Failed to create PDF: \(error)")
         throw error
     }
 }
@@ -750,8 +752,6 @@ func flatFiles(in directory: URL) throws -> [URL] {
 
     let contents = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [])
     let files = try contents.flatMap { try flatFiles(in: $0) }
-
-    print(#function, "files: \(files)")
     return files
 }
 

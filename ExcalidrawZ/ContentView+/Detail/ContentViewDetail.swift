@@ -34,7 +34,6 @@ struct ContentViewDetail: View {
     private func applyToolStateWebCoordinator() {
         // TODO: Not Good Enough
 //        DispatchQueue.main.async {
-//            print("=-=-=-=-=-=", fileState.excalidrawWebCoordinator, fileState.excalidrawCollaborationWebCoordinator)
 //            if fileState.currentCollaborationFile != nil {
 //                toolState.excalidrawWebCoordinator = fileState.excalidrawCollaborationWebCoordinator
 //            } else {
@@ -87,4 +86,3 @@ struct ExcalidrawSplitViewsContainer: View {
         EmptyView()
     }
 }
-

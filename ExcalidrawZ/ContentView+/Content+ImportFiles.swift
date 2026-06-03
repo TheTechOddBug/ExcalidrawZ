@@ -34,7 +34,6 @@ struct MenuBarImportHandlerModifier: ViewModifier {
             do {
                 try await fileState.importFiles(urls)
             } catch {
-                print(error)
                 await MainActor.run {
                     alert(error: error)
                 }

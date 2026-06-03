@@ -148,7 +148,7 @@ actor FileRepository {
                     mediaItem.updateAfterSavingToStorage(filePath: relativePath)
                     try context.save()
                 }
-                logger.info("Saved media item to storage: \(relativePath)")
+                logger.debug("Saved media item to storage: \(relativePath)")
             } catch {
                 logger.warning("Failed to save media item to iCloud Drive: \(error.localizedDescription)")
                 continue
@@ -312,7 +312,7 @@ actor FileRepository {
             file.updateAfterSavingToStorage(filePath: relativePath)
             try context.save()
         }
-        logger.info("Saved file to storage: \(relativePath)")
+        logger.debug("Saved file to storage: \(relativePath)")
     }
 
     private func encryptedContentIfNeeded(
@@ -579,7 +579,7 @@ actor FileRepository {
                 do {
                     try await FileStorageManager.shared.deleteContent(relativePath: checkpointPath, fileID: checkpointID.uuidString)
                 } catch {
-                    print("Warning: Failed to delete checkpoint file from storage: \(error)")
+                    logger.warning("Failed to delete checkpoint file from storage: \(error)")
                 }
             }
 
@@ -587,7 +587,7 @@ actor FileRepository {
             do {
                 try await FileStorageManager.shared.deleteContent(relativePath: relativePath, fileID: fileUUID.uuidString)
             } catch {
-                print("Warning: Failed to delete file from storage: \(error)")
+                logger.warning("Failed to delete file from storage: \(error)")
             }
         }
 
@@ -603,7 +603,7 @@ actor FileRepository {
                     )
                 await AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
             } catch {
-                print("Warning: Failed to delete AI conversations for file \(fileScopeID): \(error)")
+                logger.warning("Failed to delete AI conversations for file \(fileScopeID): \(error)")
             }
         }
     }

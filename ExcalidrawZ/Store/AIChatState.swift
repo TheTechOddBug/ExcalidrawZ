@@ -410,20 +410,16 @@ extension AIChatState {
     ) async {
         let activeFile = fileState.currentActiveFile
         let activeFileScope = activeFile?.aiConversationFileScope
-        print("[AIChatDiag] loadConversationForActiveFile fired. activeFile=\(describe(activeFile))")
 
         // Always refresh first: the global cache also drives
         // AIChatView's rendering of the conversation we're about to
         // pin, so we want both pieces to land in the same render
         // pass. The snapshot path is fast (single Core Data fetch).
         await llmState.refreshConversations()
-        print("[AIChatDiag] after refresh, conversations.value count=\(llmState.conversations.value?.count ?? -1)")
 
         let chosen = await pickLatestConversationID(forActiveFile: activeFile)
-        print("[AIChatDiag] pickLatestConversationID -> \(chosen ?? "nil")")
         await MainActor.run {
             guard fileState.currentActiveFile?.aiConversationFileScope == activeFileScope else {
-                print("[AIChatDiag] skip stale conversation pick; active file changed during load")
                 return
             }
             fileState.aiChatConversationID = chosen
@@ -440,32 +436,18 @@ extension AIChatState {
         forActiveFile activeFile: FileState.ActiveFile?
     ) async -> String? {
         guard let scope = activeFile?.aiConversationFileScope else {
-            print("[AIChatDiag] pick: activeFile is nil, skipping")
             return nil
         }
-        print("[AIChatDiag] pick: querying snapshots for scope=\(scope.kind.rawValue):\(scope.id)")
         let repo = PersistenceController.shared.aiConversationRepository
         let snapshots: [AIConversationSnapshot]
         do {
             snapshots = try await repo.fetchConversationSnapshots(forFileScope: scope)
         } catch {
-            print("[AIChatDiag] pick: fetchConversationSnapshots(forFileScope:) threw \(error.localizedDescription)")
             return nil
         }
-        print("[AIChatDiag] pick: got \(snapshots.count) snapshots for this file. \(snapshots.map { "[\(($0.conversationID ?? "?").prefix(8)) msgs=\($0.messages.count) ua=\($0.hasUserOrAssistantMessage)]" }.joined(separator: " "))")
         let candidates = snapshots.filter { $0.hasUserOrAssistantMessage }
-        print("[AIChatDiag] pick: \(candidates.count) candidates after filter")
         let latest = candidates.max(by: { ($0.lastChatAt ?? .distantPast) < ($1.lastChatAt ?? .distantPast) })
         return latest?.conversationID
     }
 
-    private func describe(_ activeFile: FileState.ActiveFile?) -> String {
-        guard let activeFile else { return "nil" }
-        switch activeFile {
-            case .file(let f): return ".file(name=\(f.name ?? "?") id=\(f.id?.uuidString ?? "nil"))"
-            case .localFile(let url): return ".localFile(\(url.lastPathComponent))"
-            case .temporaryFile(let url): return ".temporaryFile(\(url.lastPathComponent))"
-            case .collaborationFile(let f): return ".collaborationFile(\(f.name ?? "?"))"
-        }
-    }
 }

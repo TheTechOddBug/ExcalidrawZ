@@ -104,12 +104,13 @@ struct ExcalidrawZApp: App {
             shouldRefreshSpotlightIndex = true
         }
         if shouldRefreshSpotlightIndex {
+            let startupLogger = Logging.Logger(label: "ExcalidrawApp")
             Task {
                 do {
                     try await PersistenceController.shared.refreshIndices()
                     UserDefaults.standard.set(Date.now.formatted(.iso8601), forKey: "LastSpotlightIndexRefreshTime")
                 } catch {
-                    print(error)
+                    startupLogger.error("Failed to refresh Spotlight index: \(error)")
                 }
             }
         }

@@ -349,9 +349,7 @@ private struct SettingSection<Content: View>: View {
         
         var body: some View {
             ScrollView {
-                DrawingSettingsPanel(settings: $settings) {
-                    print("Settings changed: \(settings)")
-                }
+                DrawingSettingsPanel(settings: $settings) {}
                 .padding(12)
                 .frame(width: 260)
             }

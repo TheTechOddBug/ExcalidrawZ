@@ -7,7 +7,10 @@
 
 import SwiftUI
 import CoreData
+import Logging
 import ChocofordUI
+
+private let localFileContextMenuLogger = Logger(label: "LocalFileContextMenu")
 
 struct LocalFileMenuProvider: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -111,7 +114,7 @@ struct LocalFileMenuProvider: View {
                     to: newScope
                 )
             } catch {
-                print("Warning: Failed to rebind AI conversations for renamed local file: \(error)")
+                localFileContextMenuLogger.warning("Failed to rebind AI conversations for renamed local file: \(error)")
             }
         }
     }
@@ -490,7 +493,7 @@ struct LocalFileRowMenuItems: View {
                                     )
                                 AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
                             } catch {
-                                print("Warning: Failed to delete AI conversations for local file \(file): \(error)")
+                                localFileContextMenuLogger.warning("Failed to delete AI conversations for local file \(file): \(error)")
                             }
                         }
                     }

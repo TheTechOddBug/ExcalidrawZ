@@ -528,7 +528,6 @@ struct ImportLocalFolderModifier: ViewModifier {
                     }
                 }
             } catch {
-                print("import failed:", error)
                 await alertToast(error)
             }
         }

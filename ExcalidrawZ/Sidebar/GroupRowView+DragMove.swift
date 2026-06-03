@@ -479,11 +479,5 @@ struct DropToGroupSheetView<T: Sendable>: View {
         }
         .padding(20)
         .frame(width: 360)
-        .watch(value: isPresented) { val in
-            print("isPresented: \(val)")
-            if val {
-                
-            }
-        }
     }
 }

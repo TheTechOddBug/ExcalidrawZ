@@ -6,10 +6,13 @@
 //
 
 import SwiftUI
+import Logging
 
 #if canImport(TipKit)
 import TipKit
 #endif
+
+private let featureDiscoveryTipsLogger = Logger(label: "FeatureDiscoveryTips")
 
 enum FeatureDiscoveryTips {
     private static let resetPendingDefaultsKey = "FeatureDiscoveryTipsResetPending"
@@ -48,7 +51,7 @@ enum FeatureDiscoveryTips {
             try Tips.resetDatastore()
             UserDefaults.standard.removeObject(forKey: resetPendingDefaultsKey)
         } catch {
-            print("Failed to reset TipKit datastore before configure:", error)
+            featureDiscoveryTipsLogger.warning("Failed to reset TipKit datastore before configure: \(error)")
         }
     }
 #endif

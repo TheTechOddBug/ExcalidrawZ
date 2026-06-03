@@ -67,7 +67,6 @@ struct NewFileButton: View {
                         do {
                             try await fileState.importFiles(urls)
                         } catch {
-                            print(error)
                             await alertToast(error)
                         }
                     }

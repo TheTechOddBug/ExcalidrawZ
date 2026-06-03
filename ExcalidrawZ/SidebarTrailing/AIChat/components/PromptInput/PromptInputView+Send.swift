@@ -17,8 +17,11 @@
 
 import SwiftUI
 import CoreData
+import Logging
 import LLMKit
 import LLMCore
+
+private let promptInputSendLogger = Logger(label: "PromptInputSend")
 
 extension PromptInputView {
     /// Pre-send threshold (fraction of the active model's context window).
@@ -286,7 +289,7 @@ extension PromptInputView {
                                         scope: scope
                                     )
                             } catch {
-                                print("[AIChatDiag] post-create bind threw \(error.localizedDescription)")
+                                promptInputSendLogger.warning("Failed to bind new AI conversation to file scope: \(error)")
                             }
                         }
                     } else {

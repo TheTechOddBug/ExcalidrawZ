@@ -7,8 +7,11 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import Logging
 
 import ChocofordUI
+
+private let libraryItemLogger = Logger(label: "LibraryItemView")
 
 struct LibraryItemView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -322,7 +325,7 @@ struct LibraryItemContentView: View {
                             self.image = image
                         }
                     } catch {
-                        dump(error)
+                        libraryItemLogger.warning("Failed to render library item preview: \(error)")
                     }
                 }
             }

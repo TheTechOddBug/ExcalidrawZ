@@ -68,7 +68,6 @@ struct ItemDropFallbackModifier: ViewModifier {
 //            .simultaneousGesture(
 //                TapGesture().onEnded {
 //                    dragState.reset()
-//                    print("ItemDropFallbackModifier: TapGesture 222")
 //                }
 //            )
 //            .modifier(
@@ -80,10 +79,8 @@ struct ItemDropFallbackModifier: ViewModifier {
 //                        .fileURL
 //                    ],
 //                    onTargeted: { isTargeted in
-//                        print("ItemDropFallbackModifier: \(isTargeted)")
 //                    },
 //                    onDrop: { item in
-//                        print("ItemDropFallbackModifier: onDrop \(item)")
 //                    }
 //                )
 //            )

@@ -312,7 +312,7 @@ final class ToolState: ObservableObject {
     }
     
     func toggleTool(_ tool: ExcalidrawTool) async throws {
-        logger.info("Toggle tool: \(String(describing: tool))")
+        logger.debug("Toggle tool: \(String(describing: tool))")
         switch tool {
             case .webEmbed:
                 try await self.excalidrawWebCoordinator?.toggleToolbarAction(tool: .webEmbed)

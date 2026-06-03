@@ -7,6 +7,9 @@
 
 import SwiftUI
 import CoreData
+import Logging
+
+private let temporaryGroupMenuLogger = Logger(label: "TemporaryGroupContextMenu")
 
 struct TemporaryGroupMenuItems: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -91,7 +94,7 @@ struct TemporaryGroupMenuItems: View {
                         )
                     await AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
                 } catch {
-                    print("Warning: Failed to delete AI conversations for temporary file \(file): \(error)")
+                    temporaryGroupMenuLogger.warning("Failed to delete AI conversations for temporary file \(file): \(error)")
                 }
             }
         }
@@ -134,7 +137,7 @@ struct TemporaryGroupMenuItems: View {
                                 to: newScope
                             )
                         } catch {
-                            print("Warning: Failed to rebind AI conversations for saved temporary file: \(error)")
+                            temporaryGroupMenuLogger.warning("Failed to rebind AI conversations for saved temporary file: \(error)")
                         }
                     }
                     if file == currentFileURL {

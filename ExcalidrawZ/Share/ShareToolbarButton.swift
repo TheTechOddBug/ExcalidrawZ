@@ -143,7 +143,6 @@ struct ShareToolbarButton: View {
                         data: content,
                         id: file.id?.uuidString
                     )
-                    print("[DEBUG] performShareFile", excalidrawFile.elements.count)
                     self.shareFileState.currentSharedFile = excalidrawFile
                 case .localFile(let url):
                     if case .localFolder(let folder) = fileState.currentActiveGroup {

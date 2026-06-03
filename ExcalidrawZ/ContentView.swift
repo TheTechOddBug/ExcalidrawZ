@@ -9,7 +9,6 @@ import SwiftUI
 import CoreData
 import CloudKit
 import Combine
-import Logging
 
 import ChocofordUI
 import ChocofordEssentials
@@ -32,8 +31,6 @@ struct ContentView: View {
     @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
     
     @AppStorage("DisableCloudSync") var isICloudDisabled: Bool = false
-    
-    let logger = Logger(label: "ContentView")
     
     @State private var hideContent: Bool = false
     
@@ -113,7 +110,6 @@ struct ContentView: View {
             // the latest from that file's bin.
             .task(id: fileState.currentActiveFile?.id) {
                 let activeFileID = fileState.currentActiveFile?.id
-                print("[AIChatDiag] ContentView.task(id:) fired with id=\(activeFileID ?? "nil")")
                 if activeFileID != nil {
                     try? await Task.sleep(nanoseconds: 350_000_000)
                     guard !Task.isCancelled,

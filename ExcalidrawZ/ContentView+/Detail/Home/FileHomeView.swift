@@ -279,9 +279,7 @@ struct FileHomeView<HomeGroup: ExcalidrawGroup>: View {
             // Not working
             Color.clear
                 .contentShape(Rectangle())
-                .onTapGesture {
-                    print("On Tap")
-                }
+                .onTapGesture {}
         }
     }
     

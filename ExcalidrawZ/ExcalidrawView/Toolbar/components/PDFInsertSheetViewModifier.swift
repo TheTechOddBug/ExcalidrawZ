@@ -64,24 +64,22 @@ struct PDFInsertSheetViewModifier: ViewModifier {
         switch mode {
         case .viewer:
             // Insert as PDF viewer element
-            let fileId = try await toolState.excalidrawWebCoordinator?.loadPDF(
+            _ = try await toolState.excalidrawWebCoordinator?.loadPDF(
                 pdfData: pdfData,
                 x: sceneX ?? 100,
                 y: sceneY ?? 100,
                 width: 600,
                 height: 800
             )
-            print("PDF loaded with fileId: \(fileId ?? "nil")")
 
         case .tiled:
             // Insert as tiled images with user-configured layout
-            let fileIds = try await toolState.excalidrawWebCoordinator?.loadPDFAsTiledImages(
+            _ = try await toolState.excalidrawWebCoordinator?.loadPDFAsTiledImages(
                 pdfData: pdfData,
                 imageWidth: 400,
                 direction: direction,
                 itemsPerLine: itemsPerLine
             )
-            print("PDF loaded as tiled images with \(fileIds?.count ?? 0) pages")
         }
     }
 }

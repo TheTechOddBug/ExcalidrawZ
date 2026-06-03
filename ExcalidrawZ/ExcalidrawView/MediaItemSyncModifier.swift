@@ -74,7 +74,7 @@ struct MediaItemSyncModifier: ViewModifier {
             // Check if MediaItem count has changed
             let currentCount = await getCurrentMediaItemCount()
             if currentCount != lastKnownMediaItemCount {
-                logger.info("MediaItem count changed: \(lastKnownMediaItemCount) -> \(currentCount), triggering refresh...")
+                logger.debug("MediaItem count changed: \(lastKnownMediaItemCount) -> \(currentCount), triggering refresh")
                 lastKnownMediaItemCount = currentCount
 
                 // Trigger MediaItem re-injection

@@ -164,7 +164,6 @@ actor AIConversationRepository {
             fetchRequest.relationshipKeyPathsForPrefetching = ["messages"]
 
             let rows = try context.fetch(fetchRequest)
-            print("[AIChatDiag] repo.fetchConversationSnapshots(scope=\(scope.kind.rawValue):\(scope.id)) -> \(rows.count) Core Data rows")
             return rows.map { row in
                 let messageSet = row.messages as? Set<AIConversationMessage> ?? []
                 let messageSnapshots = messageSet
@@ -218,13 +217,12 @@ actor AIConversationRepository {
             fetchRequest.fetchLimit = 1
 
             guard let conversation = try context.fetch(fetchRequest).first else {
-                print("[AIChatDiag] repo.bindConversationToFileScope: conversation \(conversationID) NOT FOUND in Core Data")
+                self.logger.warning("Cannot bind missing AI conversation \(conversationID) to \(scope.kind.rawValue):\(scope.id)")
                 throw AppError.fileError(.notFound)
             }
             conversation.fileScopeKind = scope.kind.rawValue
             conversation.fileScopeID = scope.id
             try context.save()
-            print("[AIChatDiag] repo.bindConversationToFileScope: bound \(conversationID) -> \(scope.kind.rawValue):\(scope.id)")
         }
     }
 

@@ -38,14 +38,14 @@ extension ExcalidrawCore: WKNavigationDelegate {
     }
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        logger.info("didFinish - URL: \(webView.url?.absoluteString ?? "nil"), hasInjectIndexedDBData: \(self.hasInjectIndexedDBData)")
+        logger.debug("didFinish - URL: \(webView.url?.absoluteString ?? "nil"), hasInjectIndexedDBData: \(self.hasInjectIndexedDBData)")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.isNavigating = false
             Task {
                 do {
                     // Use the extracted injection method
                     let injectedCount = try await self.injectAllMediaItems()
-                    self.logger.info("Injected \(injectedCount) MediaItems on initial load")
+                    self.logger.debug("Injected \(injectedCount) MediaItems on initial load")
                     
                     try await Task.sleep(nanoseconds: UInt64(1e+9 * 0.3))
                     
@@ -79,7 +79,7 @@ extension ExcalidrawCore: WKNavigationDelegate {
     }
     
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        logger.info("didCommit...")
+        logger.debug("didCommit")
         self.parent?.loadingState = .loading
         DispatchQueue.main.async {
             self.isNavigating = true
@@ -88,7 +88,7 @@ extension ExcalidrawCore: WKNavigationDelegate {
     }
     
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        logger.info("didStartProvisionalNavigation...")
+        logger.debug("didStartProvisionalNavigation")
         self.parent?.loadingState = .loading
         DispatchQueue.main.async {
             self.isNavigating = true

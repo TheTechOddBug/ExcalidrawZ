@@ -7,6 +7,9 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import Logging
+
+private let libraryImportLogger = Logger(label: "LibraryImport")
 
 extension Notification.Name {
     static let shouldImportExternalLibraryFile = Notification.Name("ShouldImportExternalLibraryFile")
@@ -109,7 +112,7 @@ func handleDropExcalidrawLibrary(providers: [NSItemProvider]) {
                 )
             }
         } catch {
-            print(error)
+            libraryImportLogger.warning("Failed to import dropped library: \(error)")
         }
     }
 }

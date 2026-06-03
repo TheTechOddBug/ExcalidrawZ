@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import Logging
 import ChocofordUI
 import SFSafeSymbols
+
+private let fileCheckpointRowLogger = Logger(label: "FileCheckpointRowView")
 
 struct FileCheckpointRowView<Checkpoint: FileCheckpointRepresentable>: View {
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
@@ -33,7 +36,7 @@ struct FileCheckpointRowView<Checkpoint: FileCheckpointRepresentable>: View {
                         self.file = file
                     }
                 } catch {
-                    print(error)
+                    fileCheckpointRowLogger.warning("Failed to load checkpoint metadata: \(error)")
                 }
             }
     }

@@ -41,7 +41,7 @@ extension ExcalidrawCore: WKScriptMessageHandler {
                     DispatchQueue.main.async {
                         self.isDocumentLoaded = true
                     }
-                    logger.info("onload")
+                    logger.debug("onload")
                 case .legacyNoop:
                     break
                 case .stateChanged(let message):
@@ -243,8 +243,7 @@ extension ExcalidrawCore {
     }
     
     func handleBlobData(_ data: Data) throws {
-        let json = try JSONSerialization.jsonObject(with: data)
-        dump(json)
+        _ = try JSONSerialization.jsonObject(with: data)
     }
     
     func handleCopy(_ data: [WebClipboardItem]) throws {
@@ -270,8 +269,7 @@ extension ExcalidrawCore {
                         )),
                         options: [.ignoreUnknownCharacters]
                     ) {
-                        let success = pasteboard.setData(data, forType: .png)
-                        print(success)
+                        pasteboard.setData(data, forType: .png)
                     } else {
                         pasteboard.setString(string, forType: .png)
                     }
