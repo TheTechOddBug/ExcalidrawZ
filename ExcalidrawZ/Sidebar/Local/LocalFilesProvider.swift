@@ -65,8 +65,8 @@ struct LocalFilesProvider<Content: View>: View {
     var body: some View {
         content(files, updateFlags)
             .bindWindow($window)
-            .watch(value: folder.url) { newValue in
-                DispatchQueue.main.async { getFolderContents() }
+            .task(id: folderContentsLoadID) {
+                getFolderContents()
             }
 #if os(macOS)
             .onReceive(
@@ -118,6 +118,10 @@ struct LocalFilesProvider<Content: View>: View {
                     fileState.setActiveFile(nil)
                 }
             }
+    }
+
+    private var folderContentsLoadID: String {
+        folder.url?.filePath ?? folder.objectID.uriRepresentation().absoluteString
     }
     
     private func getFolderContents() {
