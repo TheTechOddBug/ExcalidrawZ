@@ -458,7 +458,7 @@ final class FileState: ObservableObject {
     private func recoverWatchUpdate() {
         recoverWatchUpdateWorkItem?.cancel()
         recoverWatchUpdateWorkItem = DispatchWorkItem(flags: .assignCurrentContext) {
-            if self.excalidrawWebCoordinator?.isLoading == true {
+            if self.activeCanvasIsLoading {
                 self.recoverWatchUpdate()
                 return
             }
@@ -467,6 +467,14 @@ final class FileState: ObservableObject {
             self.didUpdateFile = false
         }
         stateUpdateQueue.asyncAfter(deadline: .now().advanced(by: .milliseconds(2500)), execute: recoverWatchUpdateWorkItem!)
+    }
+
+    private var activeCanvasIsLoading: Bool {
+        if case .collaborationFile = currentActiveFile {
+            let coreIsLoading = excalidrawCollaborationWebCoordinator?.isLoading == true
+            return coreIsLoading || activeCollaborationFileIsLoading
+        }
+        return excalidrawWebCoordinator?.isLoading == true
     }
     
     @discardableResult
@@ -692,31 +700,29 @@ final class FileState: ObservableObject {
     }
     
     
-    func updateCurrentCollaborationFile(with excalidrawFile: ExcalidrawFile) {
+    func updateCollaborationFile(_ file: CollaborationFile, with excalidrawFile: ExcalidrawFile) {
         guard !shouldIgnoreUpdate else { return }
-        let didUpdateFile = didUpdateFile
-        let id = excalidrawFile.id
-        let context = PersistenceController.shared.newTaskContext()
-        
+        let activeFile = ActiveFile.collaborationFile(file)
+        let didUpdateFile = didUpdateFileState[activeFile] ?? false
+        let fileObjectID = file.objectID
+        self.didUpdateFileState[activeFile] = true
+
         Task.detached {
             do {
-                // Step 1: Get collaboration file objectID and update roomID
-                let fileObjectID = try await context.perform {
-                    let fetchRequest = NSFetchRequest<CollaborationFile>(entityName: "CollaborationFile")
-                    fetchRequest.predicate = NSPredicate(format: "id = %@", id as CVarArg)
-                    
-                    guard let file = try context.fetch(fetchRequest).first else {
-                        throw AppError.fileError(.contentNotAvailable(filename: excalidrawFile.name ?? String(localizable: .generalUnknown)))
+                let context = PersistenceController.shared.newTaskContext()
+
+                // Step 1: Update roomID
+                try await context.perform {
+                    guard let file = context.object(with: fileObjectID) as? CollaborationFile else {
+                        throw AppError.fileError(.notFound)
                     }
-                    
+
                     // Update roomID
                     file.roomID = excalidrawFile.roomID
-                    
+
                     try context.save()
-                    
-                    return file.objectID
                 }
-                
+
                 // Sync media items from ExcalidrawFile (creates new ones and saves to iCloud Drive)
                 _ = try await PersistenceController.shared.mediaItemRepository.syncMediaItemsForCollaborationFile(
                     excalidrawFile: excalidrawFile,

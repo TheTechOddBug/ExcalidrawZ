@@ -668,7 +668,7 @@ extension ExcalidrawCore {
 
     struct ExcalidrawState: Codable {
         let showWelcomeScreen: Bool
-        let theme, currentChartType, currentItemBackgroundColor, currentItemEndArrowhead: String
+        let theme, currentItemBackgroundColor, currentItemEndArrowhead: String
         let currentItemFillStyle: String
         let currentItemFontFamily: FontFamily
         let currentItemFontSize, currentItemOpacity, currentItemRoughness: Int
@@ -697,7 +697,7 @@ extension ExcalidrawCore {
 //        let selectedLinearElement: JSONNull?
 
         enum CodingKeys: String, CodingKey {
-            case showWelcomeScreen, theme, currentChartType, currentItemBackgroundColor, currentItemEndArrowhead, currentItemFillStyle, currentItemFontFamily, currentItemFontSize, currentItemOpacity, currentItemRoughness, currentItemStrokeColor, currentItemRoundness, currentItemStrokeStyle, currentItemStrokeWidth, currentItemTextAlign, cursorButton
+            case showWelcomeScreen, theme, currentItemBackgroundColor, currentItemEndArrowhead, currentItemFillStyle, currentItemFontFamily, currentItemFontSize, currentItemOpacity, currentItemRoughness, currentItemStrokeColor, currentItemRoundness, currentItemStrokeStyle, currentItemStrokeWidth, currentItemTextAlign, cursorButton
             
             case activeTool, penMode, penDetected, exportBackground, exportScale, exportEmbedScene, exportWithDarkMode, defaultSidebarDockedPreference, lastPointerDownWith, name
             case previousSelectedElementIDS = "previousSelectedElementIds"
