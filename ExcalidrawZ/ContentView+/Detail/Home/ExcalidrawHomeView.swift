@@ -180,56 +180,60 @@ struct ExcalidrawHomeView: View {
                 updateLastHomeType()
             }
         }
-        .watch(value: fileState.currentActiveGroup) { _, newValue in
-            switch newValue {
-                case .group(let newValue):
-                    if currentGroups.isEmpty {
-                        initCurrentGroups()
-                    } else if currentGroups.contains(newValue) {
-                        let index = currentGroups.firstIndex(of: newValue)!
-                        withAnimation(.smooth(duration: 0.4)) {
-                            currentGroups = Array(currentGroups.prefix(upTo: index + 1))
-                        }
-                    } else {
-                        isTransitioning = true
-                        DispatchQueue.main.async {
-                            withAnimation(.smooth(duration: 0.4)) {
-                                currentGroups.append(newValue)
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                isTransitioning = false
-                            }
-                        }
-                    }
-                    
-                case .localFolder(let newValue):
-                    if currentFolders.isEmpty {
-                        initCurrentGroups()
-                    } else if currentFolders.contains(newValue) {
-                        let index = currentFolders.firstIndex(of: newValue)!
-                        withAnimation(.smooth(duration: 0.4)) {
-                            currentFolders = Array(currentFolders.prefix(upTo: index + 1))
-                        }
-                    } else {
-                        isTransitioning = true
-                        DispatchQueue.main.async {
-                            withAnimation(.smooth(duration: 0.4)) {
-                                currentFolders.append(newValue)
-                            }
-                            
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                isTransitioning = false
-                            }
-                        }
-                    }
-                    
-                default:
-                    currentGroups.removeAll()
-            }
+        .watch(value: fileState.currentActiveGroup, initial: true) { _, newValue in
+            handleActiveGroupChanged(newValue)
+        }
+    }
 
-            if fileState.currentActiveFile == nil {
-                updateLastHomeType()
-            }
+    private func handleActiveGroupChanged(_ newValue: FileState.ActiveGroup?) {
+        switch newValue {
+            case .group(let newValue):
+                if currentGroups.isEmpty {
+                    initCurrentGroups()
+                } else if currentGroups.contains(newValue) {
+                    let index = currentGroups.firstIndex(of: newValue)!
+                    withAnimation(.smooth(duration: 0.4)) {
+                        currentGroups = Array(currentGroups.prefix(upTo: index + 1))
+                    }
+                } else {
+                    isTransitioning = true
+                    DispatchQueue.main.async {
+                        withAnimation(.smooth(duration: 0.4)) {
+                            currentGroups.append(newValue)
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            isTransitioning = false
+                        }
+                    }
+                }
+
+            case .localFolder(let newValue):
+                if currentFolders.isEmpty {
+                    initCurrentGroups()
+                } else if currentFolders.contains(newValue) {
+                    let index = currentFolders.firstIndex(of: newValue)!
+                    withAnimation(.smooth(duration: 0.4)) {
+                        currentFolders = Array(currentFolders.prefix(upTo: index + 1))
+                    }
+                } else {
+                    isTransitioning = true
+                    DispatchQueue.main.async {
+                        withAnimation(.smooth(duration: 0.4)) {
+                            currentFolders.append(newValue)
+                        }
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            isTransitioning = false
+                        }
+                    }
+                }
+
+            default:
+                currentGroups.removeAll()
+        }
+
+        if fileState.currentActiveFile == nil {
+            updateLastHomeType()
         }
     }
     

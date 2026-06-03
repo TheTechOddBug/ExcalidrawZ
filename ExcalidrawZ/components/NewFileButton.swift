@@ -67,7 +67,6 @@ struct NewFileButton: View {
                         do {
                             try await fileState.importFiles(urls)
                         } catch {
-                            print(error)
                             await alertToast(error)
                         }
                     }
@@ -85,7 +84,7 @@ struct NewFileButton: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func localNewButton() -> some View {
         Menu {
             Button {
@@ -137,7 +136,7 @@ struct NewFileButton: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func collaborationNewButton() -> some View {
         Menu {
             Button {

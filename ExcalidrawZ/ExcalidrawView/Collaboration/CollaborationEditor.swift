@@ -35,6 +35,8 @@ struct CollaborationEditor: View {
     @State private var isProgressViewPresented = true
 
     @State private var excalidrawFile: ExcalidrawFile?
+    @State private var loadedContent: Data?
+    @State private var loadedRoomID: String?
 
     var body: some View {
         ZStack {
@@ -80,7 +82,9 @@ struct CollaborationEditor: View {
                 }
                 .onChange(of: excalidrawFile, throttle: 1.0, latest: true) { newValue in
                     guard let newValue, loadingState == .loaded else { return }
-                    fileState.updateCurrentCollaborationFile(with: newValue)
+                    guard let content = newValue.content else { return }
+                    guard content != loadedContent || newValue.roomID != loadedRoomID else { return }
+                    fileState.updateCollaborationFile(file, with: newValue)
                 }
             }
             
@@ -130,8 +134,9 @@ struct CollaborationEditor: View {
                 excalidrawFile.roomID = file.roomID
                 try await excalidrawFile.syncFiles(context: viewContext)
                 await MainActor.run {
+                    self.loadedContent = excalidrawFile.content ?? content
+                    self.loadedRoomID = excalidrawFile.roomID
                     self.excalidrawFile = excalidrawFile
-                    fileState.updateCurrentCollaborationFile(with: excalidrawFile)
                 }
             } catch {
                 // Fallback to empty file if loading fails
@@ -140,6 +145,8 @@ struct CollaborationEditor: View {
                 excalidrawFile.roomID = file.roomID
                 try? await excalidrawFile.syncFiles(context: viewContext)
                 await MainActor.run {
+                    self.loadedContent = excalidrawFile.content
+                    self.loadedRoomID = excalidrawFile.roomID
                     self.excalidrawFile = excalidrawFile
                 }
                 alertToast(error)

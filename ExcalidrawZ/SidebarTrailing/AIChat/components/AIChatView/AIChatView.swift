@@ -58,11 +58,6 @@ struct AIChatView: View {
     /// even if the user clears all chats from the More menu.
     @State var hasDismissedWelcome: Bool = false
     @State var isShowingWelcomeManually: Bool = false
-
-    #if DEBUG
-    @ObservedObject var aiChatRenderDebug = AIChatRenderDebug.state
-    #endif
-
     /// Show the welcome cover when no conversations exist anywhere yet AND
     /// the user hasn't already dismissed it. We treat `nil` (cache not
     /// loaded) as "don't show yet" — flashing the welcome before LLMKit
@@ -121,10 +116,17 @@ struct AIChatView: View {
         AIChatAvailability.isAvailable
     }
 
+    @MainActor
+    func activeFileAllowsAIContext() async -> Bool {
+        guard let activeFile = fileState.currentActiveFile else { return false }
+        guard prefs.allowsFileAccess(for: activeFile) else { return false }
+        return await LockedContentAIGuard.canAIRead(activeFile: activeFile)
+    }
+
     var shouldBlockAIForPreference: Bool {
         !prefs.isAIEnabled
     }
-    
+
     var body: some View {
         let _ = AIChatRenderDebug.hit("AIChatView.body")
 
@@ -349,6 +351,10 @@ struct AIChatView: View {
         // Cancel any in-flight stream so its trailing message commit
         // doesn't land in a just-cleared conversation.
         llmState.cancelGeneration(conversationID: id)
+        aiChatState.clearTransientError(for: id)
+        aiChatState.clearGenerationCancellation(for: id)
+        aiChatState.unmarkCompacting(conversationID: id)
+        aiChatState.cancelEditing(conversationID: id)
         Task {
             do {
                  try await llmState.clearConversation(id)

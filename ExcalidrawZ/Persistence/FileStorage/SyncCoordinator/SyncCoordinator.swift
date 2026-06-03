@@ -220,7 +220,7 @@ actor SyncCoordinator {
         isSyncing = true
         
         if initialCount > 1 {
-            logger.info("Processing \(initialCount) queued sync operations")
+            logger.debug("Processing \(initialCount) queued sync operations")
         }
         
         var processedCount = 0
@@ -273,7 +273,7 @@ actor SyncCoordinator {
         }
         
         if initialCount > 1 || failedCount > 0 {
-            logger.info("Completed processing: \(processedCount) total, \(failedCount) failed and re-queued")
+            logger.debug("Completed processing: \(processedCount) total, \(failedCount) failed and re-queued")
         }
         
         // Release the lock before checking for more work

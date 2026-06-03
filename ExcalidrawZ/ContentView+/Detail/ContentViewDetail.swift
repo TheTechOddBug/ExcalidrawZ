@@ -34,7 +34,6 @@ struct ContentViewDetail: View {
     private func applyToolStateWebCoordinator() {
         // TODO: Not Good Enough
 //        DispatchQueue.main.async {
-//            print("=-=-=-=-=-=", fileState.excalidrawWebCoordinator, fileState.excalidrawCollaborationWebCoordinator)
 //            if fileState.currentCollaborationFile != nil {
 //                toolState.excalidrawWebCoordinator = fileState.excalidrawCollaborationWebCoordinator
 //            } else {
@@ -43,7 +42,7 @@ struct ContentViewDetail: View {
 //        }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func splitViewsContent() -> some View {
         if #available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *), false {
             ExcalidrawSplitViewsContainer()
@@ -87,4 +86,3 @@ struct ExcalidrawSplitViewsContainer: View {
         EmptyView()
     }
 }
-

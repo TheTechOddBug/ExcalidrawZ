@@ -7,6 +7,9 @@
 
 import SwiftUI
 import WebKit
+import Logging
+
+private let svgPreviewLogger = Logger(label: "SVGPreviewWebView")
 
 #if DEV
 
@@ -126,7 +129,7 @@ extension SVGPreviewWebView {
                         self.contentSize = CGSize(width: arr[0], height: arr[1])
                     }
                 } else if let error = error {
-                    print("Error evaluating JavaScript: \(error)")
+                    svgPreviewLogger.warning("Failed to evaluate SVG preview JavaScript: \(error)")
                 }
             }
         }

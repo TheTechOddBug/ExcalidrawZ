@@ -20,7 +20,7 @@ struct ProminentButtonModifier: ViewModifier {
 }
 
 extension View {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func prominentButtonStyle() -> some View {
         modifier(ProminentButtonModifier())
     }
@@ -147,7 +147,7 @@ struct ModernButtonStyleModifier: ViewModifier {
 
 
 extension View {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func modernButtonStyle(
         style: ModernButtonStyleModifier.Style? = nil,
         size: ModernButtonStyleModifier.Size? = nil,

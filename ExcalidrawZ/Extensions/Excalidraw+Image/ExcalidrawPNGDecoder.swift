@@ -48,7 +48,6 @@ class ExcalidrawPNGDecoder: ExcalidrawImageDecoder {
                 let decoded = try self.decodeEncodedData(data: textData)
                 
                 if let data = decoded.data(using: .utf8) {
-//                    print(try? JSONSerialization.jsonObject(with: data))
                     return try ExcalidrawFile(data: data)
                 }
                 
@@ -58,7 +57,6 @@ class ExcalidrawPNGDecoder: ExcalidrawImageDecoder {
                 }
             }
         } catch {
-            print(error)
             return nil
         }
         
@@ -129,7 +127,6 @@ extension ExcalidrawPNGDecoder {
                 if byte != 0 {
                     text.append(Character(UnicodeScalar(byte)))
                 } else {
-                    print("Error: Invalid NULL character found. 0x00 character is not permitted in tEXt content")
                     return nil
                 }
             }

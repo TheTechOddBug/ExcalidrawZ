@@ -39,14 +39,8 @@ struct CreateRoomSheetView: View {
                     Text(.localizable(.generalButtonCancel))
                         .frame(width: 60)
                 }
-                
-//                if #available(macOS 13.0, *) {
-//                    menuButton()
-//                        .menuStyle(.button)
-//                } else {
-//                    menuButton()
-//                        .menuStyle(.borderedButton)
-//                }
+                .modernButtonStyle(style: .glass, shape: .modern)
+
                 Button {
                     dismiss()
                     onCreate(name, true)
@@ -54,7 +48,7 @@ struct CreateRoomSheetView: View {
                     Text(.localizable(.generalButtonCreate))
                         .frame(width: 60)
                 }
-                .buttonStyle(.borderedProminent)
+                .modernButtonStyle(style: .glassProminent, shape: .modern)
             }
         }
         .padding()
@@ -63,33 +57,5 @@ struct CreateRoomSheetView: View {
                 name = String(localizable: .collaborationCreateRoomSheetDefaultRoomName(collaborationState.userCollaborationInfo.username))
             }
         }
-    }
-    
-    @MainActor @ViewBuilder
-    private func menuButton() -> some View {
-        Menu {
-            Button {
-                dismiss()
-                onCreate(name, false)
-            } label: {
-                Text("Create from a file")
-            }
-            Button {
-                dismiss()
-                onCreate(name, true)
-            } label: {
-                Text("Create a blank room")
-            }
-        } label: {
-            Text("Create")
-                .frame(width: 60)
-        } primaryAction: {
-            dismiss()
-            onCreate(name, true)
-        }
-        .buttonStyle(.borderedProminent)
-        .fixedSize()
-        .disabled(name.isEmpty)
-        .tint(.accent)
     }
 }

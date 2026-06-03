@@ -223,9 +223,7 @@ extension Color {
             ColorButtonGroup(
                 colors: ColorPalette.strokeQuickPicks,
                 selectedColor: "#e03131"
-            ) { color in
-                print("Selected stroke color: \(color)")
-            }
+            ) { _ in }
         }
         
         VStack(alignment: .leading, spacing: 8) {
@@ -236,9 +234,7 @@ extension Color {
             ColorButtonGroup(
                 colors: ColorPalette.backgroundQuickPicks,
                 selectedColor: "transparent"
-            ) { color in
-                print("Selected background color: \(color)")
-            }
+            ) { _ in }
         }
     }
     .padding()

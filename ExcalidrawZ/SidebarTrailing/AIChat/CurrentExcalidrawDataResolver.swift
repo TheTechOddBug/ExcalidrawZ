@@ -13,11 +13,13 @@ enum CurrentExcalidrawDataResolver {
         fileState: FileState,
         canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget
     ) async throws -> Data? {
+        let currentFileID = currentFileID(from: fileState.currentActiveFile)
         let storedContent = try await storedContent(from: fileState)
 
         if let liveContent = try await resolveLiveSnapshot(
             canvasTarget: canvasTarget,
-            baseContent: storedContent
+            baseContent: storedContent,
+            currentFileID: currentFileID
         ) {
             return liveContent
         }
@@ -28,23 +30,39 @@ enum CurrentExcalidrawDataResolver {
     @MainActor
     static func resolveLiveSnapshot(
         canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget,
-        baseContent: Data?
+        baseContent: Data?,
+        currentFileID: UUID? = nil
     ) async throws -> Data? {
-        guard let coordinator = ExcalidrawCoordinatorRegistry.shared.coordinator(for: canvasTarget) else {
-            return baseContent
+        try await LockedContentAIGuard.ensureAIReadable(
+            canvasTarget: canvasTarget,
+            currentFileID: currentFileID
+        )
+        let coordinator = try await ExcalidrawCoordinatorRegistry.shared.resolvedCoordinator(for: canvasTarget)
+        let resolvedBaseContent = resolvedBaseContent(for: canvasTarget, provided: baseContent)
+        guard let coordinator else {
+            return resolvedBaseContent
         }
 
         let snapshot = try await coordinator.getCurrentFileSnapshot()
         if let snapshotData = snapshot.dataString.data(using: .utf8) {
-            return try mergeLiveSceneData(snapshotData, into: baseContent)
+            return try mergeLiveSceneData(snapshotData, into: resolvedBaseContent)
         }
 
-        return baseContent
+        return resolvedBaseContent
     }
 
+    private static func resolvedBaseContent(
+        for canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget,
+        provided baseContent: Data?
+    ) -> Data? {
+        baseContent ?? (canvasTarget.targetsProposalCanvas ? AIProposalSandbox.blankFileData() : nil)
+    }
+
+    @MainActor
     private static func storedContent(from fileState: FileState) async throws -> Data? {
         switch fileState.currentActiveFile {
             case .file(let file):
+                try await LockedContentAIGuard.ensureAIReadable(fileObjectID: file.objectID)
                 if let content = file.content {
                     return content
                 }
@@ -57,11 +75,19 @@ enum CurrentExcalidrawDataResolver {
                 return try await room.loadContent()
 
             case .localFile(let url), .temporaryFile(let url):
-                return try await FileCoordinator.shared.coordinatedRead(url: url)
+                return try await FileSyncCoordinator.shared.openFile(url)
 
             default:
                 return nil
         }
+    }
+
+    @MainActor
+    private static func currentFileID(from activeFile: FileState.ActiveFile?) -> UUID? {
+        if case .file(let file) = activeFile {
+            return file.id
+        }
+        return nil
     }
 
     private static func mergeLiveSceneData(_ sceneData: Data, into baseData: Data?) throws -> Data {

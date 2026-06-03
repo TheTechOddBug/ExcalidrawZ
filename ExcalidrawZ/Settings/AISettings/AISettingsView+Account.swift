@@ -15,7 +15,7 @@ import UIKit
 #endif
 
 extension AISettingsView {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var aiAccountHeader: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(localizable: .settingsAIAccountTitle)
@@ -28,14 +28,14 @@ extension AISettingsView {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var aiAccountRows: some View {
         HStack {
             Text(localizable: .settingsAIAccountProviderLabel)
             Spacer(minLength: 16)
 
             if let provider = aiUserInfo?.identity.provider {
-                Text(provider)
+                Text(aiIdentityProviderDisplayName(provider))
                     .foregroundStyle(.secondary)
             } else if isLoadingAIUserInfo {
                 Text(localizable: .generalLoading)
@@ -88,6 +88,23 @@ extension AISettingsView {
     var aiAccountID: String? {
         guard let identity = aiUserInfo?.identity else { return nil }
         return (identity.userId ?? identity.id).uuidString
+    }
+
+    func aiIdentityProviderDisplayName(_ provider: String) -> String {
+        switch provider {
+            case "anonID":
+                return "Anonymous"
+            case "device":
+                return "Device"
+            case "appStore":
+                return "App Store"
+            case "weixinMiniProgram":
+                return "Weixin Mini Program"
+            default:
+                return provider
+                    .replacingOccurrences(of: "([a-z0-9])([A-Z])", with: "$1 $2", options: .regularExpression)
+                    .capitalized
+        }
     }
 
     @MainActor

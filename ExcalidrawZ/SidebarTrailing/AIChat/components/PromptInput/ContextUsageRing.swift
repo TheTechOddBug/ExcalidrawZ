@@ -67,6 +67,7 @@ struct ContextUsageRing: View {
                     .frame(width: 12, height: 12)
                     .contentShape(Rectangle())
                 }
+                .frame(width: 18, height: 18)
                 .help(helpText)
                 .accessibilityLabel(String(localizable: .aiChatContextUsageTitle))
                 .accessibilityValue(Text(helpText))

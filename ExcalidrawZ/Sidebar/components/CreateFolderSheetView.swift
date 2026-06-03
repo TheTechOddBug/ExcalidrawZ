@@ -15,6 +15,7 @@ struct CreateFolderModifier: ViewModifier {
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
     @Environment(\.alertToast) private var alertToast
     @EnvironmentObject var fileState: FileState
+    @EnvironmentObject private var localFolderState: LocalFolderState
     
 
     @Binding var isPresented: Bool
@@ -48,13 +49,13 @@ struct CreateFolderModifier: ViewModifier {
                     createFolderSheetView()
                 }
             }
-            .watch(value: parentFolderID) { newValue in
-                guard let newValue else { return }
-                self.parentFolder = viewContext.object(with: newValue) as? LocalFolder
+            .task(id: parentFolderID) {
+                guard let parentFolderID else { return }
+                parentFolder = viewContext.object(with: parentFolderID) as? LocalFolder
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func createFolderSheetView() -> some View {
         CreateGroupSheetView(
             name: $initialNewGroupName,
@@ -62,7 +63,8 @@ struct CreateFolderModifier: ViewModifier {
         ) { name in
             do {
                 let context = viewContext
-                guard let url = parentFolder?.url else {
+                guard let parentFolder,
+                      let url = parentFolder.url else {
                     struct URLNotFoundError: Error {}
                     throw URLNotFoundError()
                 }
@@ -75,14 +77,17 @@ struct CreateFolderModifier: ViewModifier {
                     }
                     throw FolderAlreadyExistsError()
                 }
+
+                try parentFolder.withSecurityScopedURL { scopedURL in
+                    try FileManager.default.createDirectory(
+                        at: scopedURL.appendingPathComponent(name, conformingTo: .directory),
+                        withIntermediateDirectories: false
+                    )
+                }
                 
-                try FileManager.default.createDirectory(
-                    at: newURL,
-                    withIntermediateDirectories: false
-                )
-                
-                let newFolder = try LocalFolder(url: newURL, context: context)
-                newFolder.parent = parentFolder
+                try parentFolder.refreshChildren(context: context)
+                localFolderState.objectWillChange.send()
+                localFolderState.refreshFilesPublisher.send()
             } catch {
                 alertToast(error)
             }

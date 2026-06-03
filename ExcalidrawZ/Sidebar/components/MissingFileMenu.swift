@@ -10,6 +10,9 @@ import CoreData
 import SFSafeSymbols
 import AlertToast
 import ChocofordUI
+import Logging
+
+private let missingFileMenuLogger = Logger(label: "MissingFileMenu")
 
 struct MissingFileMenuProvider: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -518,7 +521,7 @@ struct CheckpointRowView: View {
                     self.isLoading = false
                 }
             } catch {
-                print("Failed to load checkpoint data:", error)
+                missingFileMenuLogger.warning("Failed to load checkpoint data: \(error)")
                 await MainActor.run {
                     self.isLoading = false
                 }

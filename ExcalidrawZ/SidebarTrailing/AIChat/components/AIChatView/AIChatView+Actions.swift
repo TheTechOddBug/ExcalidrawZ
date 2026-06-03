@@ -252,35 +252,50 @@ extension AIChatView {
         aiChatState.clearTransientError(for: id)
         aiChatState.clearGenerationCancellation(for: id)
         aiActionTask?.cancel()
+        let preferredInteractionMode = prefs.interactionMode(for: fileState.currentActiveFile)
         aiActionTask = Task {
             var attemptedModel: SupportedModel?
             do {
                 guard AIChatAvailability.canUseAI else { throw CancellationError() }
                 let model = try await retryModel(conversationID: id)
                 attemptedModel = model
+                let canIncludeActiveFileContext = await activeFileAllowsAIContext()
+                let invocationPlan = AIChatInvocationPlan.make(
+                    fileState: fileState,
+                    preferredInteractionMode: preferredInteractionMode,
+                    includesCurrentFileContext: canIncludeActiveFileContext
+                )
                 try await refreshConversationToolsIfNeeded(
                     conversationID: id,
-                    model: model
-                )
-                guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                let context = try await makeInvocationContext(model: model)
-                let metadata = await makeTransactionMetadata(
-                    conversationID: id,
-                    userMessageID: retryContent?.id ?? messageID,
-                    requestKind: .regenerateMessage,
                     model: model,
-                    context: context,
-                    attachmentCount: retryContent?.files?.count ?? 0
+                    mode: invocationPlan.interactionMode,
+                    includesCurrentFileContext: invocationPlan.includesCurrentFileContext
                 )
-                guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                try await llmState.regenerateMessage(
-                    in: id,
-                    fromMessageID: messageID,
-                    model: model,
-                    stream: true,
-                    metadata: metadata,
-                    context: context
-                )
+                try await LockedContentAIGuard.withProtectedContentAccessDenied {
+                    guard AIChatAvailability.canUseAI else { throw CancellationError() }
+                    let context = try await invocationPlan.makeContext(
+                        fileState: fileState,
+                        model: model
+                    )
+                    let metadata = await makeTransactionMetadata(
+                        conversationID: id,
+                        userMessageID: retryContent?.id ?? messageID,
+                        requestKind: .regenerateMessage,
+                        model: model,
+                        invocationPlan: invocationPlan,
+                        attachmentCount: retryContent?.files?.count ?? 0,
+                        hasCurrentFileData: context.currentFileData != nil
+                    )
+                    guard AIChatAvailability.canUseAI else { throw CancellationError() }
+                    try await llmState.regenerateMessage(
+                        in: id,
+                        fromMessageID: messageID,
+                        model: model,
+                        stream: true,
+                        metadata: metadata,
+                        context: context
+                    )
+                }
             } catch {
                 await MainActor.run {
                     aiChatState.presentTransientError(
@@ -304,6 +319,7 @@ extension AIChatView {
         aiChatState.clearTransientError(for: id)
         aiChatState.clearGenerationCancellation(for: id)
         aiActionTask?.cancel()
+        let preferredInteractionMode = prefs.interactionMode(for: fileState.currentActiveFile)
         aiActionTask = Task {
             var attemptedModel: SupportedModel?
             do {
@@ -313,28 +329,42 @@ extension AIChatView {
                     preferredModel: modelOverride
                 )
                 attemptedModel = model
+                let canIncludeActiveFileContext = await activeFileAllowsAIContext()
+                let invocationPlan = AIChatInvocationPlan.make(
+                    fileState: fileState,
+                    preferredInteractionMode: preferredInteractionMode,
+                    includesCurrentFileContext: canIncludeActiveFileContext
+                )
                 try await refreshConversationToolsIfNeeded(
                     conversationID: id,
-                    model: model
-                )
-                guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                let context = try await makeInvocationContext(model: model)
-                let metadata = await makeTransactionMetadata(
-                    conversationID: id,
-                    userMessageID: retryContent?.id ?? "",
-                    requestKind: .resumeGeneration,
                     model: model,
-                    context: context,
-                    attachmentCount: retryContent?.files?.count ?? 0
+                    mode: invocationPlan.interactionMode,
+                    includesCurrentFileContext: invocationPlan.includesCurrentFileContext
                 )
-                guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                try await llmState.resumeGeneration(
-                    in: id,
-                    model: model,
-                    stream: true,
-                    metadata: metadata,
-                    context: context
-                )
+                try await LockedContentAIGuard.withProtectedContentAccessDenied {
+                    guard AIChatAvailability.canUseAI else { throw CancellationError() }
+                    let context = try await invocationPlan.makeContext(
+                        fileState: fileState,
+                        model: model
+                    )
+                    let metadata = await makeTransactionMetadata(
+                        conversationID: id,
+                        userMessageID: retryContent?.id ?? "",
+                        requestKind: .resumeGeneration,
+                        model: model,
+                        invocationPlan: invocationPlan,
+                        attachmentCount: retryContent?.files?.count ?? 0,
+                        hasCurrentFileData: context.currentFileData != nil
+                    )
+                    guard AIChatAvailability.canUseAI else { throw CancellationError() }
+                    try await llmState.resumeGeneration(
+                        in: id,
+                        model: model,
+                        stream: true,
+                        metadata: metadata,
+                        context: context
+                    )
+                }
             } catch {
                 await MainActor.run {
                     aiChatState.presentTransientError(
@@ -350,64 +380,19 @@ extension AIChatView {
         }
     }
 
-    @MainActor
-    private func makeInvocationContext(
-        model: SupportedModel
-    ) async throws -> ExcalidrawChatInvocationContext {
-        ExcalidrawCoordinatorRegistry.shared.update(
-            normal: fileState.excalidrawWebCoordinator,
-            collaboration: fileState.excalidrawCollaborationWebCoordinator
-        )
-
-        let canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget = {
-            switch fileState.currentActiveFile {
-                case .collaborationFile:
-                    .collaboration
-                default:
-                    .normal
-            }
-        }()
-
-        let coordinator: ExcalidrawCanvasView.Coordinator? = switch canvasTarget {
-            case .normal:
-                fileState.excalidrawWebCoordinator
-            case .collaboration:
-                fileState.excalidrawCollaborationWebCoordinator
-        }
-        let ids = coordinator?.selectedElementIDs ?? []
-        let selectedElementIDs = ids.isEmpty ? nil : ids
-
-        let currentFileID: UUID? = {
-            if case .file(let file) = fileState.currentActiveFile {
-                return file.id
-            }
-            return nil
-        }()
-
-        let currentFileData = try await CurrentExcalidrawDataResolver.resolve(
-            fileState: fileState,
-            canvasTarget: canvasTarget
-        )
-
-        return ExcalidrawChatInvocationContext(
-            currentFileData: currentFileData,
-            canvasTarget: canvasTarget,
-            selectedElementIDs: selectedElementIDs,
-            currentFileID: currentFileID,
-            currentModelSupportsImageInput: model.supportsExcalidrawImageInput
-        )
-    }
-
     private func makeTransactionMetadata(
         conversationID: String,
         userMessageID: String,
         requestKind: ExcalidrawAITransactionRequestKind,
         model: SupportedModel,
-        context: ExcalidrawChatInvocationContext,
-        attachmentCount: Int
+        invocationPlan: AIChatInvocationPlan,
+        attachmentCount: Int,
+        hasCurrentFileData: Bool
     ) async -> ExcalidrawAITransactionMetadata {
         let fileContext = await MainActor.run {
-            transactionFileContext(for: fileState.currentActiveFile)
+            invocationPlan.includesCurrentFileContext
+                ? transactionFileContext(for: fileState.currentActiveFile)
+                : (id: nil, name: nil, kind: nil)
         }
 
         return ExcalidrawAITransactionMetadata(
@@ -418,13 +403,13 @@ extension AIChatView {
             requestKind: requestKind,
             agentID: ExcalidrawAgentConfig.agentID,
             model: model.rawValue,
-            canvasTarget: context.canvasTarget.rawValue,
+            canvasTarget: invocationPlan.toolCanvasTarget.rawValue,
             fileID: fileContext.id,
             fileName: fileContext.name,
             fileKind: fileContext.kind,
-            selectedElementCount: context.selectedElementIDs?.count ?? 0,
+            selectedElementCount: invocationPlan.selectedElementCount,
             attachmentCount: attachmentCount,
-            hasCurrentFileData: context.currentFileData != nil,
+            hasCurrentFileData: hasCurrentFileData,
             isNewConversation: false
         )
     }
@@ -516,10 +501,14 @@ extension AIChatView {
 
     private func refreshConversationToolsIfNeeded(
         conversationID: String,
-        model: SupportedModel
+        model: SupportedModel,
+        mode: AIChatInteractionMode,
+        includesCurrentFileContext: Bool
     ) async throws {
         let tools = ExcalidrawAgentConfig.toolNames(
-            supportsImageInput: model.supportsExcalidrawImageInput
+            mode: mode,
+            supportsImageInput: model.supportsExcalidrawImageInput,
+            includesCurrentFileContext: includesCurrentFileContext
         )
         let currentTools = await MainActor.run {
             conversation?.agentConfig.tools

@@ -27,6 +27,12 @@ actor CollaborationFileRepository {
     ) async throws {
         let context = PersistenceController.shared.newTaskContext()
 
+        let currentContent = try? await loadContent(collaborationFileObjectID: collaborationFileObjectID)
+        if hasSameSceneContent(currentContent, content) {
+            logger.debug("Skipped unchanged collaboration file content")
+            return
+        }
+
         // Update CoreData immediately (as fallback)
         try await context.perform {
             guard let collaborationFile = context.object(with: collaborationFileObjectID) as? CollaborationFile else { return }
@@ -47,6 +53,55 @@ actor CollaborationFileRepository {
         } else {
             try await updateLatestCheckpoint(collaborationFileObjectID: collaborationFileObjectID, content: content)
         }
+    }
+
+    private func loadContent(collaborationFileObjectID: NSManagedObjectID) async throws -> Data {
+        let context = PersistenceController.shared.newTaskContext()
+        let (filePath, fileID, content, name): (String?, UUID?, Data?, String?) = try await context.perform {
+            guard let collaborationFile = context.object(with: collaborationFileObjectID) as? CollaborationFile else {
+                throw AppError.fileError(.notFound)
+            }
+            return (
+                collaborationFile.filePath,
+                collaborationFile.id,
+                collaborationFile.content,
+                collaborationFile.name
+            )
+        }
+
+        if let filePath, let fileID {
+            do {
+                return try await FileStorageManager.shared.loadContent(
+                    relativePath: filePath,
+                    fileID: fileID.uuidString
+                )
+            } catch {
+                logger.warning("\(error.localizedDescription), falling back to CoreData")
+            }
+        }
+
+        if let content {
+            return content
+        }
+
+        throw AppError.fileError(.contentNotAvailable(filename: name ?? String(localizable: .generalUnknown)))
+    }
+
+    private func hasSameSceneContent(_ lhs: Data?, _ rhs: Data) -> Bool {
+        guard let lhs else { return false }
+        if lhs == rhs { return true }
+
+        guard let lhsFile = try? JSONDecoder().decode(ExcalidrawFile.self, from: lhs),
+              let rhsFile = try? JSONDecoder().decode(ExcalidrawFile.self, from: rhs) else {
+            return false
+        }
+
+        return lhsFile.source == rhsFile.source &&
+            lhsFile.version == rhsFile.version &&
+            lhsFile.type == rhsFile.type &&
+            lhsFile.elements == rhsFile.elements &&
+            lhsFile.files == rhsFile.files &&
+            lhsFile.appState == rhsFile.appState
     }
 
     // MARK: - Save CollaborationFile Content
@@ -82,7 +137,7 @@ actor CollaborationFileRepository {
             collaborationFile.updateAfterSavingToStorage(filePath: relativePath)
             try context.save()
         }
-        logger.info("Saved collaboration file to storage: \(relativePath)")
+        logger.debug("Saved collaboration file to storage: \(relativePath)")
     }
 
     // MARK: - Checkpoint Management
@@ -347,7 +402,7 @@ actor CollaborationFileRepository {
                 do {
                     try await FileStorageManager.shared.deleteContent(relativePath: checkpointPath, fileID: checkpointID.uuidString)
                 } catch {
-                    print("Warning: Failed to delete checkpoint file from storage: \(error)")
+                    logger.warning("Failed to delete checkpoint file from storage: \(error)")
                 }
             }
 
@@ -355,21 +410,23 @@ actor CollaborationFileRepository {
             do {
                 try await FileStorageManager.shared.deleteContent(relativePath: relativePath, fileID: fileUUID.uuidString)
             } catch {
-                print("Warning: Failed to delete collaboration file from storage: \(error)")
+                logger.warning("Failed to delete collaboration file from storage: \(error)")
             }
         }
 
         if let fileScopeID {
+            let scope = AIConversationFileScope(
+                kind: .collaborationFile,
+                id: fileScopeID
+            )
             do {
                 try await PersistenceController.shared.aiConversationRepository
                     .deleteConversations(
-                        forFileScope: AIConversationFileScope(
-                            kind: .collaborationFile,
-                            id: fileScopeID
-                        )
+                        forFileScope: scope
                     )
+                await AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
             } catch {
-                print("Warning: Failed to delete AI conversations for collaboration file \(fileScopeID): \(error)")
+                logger.warning("Failed to delete AI conversations for collaboration file \(fileScopeID): \(error)")
             }
         }
     }

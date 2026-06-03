@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import Logging
 import ChocofordUI
 import SFSafeSymbols
+
+private let fileCheckpointRowLogger = Logger(label: "FileCheckpointRowView")
 
 struct FileCheckpointRowView<Checkpoint: FileCheckpointRepresentable>: View {
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
@@ -24,25 +27,25 @@ struct FileCheckpointRowView<Checkpoint: FileCheckpointRepresentable>: View {
     
     var body: some View {
         content()
-            .watch(value: checkpoint) { newValue in
-                Task {
-                    do {
-                        let content = try await PersistenceController.shared.checkpointRepository.loadCheckpointContent(
-                            checkpointObjectID: newValue.objectID
-                        )
-                        let file = try? JSONDecoder().decode(ExcalidrawFile.self, from: content)
-                        await MainActor.run {
-                            self.fileSize = content.count
-                            self.file = file
-                        }
-                    } catch {
-                        print(error)
+            .task(id: checkpointMetadataLoadID) {
+                do {
+                    let content = try await loadContent(for: checkpoint)
+                    let file = try? JSONDecoder().decode(ExcalidrawFile.self, from: content)
+                    await MainActor.run {
+                        self.fileSize = content.count
+                        self.file = file
                     }
+                } catch {
+                    fileCheckpointRowLogger.warning("Failed to load checkpoint metadata: \(error)")
                 }
             }
     }
+
+    private var checkpointMetadataLoadID: String {
+        "\(checkpoint.objectID.uriRepresentation().absoluteString)-\(checkpoint.updatedAt?.timeIntervalSinceReferenceDate ?? 0)"
+    }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
 #if os(iOS)
         NavigationLink {
@@ -61,7 +64,7 @@ struct FileCheckpointRowView<Checkpoint: FileCheckpointRepresentable>: View {
 #endif
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func label() -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
@@ -115,6 +118,18 @@ struct FileCheckpointRowView<Checkpoint: FileCheckpointRepresentable>: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 8)
     }
+
+    @MainActor
+    private func loadContent(for checkpoint: Checkpoint) async throws -> Data {
+        if let fileCheckpoint = checkpoint as? FileCheckpoint {
+            return try await fileCheckpoint.loadContent()
+        }
+
+        guard let content = checkpoint.content else {
+            throw EmptyCheckpointContentError()
+        }
+        return content
+    }
     
     /// Capsule badge for AI-authored result checkpoints. `.aiPre` is
     /// visible in history as the revert anchor, but should read like a
@@ -130,6 +145,8 @@ struct FileCheckpointRowView<Checkpoint: FileCheckpointRepresentable>: View {
         }
     }
 }
+
+private struct EmptyCheckpointContentError: Error {}
 
 
 /// Small capsule used by `FileCheckpointRowView` to surface AI vs user
@@ -193,7 +210,7 @@ private struct FileCheckpointRowButtonStyle: PrimitiveButtonStyle {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func rowBackground(isPressed: Bool) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         

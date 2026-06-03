@@ -7,8 +7,11 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import Logging
 
 import ChocofordUI
+
+private let libraryItemLogger = Logger(label: "LibraryItemView")
 
 struct LibraryItemView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -101,7 +104,7 @@ struct LibraryItemView: View {
 #endif
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         LibraryItemContentView(item: item)
         .font(.footnote)
@@ -109,7 +112,7 @@ struct LibraryItemView: View {
         .truncationMode(.middle)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func contextMenu() -> some View {
         if !inSelectionMode {
             Button {
@@ -322,13 +325,13 @@ struct LibraryItemContentView: View {
                             self.image = image
                         }
                     } catch {
-                        dump(error)
+                        libraryItemLogger.warning("Failed to render library item preview: \(error)")
                     }
                 }
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         Center {
             VStack {

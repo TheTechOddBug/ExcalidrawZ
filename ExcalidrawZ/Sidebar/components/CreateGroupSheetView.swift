@@ -63,7 +63,7 @@ struct CreateGroupModifier: ViewModifier {
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func createFolderSheetView() -> some View {
         CreateGroupSheetView(
             name: $initialNewGroupName,
@@ -154,7 +154,7 @@ struct CreateGroupSheetView: View {
     }
     
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         Form {
             Section {

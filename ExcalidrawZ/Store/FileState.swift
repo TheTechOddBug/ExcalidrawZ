@@ -238,6 +238,7 @@ final class FileState: ObservableObject {
             return
         }
         self.currentActiveFile = file
+        recordVisit(for: file)
         let context = PersistenceController.shared.container.viewContext
         switch file {
             case .localFile(let url):
@@ -271,7 +272,7 @@ final class FileState: ObservableObject {
                         do {
                             try await FileSyncCoordinator.shared.downloadFile(url)
                         } catch {
-                            print(error)
+                            logger.error("Failed to download local file \(url.lastPathComponent): \(error)")
                         }
                     }
                 }
@@ -311,7 +312,36 @@ final class FileState: ObservableObject {
                     if !collaboratingFiles.contains(room) {
                         collaboratingFiles.append(room)
                     }
+                    if collaboratingFilesState[room] == nil {
+                        collaboratingFilesState[room] = .loading
+                    }
                 }
+        }
+    }
+
+    @MainActor
+    private func recordVisit(for file: ActiveFile) {
+        let now = Date()
+        switch file {
+            case .file(let dbFile):
+                guard dbFile.inTrash == false else { return }
+                dbFile.visitedAt = now
+                saveVisitedAtChange(in: dbFile.managedObjectContext)
+            case .collaborationFile(let room):
+                room.visitedAt = now
+                saveVisitedAtChange(in: room.managedObjectContext)
+            case .localFile, .temporaryFile:
+                break
+        }
+    }
+
+    @MainActor
+    private func saveVisitedAtChange(in context: NSManagedObjectContext?) {
+        guard let context, context.hasChanges else { return }
+        do {
+            try context.save()
+        } catch {
+            logger.error("Failed to save file visit timestamp: \(error.localizedDescription)")
         }
     }
     
@@ -403,6 +433,20 @@ final class FileState: ObservableObject {
     @Published var collaboratingFiles: [CollaborationFile] = []
     @Published var collaboratingFilesState: [CollaborationFile : ExcalidrawCanvasView.LoadingState] = [:]
     @Published var collaborators: [CollaborationFile : [Collaborator]] = [:]
+
+    var activeCollaborationFileIsLoading: Bool {
+        guard case .collaborationFile(let file) = currentActiveFile else {
+            return false
+        }
+
+        switch collaboratingFilesState[file] {
+            case .loaded, .error:
+                return false
+            case .idle, .loading, .none:
+                return true
+        }
+    }
+
     enum CollborationRoute: Hashable {
         case home
         case room(CollaborationFile)
@@ -441,15 +485,22 @@ final class FileState: ObservableObject {
     private func recoverWatchUpdate() {
         recoverWatchUpdateWorkItem?.cancel()
         recoverWatchUpdateWorkItem = DispatchWorkItem(flags: .assignCurrentContext) {
-            if self.excalidrawWebCoordinator?.isLoading == true {
+            if self.activeCanvasIsLoading {
                 self.recoverWatchUpdate()
                 return
             }
-            print("recoverWatchUpdateWorkItem: \(Date.now.timeIntervalSince1970)")
             self.shouldIgnoreUpdate = false
             self.didUpdateFile = false
         }
         stateUpdateQueue.asyncAfter(deadline: .now().advanced(by: .milliseconds(2500)), execute: recoverWatchUpdateWorkItem!)
+    }
+
+    private var activeCanvasIsLoading: Bool {
+        if case .collaborationFile = currentActiveFile {
+            let coreIsLoading = excalidrawCollaborationWebCoordinator?.isLoading == true
+            return coreIsLoading || activeCollaborationFileIsLoading
+        }
+        return excalidrawWebCoordinator?.isLoading == true
     }
     
     @discardableResult
@@ -532,13 +583,8 @@ final class FileState: ObservableObject {
     
     @discardableResult
     func updateFile(_ file: File, with excalidrawFile: ExcalidrawFile) -> Bool {
-        // DIAG: third checkpoint in the update chain — confirms what flags
-        // are in play when a Swift-side save would be issued, and whether
-        // `shouldIgnoreUpdate` / `inTrash` are silently dropping updates.
         let didUpdateFlag = didUpdateFileState[.file(file)] ?? false
-        print("[aiDiag] updateFile elements=\(excalidrawFile.elements.count) shouldIgnore=\(shouldIgnoreUpdate) aiSession=\(aiChatSession != nil) didUpdateFile=\(didUpdateFlag) inTrash=\(file.inTrash)")
         guard !shouldIgnoreUpdate, !file.inTrash else {
-            print("[aiDiag] updateFile → DROPPED by guard")
             return false
         }
         let didUpdateFile = didUpdateFlag
@@ -569,13 +615,13 @@ final class FileState: ObservableObject {
                     fileData: content,
                     checkpoint: checkpointPolicy
                 )
-                self.logger.info("updateFile done...")
+                self.logger.debug("File update saved")
                 await MainActor.run {
                     // already throttled
                     self.objectWillChange.send()
                 }
             } catch {
-                print(error)
+                self.logger.error("Failed to update file \(file.name ?? "Untitled"): \(error)")
             }
         }
         return true
@@ -675,31 +721,29 @@ final class FileState: ObservableObject {
     }
     
     
-    func updateCurrentCollaborationFile(with excalidrawFile: ExcalidrawFile) {
+    func updateCollaborationFile(_ file: CollaborationFile, with excalidrawFile: ExcalidrawFile) {
         guard !shouldIgnoreUpdate else { return }
-        let didUpdateFile = didUpdateFile
-        let id = excalidrawFile.id
-        let context = PersistenceController.shared.newTaskContext()
-        
+        let activeFile = ActiveFile.collaborationFile(file)
+        let didUpdateFile = didUpdateFileState[activeFile] ?? false
+        let fileObjectID = file.objectID
+        self.didUpdateFileState[activeFile] = true
+
         Task.detached {
             do {
-                // Step 1: Get collaboration file objectID and update roomID
-                let fileObjectID = try await context.perform {
-                    let fetchRequest = NSFetchRequest<CollaborationFile>(entityName: "CollaborationFile")
-                    fetchRequest.predicate = NSPredicate(format: "id = %@", id as CVarArg)
-                    
-                    guard let file = try context.fetch(fetchRequest).first else {
-                        throw AppError.fileError(.contentNotAvailable(filename: excalidrawFile.name ?? String(localizable: .generalUnknown)))
+                let context = PersistenceController.shared.newTaskContext()
+
+                // Step 1: Update roomID
+                try await context.perform {
+                    guard let file = context.object(with: fileObjectID) as? CollaborationFile else {
+                        throw AppError.fileError(.notFound)
                     }
-                    
+
                     // Update roomID
                     file.roomID = excalidrawFile.roomID
-                    
+
                     try context.save()
-                    
-                    return file.objectID
                 }
-                
+
                 // Sync media items from ExcalidrawFile (creates new ones and saves to iCloud Drive)
                 _ = try await PersistenceController.shared.mediaItemRepository.syncMediaItemsForCollaborationFile(
                     excalidrawFile: excalidrawFile,
@@ -718,7 +762,7 @@ final class FileState: ObservableObject {
                     self.didUpdateFile = true
                 }
             } catch {
-                print(error)
+                self.logger.error("Failed to update collaboration file: \(error)")
             }
         }
     }
@@ -1131,7 +1175,6 @@ final class FileState: ObservableObject {
                         }
                     }
                 }
-                print("expandToGroup: \(groupIDs.map { $0.description })")
                 Task { [groupIDs, expandSelf] in
                     for groupId in groupIDs {
                         await MainActor.run {

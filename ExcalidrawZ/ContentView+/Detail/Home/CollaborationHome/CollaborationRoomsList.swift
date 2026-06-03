@@ -56,7 +56,7 @@ struct CollaborationRoomsList: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         ForEach(collaborationFiles) { room in
             CollaborationRoomItemView(

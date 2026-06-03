@@ -294,7 +294,7 @@ struct SerachContent: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func collaborationFilesSection() -> some View {
         if !searchCollaborationFiles.isEmpty {
             searchResultSection(.localizable(.searchResultsSectionCollaborationFilesTitle)) {
@@ -331,7 +331,7 @@ struct SerachContent: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func filesSection() -> some View {
         if !searchFiles.isEmpty {
             searchResultSection(.localizable(.searchResultsSectionFilesTitle)) {
@@ -362,7 +362,7 @@ struct SerachContent: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func localFilesSection() -> some View {
         if !searchLocalFiles.isEmpty {
             searchResultSection(.localizable(.searchResultsSectionLocalFilesTitle)) {
@@ -394,7 +394,7 @@ struct SerachContent: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func searchResultSection<Content: View>(
         _ header: LocalizedStringKey,
         @ViewBuilder content: () -> Content

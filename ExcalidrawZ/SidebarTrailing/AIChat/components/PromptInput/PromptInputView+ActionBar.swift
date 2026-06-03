@@ -20,11 +20,13 @@ import LLMCore
 import SFSafeSymbols
 
 extension PromptInputView {
+    private var actionBarIconFrameLength: CGFloat { 18 }
+
     /// Left half of the action row: attachment menu, context-usage ring,
     /// model picker. Wrapped in an HStack so the whole group can take a
     /// shared `buttonStyle` from the caller (`.accessoryBar` on macOS 14+,
     /// `.plain` below).
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func actionBarLeading() -> some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.actionBarLeading")
 
@@ -39,7 +41,65 @@ extension PromptInputView {
                 usedTokens: nil
             )
 
+            fileAccessToggleButton
+
             modelPicker
+
+#if DEBUG
+            debugChatContextButton
+#endif
+        }
+    }
+
+    @ViewBuilder
+    var fileAccessToggleButton: some View {
+        Button {
+            toggleAIFileAccess()
+        } label: {
+            if #available(macOS 14.0, *) {
+                Image(systemName: activeFileAccessAllowsAI ? "eye" : "eye.slash")
+                    .font(.caption)
+                    .frame(width: actionBarIconFrameLength, height: actionBarIconFrameLength)
+                    .contentTransition(.symbolEffect(.replace))
+            } else {
+                Image(systemName: activeFileAccessAllowsAI ? "eye" : "eye.slash")
+                    .font(.caption)
+                    .frame(width: actionBarIconFrameLength, height: actionBarIconFrameLength)
+            }
+        }
+        .foregroundStyle(activeFileAccessAllowsAI ? .primary : .secondary)
+        .tint(activeFileAccessAllowsAI ? .accentColor : .secondary.opacity(0.75))
+        .disabled(!hasActiveFileForAIAccessControl || !canToggleAIFileAccess)
+        .help(fileAccessHelpText)
+        .modifier(FeatureDiscoveryTipModifier(
+            kind: .aiFileVisibility,
+            isEnabled: hasActiveFileForAIAccessControl && canToggleAIFileAccess
+        ))
+    }
+
+    @MainActor
+    func toggleAIFileAccess() {
+        guard hasActiveFileForAIAccessControl, canToggleAIFileAccess else { return }
+        prefs.setAllowsFileAccess(
+            !activeFileAccessAllowsAI,
+            for: fileState.currentActiveFile
+        )
+    }
+
+    @MainActor
+    var fileAccessHelpText: String {
+        guard hasActiveFileForAIAccessControl else {
+            return String(localizable: .aiChatFileAccessHelpNoActiveFile)
+        }
+
+        guard canToggleAIFileAccess else {
+            return String(localizable: .aiChatFileAccessHelpLockedFile)
+        }
+
+        if activeFileAccessAllowsAI {
+            return String(localizable: .aiChatFileAccessHelpAccessAllowed)
+        } else {
+            return String(localizable: .aiChatFileAccessHelpAccessDenied)
         }
     }
 
@@ -51,7 +111,7 @@ extension PromptInputView {
     /// We deliberately don't use the `primaryAction:` closure form —
     /// the icon doesn't have a single "default" action; tapping it
     /// just opens the menu.
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var attachmentMenu: some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.attachmentMenu")
 
@@ -64,8 +124,8 @@ extension PromptInputView {
             .disabled(!canInsertImages)
         } label: {
             Image(systemSymbol: .paperclip)
-                .resizable()
-                .frame(height: 12)
+                .font(.caption)
+                .frame(width: actionBarIconFrameLength, height: actionBarIconFrameLength)
         }
         .labelStyle(.iconOnly)
         .menuIndicator(.hidden)
@@ -109,7 +169,7 @@ extension PromptInputView {
         aiChatState.requestAppendDraftImages(images, draftKey: promptDraftKey)
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var modelPicker: some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.modelPicker")
 
@@ -143,9 +203,10 @@ extension PromptInputView {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .frame(height: actionBarIconFrameLength)
             .contentShape(Rectangle())
         }
-        .menuIndicator(.visible)
+        .menuIndicator(.hidden)
         .disabled(tiers.isEmpty)
     }
 

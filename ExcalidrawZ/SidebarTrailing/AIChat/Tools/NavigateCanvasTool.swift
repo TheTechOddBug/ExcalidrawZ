@@ -12,9 +12,10 @@ import LLMCore
 final class ExcalidrawCoordinatorRegistry {
     static let shared = ExcalidrawCoordinatorRegistry()
 
-    enum CanvasTarget: String, Codable {
+    enum CanvasTarget: String, Codable, Sendable {
         case normal
         case collaboration
+        case proposal
     }
 
     private final class WeakCoordinatorBox {
@@ -27,8 +28,10 @@ final class ExcalidrawCoordinatorRegistry {
 
     private var normalCoordinatorBox = WeakCoordinatorBox(nil)
     private var collaborationCoordinatorBox = WeakCoordinatorBox(nil)
+    private var proposalCoordinatorBox = WeakCoordinatorBox(nil)
     private let normalCameraDirector = AICameraDirector()
     private let collaborationCameraDirector = AICameraDirector()
+    private let proposalCameraDirector = AICameraDirector()
 
     func update(
         normal: ExcalidrawCanvasView.Coordinator?,
@@ -40,13 +43,27 @@ final class ExcalidrawCoordinatorRegistry {
         collaborationCameraDirector.coordinator = collaboration
     }
 
+    func updateProposal(_ proposal: ExcalidrawCanvasView.Coordinator?) {
+        proposalCoordinatorBox = WeakCoordinatorBox(proposal)
+        proposalCameraDirector.coordinator = proposal
+    }
+
     func coordinator(for target: CanvasTarget) -> ExcalidrawCanvasView.Coordinator? {
         switch target {
             case .normal:
                 normalCoordinatorBox.value
             case .collaboration:
                 collaborationCoordinatorBox.value
+            case .proposal:
+                proposalCoordinatorBox.value
         }
+    }
+
+    func resolvedCoordinator(for target: CanvasTarget) async throws -> ExcalidrawCanvasView.Coordinator? {
+        if target.targetsProposalCanvas {
+            return try await AIProposalSandbox.readyCoordinator()
+        }
+        return coordinator(for: target)
     }
 
     func cameraDirector(for target: CanvasTarget) -> AICameraDirector {
@@ -55,6 +72,8 @@ final class ExcalidrawCoordinatorRegistry {
                 normalCameraDirector
             case .collaboration:
                 collaborationCameraDirector
+            case .proposal:
+                proposalCameraDirector
         }
     }
 
@@ -63,9 +82,20 @@ final class ExcalidrawCoordinatorRegistry {
     }
 }
 
+extension ExcalidrawCoordinatorRegistry.CanvasTarget {
+    var targetsProposalCanvas: Bool {
+        self == .proposal
+    }
+
+    var targetsUserCanvas: Bool {
+        !targetsProposalCanvas
+    }
+}
+
 struct NavigateCanvasTool: Tool {
     struct NavigateCanvasContext: ToolContext {
         var canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget
+        var currentFileID: UUID? = nil
     }
 
     var name: String { "navigate_canvas" }
@@ -98,12 +128,18 @@ struct NavigateCanvasTool: Tool {
             throw ToolError.executionFailed("Missing NavigateCanvasContext")
         }
         let navigationContext = try context.resolve(NavigateCanvasContext.self)
+        guard try await LockedContentAIGuard.canToolAccess(
+            canvasTarget: navigationContext.canvasTarget,
+            currentFileID: navigationContext.currentFileID
+        ) else {
+            return LockedContentAIGuard.lockedToolResult
+        }
         await MainActor.run {
             ExcalidrawCoordinatorRegistry.shared.stopCameraDirector(for: navigationContext.canvasTarget)
         }
-        let coordinator = await MainActor.run {
-            ExcalidrawCoordinatorRegistry.shared.coordinator(for: navigationContext.canvasTarget)
-        }
+        let coordinator = try await ExcalidrawCoordinatorRegistry.shared.resolvedCoordinator(
+            for: navigationContext.canvasTarget
+        )
         guard let coordinator else {
             throw ToolError.executionFailed("Missing active Excalidraw coordinator")
         }

@@ -34,7 +34,10 @@ struct CollaborationHome: View {
     var body: some View {
         ScrollView {
             content()
-                .frame(minHeight: scrollViewHeight)
+                .frame(
+                    maxWidth: .infinity,
+                    minHeight: scrollViewHeight
+                )
                 .background {
                     Color.clear
                         .contentShape(Rectangle())
@@ -50,7 +53,7 @@ struct CollaborationHome: View {
         .readHeight($scrollViewHeight)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         VStack(spacing: 40) {
             VStack(spacing: 0) {
@@ -127,12 +130,13 @@ struct CollaborationHome: View {
                     CollaborationRoomsList(sortField: .updatedAt, selections: $selections)
                         .padding(.horizontal, 80)
                 }
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .animation(.default, value: collaborationFiles.isEmpty)
+        .animation(.smooth(duration: 0.24), value: collaborationFiles.count)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func actions() -> some View {
         Button {
             if let limit = store.collaborationRoomLimits, collaborationFiles.count >= limit {
@@ -161,7 +165,7 @@ struct CollaborationHome: View {
 
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func nameField() -> some View {
         TextField(
             .localizable(.collaborationHomeNameFieldLabel),
@@ -231,7 +235,6 @@ struct CollaborationHomeBackground: View {
         .opacity(0.7)
 #endif
         .onAppear {
-            print(horizontalSizeClass == .compact)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 withAnimation(.smooth(duration: 1.2)) {
                     isPresented = true

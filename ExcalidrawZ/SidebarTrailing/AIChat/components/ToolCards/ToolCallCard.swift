@@ -31,14 +31,15 @@ struct ToolCallCard: View {
 
     var body: some View {
         let isStreamingArguments = isActive && !isDenied
+        let style = ToolCallVisualStyle.style(for: call.name)
         ToolEventCard(
-            icon: .hammerFill,
+            icon: style.icon,
             // Resolve the snake_case `name` (LLM protocol payload) to the
             // tool's UI-friendly `displayName` via the sync cache. Falls
             // back to the raw name for tools the cache doesn't know
             // about (third-party / unregistered).
             title: ToolDisplayNameCache.displayName(for: call.name),
-            accent: .purple,
+            accent: style.accent,
             isShimmering: isActive && !isDenied,
             isExpandable: !isStreamingArguments,
             showsLoadingIndicator: isStreamingArguments,
@@ -65,5 +66,45 @@ struct ToolCallCard: View {
         }
         .font(.caption2.weight(.medium))
         .foregroundStyle(.red)
+    }
+}
+
+private struct ToolCallVisualStyle {
+    let icon: SFSymbol
+    let accent: Color
+
+    static func style(for toolName: String) -> ToolCallVisualStyle {
+        switch toolName {
+            case "web_search":
+                return ToolCallVisualStyle(icon: .magnifyingglass, accent: .blue)
+            case "web_fetch":
+                return ToolCallVisualStyle(icon: .globe, accent: .cyan)
+            case "adjust_elements":
+                return ToolCallVisualStyle(icon: .hammerFill, accent: .purple)
+            case "read_file":
+                return ToolCallVisualStyle(icon: .docText, accent: .indigo)
+            case "read_canvas_image":
+                return ToolCallVisualStyle(icon: .photo, accent: .teal)
+            case "file_access_status":
+                return ToolCallVisualStyle(icon: .eye, accent: .gray)
+            case "rename_file":
+                return ToolCallVisualStyle(icon: .pencil, accent: .orange)
+            case "list_all_files":
+                return ToolCallVisualStyle(icon: .listBulletIndent, accent: .indigo)
+            case "query_file_history":
+                return ToolCallVisualStyle(icon: .clock, accent: .orange)
+            case "restore_file_history":
+                return ToolCallVisualStyle(icon: .clockArrowCirclepath, accent: .orange)
+            case "list_libraries", "list_library_items", "query_library_item", "add_library_item_to_canvas":
+                return ToolCallVisualStyle(icon: .book, accent: .mint)
+            case "calculator":
+                return ToolCallVisualStyle(icon: .xSquareroot, accent: .brown)
+            case "datetime":
+                return ToolCallVisualStyle(icon: .clock, accent: .brown)
+            case "final_answer":
+                return ToolCallVisualStyle(icon: .sparkles, accent: .accentColor)
+            default:
+                return ToolCallVisualStyle(icon: .hammerFill, accent: .purple)
+        }
     }
 }

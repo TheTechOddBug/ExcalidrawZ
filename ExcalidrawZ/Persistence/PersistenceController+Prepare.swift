@@ -16,7 +16,7 @@ extension PersistenceController {
                 _ = try await self.groupRepository.createDefaultGroupIfNeeded()
                 _ = try await self.groupRepository.createTrashGroupIfNeeded()
             } catch {
-                dump(error, name: "create groups failed")
+                logger.error("Failed to prepare default groups: \(error)")
             }
 
             // Fallback behavior: Move trashed files from trash group to default group
@@ -40,7 +40,7 @@ extension PersistenceController {
                     }
                 }
             } catch {
-                dump(error, name: "prepare fallback failed")
+                logger.error("Failed to prepare fallback trash state: \(error)")
             }
         }
     }

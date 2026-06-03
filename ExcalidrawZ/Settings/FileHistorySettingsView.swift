@@ -26,7 +26,7 @@ struct FileHistorySettingsView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         
     }

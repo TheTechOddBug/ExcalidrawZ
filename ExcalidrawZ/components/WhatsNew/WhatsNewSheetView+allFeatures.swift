@@ -8,81 +8,39 @@
 import SwiftUI
 
 extension WhatsNewView {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func featuresContent() -> some View {
         // 不能只有一行，不知道为啥一定报错
         
         WhatsNewFeatureRow(
-            title: .localizable(.whatsNewAIForExcalidrawZTitle),
-            description: .localizable(.whatsNewAIForExcalidrawZDescription),
+            title: .localizable(.whatsNewLockedFilesTitle),
+            description: .localizable(.whatsNewLockedFilesDescription),
         ) {
-            Image(systemSymbol: .sparkles)
+            Image(systemSymbol: .lockShield)
                 .resizable()
-                .foregroundStyle(AIAppearancePalette.foregroundGradient)
+                .symbolRenderingMode(.hierarchical)
         }
         
         WhatsNewFeatureRow(
-            title: .localizable(.whatsNewUpdatedSubscriptionPlansTitle),
-            description: .localizable(.whatsNewUpdatedSubscriptionPlansDescription),
+            title: .localizable(.whatsNewAIProposalCanvasTitle),
+            description: .localizable(.whatsNewAIProposalCanvasDescription),
         ) {
-            Image(systemSymbol: .creditcard)
-                .resizable()
-                .symbolRenderingMode(.multicolor)
+            if #available(macOS 26.1, iOS 26.1, *) {
+                Image(systemName: "rectangle.badge.sparkles")
+                    .resizable()
+                    .symbolRenderingMode(.hierarchical)
+            } else {
+                Image(systemSymbol: .sparkle)
+                    .resizable()
+                    .symbolRenderingMode(.hierarchical)
+            }
         }
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func allFeaturesList() -> some View {
         VStack(spacing: 0) {
-            // Navigation Back button
-#if os(macOS)
-            if #available(macOS 13.0, *) {
-                HStack {
-                    Button {
-                        if !navigationPath.isEmpty {
-                            navigationPath.removeLast()
-                        }
-                    } label: {
-                        Label(.localizable(.navigationButtonBack), systemSymbol: .chevronLeft)
-                    }
-                    .modernButtonStyle(style: .glass, shape: .circle)
-
-                    Spacer()
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 8)
-            } else {
-                HStack {
-                    Button {
-                        route = nil
-                    } label: {
-                        Label(.localizable(.navigationButtonBack), systemSymbol: .chevronLeft)
-                    }
-                    .modernButtonStyle(style: .glass, shape: .circle)
-
-                    Spacer()
-                }
-                .padding(4)
-            }
-#else
-            if #available(iOS 16.0, *) {} else {
-                HStack {
-                    Button {
-                        route = nil
-                    } label: {
-                        Label(.localizable(.navigationButtonBack), systemSymbol: .chevronLeft)
-                    }
-                    .modernButtonStyle(style: .glass, shape: .circle)
-                    
-                    Spacer()
-                }
-                .padding(4)
-            }
-#endif
-            
-            // Content
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 20) {
                     WhatsNewVersionSection(
@@ -91,6 +49,26 @@ extension WhatsNewView {
                         featuresContent()
                     }
                     
+                    WhatsNewVersionSection(version: "v2.0.0") {
+                        WhatsNewFeatureRow(
+                            title: .localizable(.whatsNewAIForExcalidrawZTitle),
+                            description: .localizable(.whatsNewAIForExcalidrawZDescription),
+                        ) {
+                            Image(systemSymbol: .sparkles)
+                                .resizable()
+                                .foregroundStyle(AIAppearancePalette.foregroundGradient)
+                        }
+
+                        WhatsNewFeatureRow(
+                            title: .localizable(.whatsNewUpdatedSubscriptionPlansTitle),
+                            description: .localizable(.whatsNewUpdatedSubscriptionPlansDescription),
+                        ) {
+                            Image(systemSymbol: .creditcard)
+                                .resizable()
+                                .symbolRenderingMode(.multicolor)
+                        }
+                    }
+
                     // MARK: - v1.7.4
                     WhatsNewVersionSection(version: "v1.7.4") {
                         WhatsNewFeatureRow(
@@ -466,7 +444,7 @@ extension WhatsNewView {
 #endif
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func changeLogLink() -> some View {
         Link(destination: URL(string: "https://github.com/chocoford/ExcalidrawZ/blob/main/CHANGELOG.md")!) {
             HStack(spacing: 2) {

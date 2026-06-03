@@ -39,6 +39,8 @@ actor MigrationManager {
     /// Check if any migrations are needed without running them.
     /// Marks the first migration that needs to run and all subsequent ones as pending.
     func checkMigrationsNeeded(state: MigrationState) async throws -> Bool {
+        var checkingMigrationName: String?
+
         do {
             let context = PersistenceController.shared.newTaskContext()
             
@@ -52,6 +54,7 @@ actor MigrationManager {
             
             for (index, migrationType) in Self.migrations.enumerated() {
                 let name = migrationType.name
+                checkingMigrationName = name
                 let migration = migrationType.init(context: context)
                 
                 // Update to checking status
@@ -80,7 +83,11 @@ actor MigrationManager {
             
             return false
         } catch {
-            print(error)
+            if let checkingMigrationName {
+                logger.error("Migration '\(checkingMigrationName)' preflight failed: \(error)")
+            } else {
+                logger.error("Migration preflight failed: \(error)")
+            }
             throw error
         }
     }

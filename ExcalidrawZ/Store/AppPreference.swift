@@ -13,6 +13,8 @@ import Logging
 import ChocofordUI
 import UniformTypeIdentifiers
 
+private let appPreferenceLogger = Logger(label: "AppPreference")
+
 final class AppPreference: ObservableObject {
     enum SidebarMode: Hashable, Sendable {
         case all
@@ -147,11 +149,15 @@ final class AppPreference: ObservableObject {
 
     var customDrawingSettings: UserDrawingSettings {
         get {
+            guard !customDrawingSettingsData.isEmpty else {
+                return UserDrawingSettings()
+            }
+
             do {
                 let settings = try JSONDecoder().decode(UserDrawingSettings.self, from: customDrawingSettingsData)
                 return settings
             } catch {
-                print("Decode customDrawingSettings error", error)
+                appPreferenceLogger.warning("Failed to decode custom drawing settings: \(error)")
                 return UserDrawingSettings()
             }
             

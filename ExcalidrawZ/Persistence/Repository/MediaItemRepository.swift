@@ -342,7 +342,7 @@ actor MediaItemRepository {
             mediaItem.updateAfterSavingToStorage(filePath: relativePath)
             try context.save()
         }
-        logger.info("Saved media item to storage: \(relativePath)")
+        logger.debug("Saved media item to storage: \(relativePath)")
     }
 
     // MARK: - Delete MediaItem
@@ -375,7 +375,7 @@ actor MediaItemRepository {
                 try await FileStorageManager.shared.deleteContent(relativePath: relativePath, fileID: mediaIDString)
             } catch {
                 // Log but don't throw - database record is already deleted
-                print("Warning: Failed to delete media item file from storage: \(error)")
+                logger.warning("Failed to delete media item file from storage: \(error)")
             }
         }
     }

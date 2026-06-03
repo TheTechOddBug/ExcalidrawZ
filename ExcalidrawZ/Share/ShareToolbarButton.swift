@@ -46,6 +46,19 @@ struct ShareToolbarButton: View {
 #if os(iOS)
     @State private var exportedPDFURL: URL?
 #endif
+
+    private var isShareDisabled: Bool {
+        if fileState.currentActiveFile == nil {
+            return true
+        }
+        if fileState.activeCollaborationFileIsLoading {
+            return true
+        }
+        if case .group(let group) = fileState.currentActiveGroup {
+            return group.groupType == .trash
+        }
+        return false
+    }
     
     var body: some View {
 #if os(macOS)
@@ -65,19 +78,11 @@ struct ShareToolbarButton: View {
         }
         .help(String(localizable: .export))
         .keyboardShortcut("s", modifiers: [.command, .shift])
-        .disabled(
-            {
-                if case .group(let group) = fileState.currentActiveGroup {
-                    return group.groupType == .trash
-                }
-                return false
-            }() ||
-            fileState.currentActiveFile == nil ||
-            isSharing
-        )
+        .disabled(isShareDisabled || isSharing)
         .bindWindow($window)
         .onReceive(NotificationCenter.default.publisher(for: .toggleShare)) { notification in
-            guard window?.isKeyWindow == true else { return }
+            guard window?.isKeyWindow == true,
+                  !isShareDisabled else { return }
             Task { @MainActor in
                 await performShareFileWithLoading()
             }
@@ -123,6 +128,7 @@ struct ShareToolbarButton: View {
         } label: {
             Label(.localizable(.export), systemSymbol: .squareAndArrowUp)
         }
+        .disabled(isShareDisabled)
         .activitySheet(item: $exportedPDFURL)
 #endif
     }
@@ -137,7 +143,6 @@ struct ShareToolbarButton: View {
                         data: content,
                         id: file.id?.uuidString
                     )
-                    print("[DEBUG] performShareFile", excalidrawFile.elements.count)
                     self.shareFileState.currentSharedFile = excalidrawFile
                 case .localFile(let url):
                     if case .localFolder(let folder) = fileState.currentActiveGroup {

@@ -30,23 +30,29 @@ struct ToolResultCard: View {
     }
 
     var body: some View {
-        let resolvedContent = content.content ?? ""
-        ToolEventCard(
-            icon: .eyeFill,
-            title: String(localizable: .aiChatToolCallObservationTitle),
-            accent: .green
-        ) { isExpanded in
-            
-            if !resolvedContent.isEmpty && isExpanded || !imageFiles.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    if !resolvedContent.isEmpty && isExpanded {
-                        Text(resolvedContent)
-                    }
-                    
-                    if !imageFiles.isEmpty {
-                        HStack(spacing: 6) {
-                            ForEach(imageFiles, id: \.self) { file in
-                                MessageImageView(file: file)
+        if let proposal = AIProposalArtifact.parse(from: content) {
+            AIProposalToolResultCard(
+                artifact: proposal,
+                previewFile: imageFiles.first
+            )
+        } else {
+            let resolvedContent = content.content ?? ""
+            ToolEventCard(
+                icon: .eyeFill,
+                title: String(localizable: .aiChatToolCallObservationTitle),
+                accent: .green
+            ) { isExpanded in
+                if !resolvedContent.isEmpty && isExpanded || !imageFiles.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        if !resolvedContent.isEmpty && isExpanded {
+                            Text(resolvedContent)
+                        }
+
+                        if !imageFiles.isEmpty {
+                            HStack(spacing: 6) {
+                                ForEach(imageFiles, id: \.self) { file in
+                                    MessageImageView(file: file)
+                                }
                             }
                         }
                     }

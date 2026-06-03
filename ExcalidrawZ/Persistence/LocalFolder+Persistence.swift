@@ -93,6 +93,90 @@ extension LocalFolder {
         defer { scopedURL.stopAccessingSecurityScopedResource() }
         return try await actions(scopedURL)
     }
+
+    static func withSecurityScopedAccessToContainingFolder<T>(
+        for fileURL: URL,
+        action: () async throws -> T
+    ) async throws -> T {
+        guard let bookmarkData = try await securityScopedBookmarkData(forLocalFileAt: fileURL) else {
+            return try await action()
+        }
+
+        return try await withSecurityScopedBookmark(bookmarkData, action: action)
+    }
+
+    private static func securityScopedBookmarkData(forLocalFileAt fileURL: URL) async throws -> Data? {
+        let filePath = fileURL.standardizedFileURL.path
+        let context = PersistenceController.shared.newTaskContext()
+
+        return try await context.perform {
+            let request = NSFetchRequest<LocalFolder>(entityName: "LocalFolder")
+            let folders = try context.fetch(request)
+
+            return folders.compactMap { folder -> (path: String, bookmarkData: Data)? in
+                guard let folderPath = folder.filePath,
+                      let bookmarkData = folder.bookmarkData else {
+                    return nil
+                }
+
+                let standardizedFolderPath = URL(fileURLWithPath: folderPath).standardizedFileURL.path
+                guard Self.filePath(filePath, isContainedInFolderPath: standardizedFolderPath) else {
+                    return nil
+                }
+
+                return (standardizedFolderPath, bookmarkData)
+            }
+            .max { $0.path.count < $1.path.count }?
+            .bookmarkData
+        }
+    }
+
+    private static func withSecurityScopedBookmark<T>(
+        _ bookmarkData: Data,
+        action: () async throws -> T
+    ) async throws -> T {
+        var isStale = false
+#if os(macOS)
+        let options: URL.BookmarkResolutionOptions = [.withSecurityScope]
+#else
+        let options: URL.BookmarkResolutionOptions = []
+#endif
+        let scopedURL = try URL(
+            resolvingBookmarkData: bookmarkData,
+            options: options,
+            bookmarkDataIsStale: &isStale
+        )
+
+        guard scopedURL.startAccessingSecurityScopedResource() else {
+            throw StartAccessingSecurityScopedResourceError()
+        }
+        defer { scopedURL.stopAccessingSecurityScopedResource() }
+
+        return try await action()
+    }
+
+    private static func filePath(_ filePath: String, isContainedInFolderPath folderPath: String) -> Bool {
+        filePath == folderPath || filePath.hasPrefix(folderPath + "/")
+    }
+
+    private static func localFolder(
+        for url: URL,
+        parent: LocalFolder,
+        context: NSManagedObjectContext
+    ) throws -> LocalFolder {
+        let fetchRequest = NSFetchRequest<LocalFolder>(entityName: "LocalFolder")
+        fetchRequest.predicate = NSPredicate(format: "filePath == %@", url.filePath)
+        fetchRequest.fetchLimit = 1
+
+        if let existingFolder = try context.fetch(fetchRequest).first {
+            existingFolder.parent = parent
+            return existingFolder
+        }
+
+        let child = try LocalFolder(url: url, context: context)
+        child.parent = parent
+        return child
+    }
     
     func refreshChildren(context: NSManagedObjectContext) throws {
         try self.withSecurityScopedURL { url in
@@ -123,8 +207,8 @@ extension LocalFolder {
                     }) == true {
                         continue
                     }
-                    /// Otherwise, create a new LocalFolder instance and add it to children
-                    let child = try LocalFolder(url: url, context: context)
+                    /// Otherwise, create/reuse a LocalFolder instance and add it to children
+                    let child = try Self.localFolder(for: url, parent: self, context: context)
                     self.addToChildren(child)
                 }
                 

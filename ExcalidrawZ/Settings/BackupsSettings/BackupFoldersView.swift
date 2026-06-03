@@ -9,6 +9,12 @@ import SwiftUI
 
 import ChocofordUI
 
+private struct BackupFolderItem: Hashable {
+    let url: URL
+    let isDirectory: Bool
+    let isEncrypted: Bool
+}
+
 struct BackupFoldersView: View {
     @Environment(\.alertToast) private var alertToast
     
@@ -27,10 +33,10 @@ struct BackupFoldersView: View {
         self.depth = depth
     }
     
-    @State private var content: [URL] = []
+    @State private var content: [BackupFolderItem] = []
     
     var body: some View {
-        TreeStructureView(children: content, id: \.self, paddingLeading: 6) {
+        TreeStructureView(children: content, id: \.url, paddingLeading: 6) {
             HStack(spacing: 4) {
                 let folderName = folder.lastPathComponent
                 Label(
@@ -44,16 +50,19 @@ struct BackupFoldersView: View {
                 Spacer()
             }
             .padding(6)
-        } childView: { url in
-            if (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
-                BackupFoldersView(selection: $selection, folder: url, depth: depth + 1)
-            } else if let name = (try? url.resourceValues(forKeys: [.nameKey]))?.name,
+        } childView: { item in
+            if item.isDirectory {
+                BackupFoldersView(selection: $selection, folder: item.url, depth: depth + 1)
+            } else if let name = (try? item.url.resourceValues(forKeys: [.nameKey]))?.name,
                       name.hasSuffix(".excalidraw") {
                 Button {
-                    selection = url
+                    selection = item.url
                 } label: {
                     HStack(spacing: 4) {
-                        Label(url.deletingPathExtension().lastPathComponent, systemSymbol: .doc)
+                        Label(
+                            item.url.deletingPathExtension().lastPathComponent,
+                            systemImage: item.iconSystemName
+                        )
                             // .symbolVariant(.fill)
                             // .padding(.leading, CGFloat(8 * depth) + 14)
                     }
@@ -61,21 +70,51 @@ struct BackupFoldersView: View {
                     .truncationMode(.tail)
                 }
                 .buttonStyle(
-                    .excalidrawSidebarRow(isSelected: selection == url, isMultiSelected: false)
+                    .excalidrawSidebarRow(isSelected: selection == item.url, isMultiSelected: false)
                 )
             }
         }
-        .onAppear {
-            do {
-                self.content = try FileManager.default.contentsOfDirectory(
-                    at: folder,
-                    includingPropertiesForKeys: [.nameKey, .isDirectoryKey],
-                    options: .skipsHiddenFiles
-                )
-            } catch {
-                alertToast(error)
-            }
+        .task(id: folder) {
+            loadContent()
         }
+    }
+
+    private func loadContent() {
+        do {
+            self.content = try FileManager.default.contentsOfDirectory(
+                at: folder,
+                includingPropertiesForKeys: [.nameKey, .isDirectoryKey],
+                options: .skipsHiddenFiles
+            )
+            .map { url in
+                let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+                return BackupFolderItem(
+                    url: url,
+                    isDirectory: isDirectory,
+                    isEncrypted: isDirectory ? false : isLegacyLockedBackupFile(url)
+                )
+            }
+        } catch {
+            alertToast(error)
+        }
+    }
+
+    private func isLegacyLockedBackupFile(_ url: URL) -> Bool {
+        guard url.pathExtension == "excalidraw",
+              let data = try? Data(contentsOf: url) else {
+            return false
+        }
+        return EncryptedContentService.isEncryptedEnvelope(data)
     }
 }
 
+private extension BackupFolderItem {
+    var iconSystemName: String {
+        guard isEncrypted else { return "doc" }
+        if #available(macOS 15.0, iOS 18.0, *) {
+            return "lock.document"
+        } else {
+            return "lock.doc"
+        }
+    }
+}

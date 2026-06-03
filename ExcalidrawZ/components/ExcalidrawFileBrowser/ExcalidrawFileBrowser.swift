@@ -48,7 +48,7 @@ struct ExcalidrawFileBrowser: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func sidebar() -> some View {
         ExcalidrawGroupBrowser()
         .background {
@@ -60,7 +60,7 @@ struct ExcalidrawFileBrowser: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         VStack(spacing: 0) {
             ScrollView {

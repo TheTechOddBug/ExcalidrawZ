@@ -98,7 +98,7 @@ struct SegmentedPicker<Selection, Content>: View where Selection : Hashable, Con
 fileprivate struct SegmentedPickerContent: _VariadicView_MultiViewRoot {
     @State private var height: CGFloat = .zero
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func body(children: _VariadicView.Children) -> some View {
         let lastID = children.last?.id
         HStack {
@@ -148,7 +148,7 @@ struct SegmentedPickerItem<Value>: View where Value : Hashable {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func buttonView() -> some View {
         Button {
             viewModel.selection = value

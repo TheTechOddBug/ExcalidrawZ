@@ -1,3 +1,26 @@
+## 2.1.0
+
+#### Features
+
+- Added Locked Files. Protect sensitive drawings with Touch ID or your Mac password, keep a Recovery Key for fallback access, and encrypt saved file data and checkpoints on disk.
+- Locked file content is protected from AI access. AI can still help by creating proposal drawings that you can review and apply manually.
+- Added AI visibility controls for each file, so you can choose whether AI can read and edit the current drawing.
+- Added encrypted backups for ExcalidrawZ-managed backup snapshots.
+
+#### Optimizations
+
+- Added clearer Security settings for managing locked content, resetting the Recovery Key, and reviewing protected files.
+- Improved AI proposal previews in chat and island mode, including repeated apply support and canvas focus after applying.
+- Improved backup export and preview behavior for protected content.
+- Improved local folder permission handling when previewing and opening external Excalidraw files.
+
+#### Bug fixed
+
+- Fixed cases where opening a file could briefly show an empty canvas.
+- Fixed collaboration files repeatedly creating checkpoints after opening.
+- Fixed compatibility with Excalidraw files that no longer include legacy chart metadata.
+- Fixed several Settings, Share, and Whats New layout and localization issues.
+
 ## 2.0.2
 
 #### Optimizations

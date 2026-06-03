@@ -16,6 +16,7 @@ struct FileRowView: View {
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
     @Environment(\.alertToast) private var alertToast
     @EnvironmentObject var fileState: FileState
+    @EnvironmentObject private var lockedContentState: LockedContentStateStore
     
     var file: File
     var files: FetchedResults<File>
@@ -107,7 +108,8 @@ struct FileRowView: View {
             } label: {
                 FileRowLabel(
                     updatedAt: file.updatedAt ?? .distantPast,
-                    isInTrash: file.inTrash == true
+                    isInTrash: file.inTrash == true,
+                    lockState: lockedContentState.lockState(for: .file(file))
                 ) {
                   Text(file.name ?? ""/* + " - \(file.rank)"*/)
                     .foregroundStyle(
@@ -126,6 +128,9 @@ struct FileRowView: View {
         }
         .modifier(FileRowDragDropModifier(file: file, sameGroupFiles: files))
         .bindFileStatus(for: .file(file), status: $fileStatus)
+        .task(id: file.objectID.uriRepresentation()) {
+            await lockedContentState.refresh(file: .file(file))
+        }
     }
     
     private func activeFile(_ file: File) {

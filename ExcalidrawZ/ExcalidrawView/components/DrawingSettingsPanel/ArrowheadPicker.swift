@@ -248,9 +248,7 @@ private struct ArrowheadPickerPopover: View {
                     ArrowheadPicker(
                         selectedArrowhead: $startArrowhead,
                         direction: .start
-                    ) { editing in
-                        print("Start arrowhead editing: \(editing), value: \(String(describing: startArrowhead))")
-                    }
+                    ) { _ in }
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -261,9 +259,7 @@ private struct ArrowheadPickerPopover: View {
                     ArrowheadPicker(
                         selectedArrowhead: $endArrowhead,
                         direction: .start
-                    ) { editing in
-                        print("End arrowhead editing: \(editing), value: \(String(describing: endArrowhead))")
-                    }
+                    ) { _ in }
                 }
             }
             .padding()

@@ -5,10 +5,12 @@
 //  Created by Dove Zachary on 2024/11/18.
 //
 
+import CoreData
 import SwiftUI
 
 import ChocofordUI
 import LLMKit
+import SFSafeSymbols
 
 struct ExcalidrawEditorToolbarModifier: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
@@ -22,9 +24,13 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
     @EnvironmentObject var toolState: ToolState
     @EnvironmentObject private var store: Store
     @EnvironmentObject private var llmState: LLMStateObject
+    @EnvironmentObject private var lockedContentState: LockedContentStateStore
     @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
 
     @State private var isCollaboratorPopoverPresented = false
+    @State private var lockedFileAccessRequest: LockedFileAccessRequest?
+    @State private var existingRecoveryKeyLockRequest: LockedFileAccessRequest?
+    @State private var isLockingFile = false
     
     func body(content: Content) -> some View {
         ZStack {
@@ -58,6 +64,23 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
             }
         }
         .toolbar(content: toolbarContent)
+        .sheet(item: $lockedFileAccessRequest) { request in
+            LockedFileAccessSheet(request: request) { _ in
+                Task { @MainActor in
+                    await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
+                }
+            }
+        }
+        .sheet(item: $existingRecoveryKeyLockRequest) { request in
+            ExistingRecoveryKeyLockSheet(request: request) {
+                Task { @MainActor in
+                    await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
+                }
+            }
+        }
+        .task(id: fileState.currentActiveFile?.id) {
+            await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
+        }
 #if os(iOS)
 //        .modifier(
 //            HideToolbarModifier(
@@ -145,24 +168,212 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
 #if os(iOS)
                 applePencilToggle()
 #endif
-                ShareToolbarButton()
-            } else if aiChatPreferences.isAIEnabled && AIChatAvailability.isAvailable {
-                Button {
-                    store.togglePaywall(reason: .manaully)
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemSymbol: .sparkles)
-                        if let balance = llmState.creditsInfo?.balance, balance > 0 {
-                            Text(balance.formatted(.number.precision(.fractionLength(2))))
-                        }
+                if case .file(let file) = fileState.currentActiveFile,
+                   !file.inTrash {
+                    switch lockedContentState.activeFileLockState {
+                        case .plaintext:
+                            lockedFileToolbarButton(file)
+                        case .temporarilyUnlocked:
+                            temporarilyUnlockedFileToolbarMenu(file)
+                        case .locked:
+                            EmptyView()
                     }
-                    .foregroundStyle(AIAppearancePalette.foregroundGradient)
+                }
+                ShareToolbarButton()
+                    .disabled(lockedContentState.activeFileLockState == .locked)
+            } else {
+                if lockedContentState.hasActiveUnlockSession {
+                    Button {
+                        Task { @MainActor in
+                            await relockUnlockedContent()
+                        }
+                    } label: {
+                        Label(.localizable(.lockedContentFileUnlockedToolbarTitle), systemImage: LockedContentSymbols.keyShield)
+                    }
+                    .help(String(localizable: .lockedContentLockFilesHelp))
+                }
+
+                if aiChatPreferences.isAIEnabled && AIChatAvailability.isAvailable {
+                    Button {
+                        store.togglePaywall(reason: .manaully)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemSymbol: .sparkles)
+                            if let balance = llmState.creditsInfo?.balance, balance > 0 {
+                                Text(balance.formatted(.number.precision(.fractionLength(2))))
+                            }
+                        }
+                        .foregroundStyle(AIAppearancePalette.foregroundGradient)
+                    }
                 }
             }
         }
     }
+
+    @ViewBuilder
+    private func lockedFileToolbarButton(_ file: File) -> some View {
+        Button {
+            Task { @MainActor in
+                await lockFile(file)
+            }
+        } label: {
+            Label(.localizable(.lockFileTitle), systemSymbol: .lockShield)
+        }
+        .disabled(isLockingFile)
+        .help(String(localizable: .lockFileTitle))
+        .modifier(FeatureDiscoveryTipModifier(
+            kind: .lockFile,
+            isEnabled: !isLockingFile
+        ))
+    }
+
+    @ViewBuilder
+    private func temporarilyUnlockedFileToolbarMenu(_ file: File) -> some View {
+        Menu {
+            Button(role: .destructive) {
+                let fileObjectID = file.objectID
+                Task { @MainActor in
+                    await removeFileLock(fileObjectID: fileObjectID)
+                }
+            } label: {
+                Label(.localizable(.settingsSecurityRemoveLockButton), systemImage: LockedContentSymbols.removeLock)
+            }
+        } label: {
+            Label(.localizable(.lockedContentFileUnlockedToolbarTitle), systemImage: LockedContentSymbols.keyShield)
+        } primaryAction: {
+            Task { @MainActor in
+                await relockUnlockedContent()
+            }
+        }
+        .help(String(localizable: .lockFileTitle))
+    }
+
+    @MainActor
+    private func lockFile(_ file: File) async {
+        guard !isLockingFile else { return }
+        let request = LockedFileAccessRequest(
+            mode: .lock,
+            fileObjectID: file.objectID,
+            fileName: file.name ?? String(localizable: .generalUntitled)
+        )
+
+        if let recoveryKey = await RecoveryKeyVault.shared.currentRecoveryKeyForLocking() {
+            await lockFile(request: request, recoveryKey: recoveryKey)
+            return
+        }
+
+        guard await shouldAttemptSystemUnlockBeforeLocking() else {
+            await presentRecoveryKeyFallback(for: request)
+            return
+        }
+
+        isLockingFile = true
+        defer { isLockingFile = false }
+
+        do {
+            let recoveryKey = try await LockedContentSystemUnlockStore.loadRecoveryKey(
+                reason: LockedContentSystemUnlockReason.lockFile
+            )
+            try await PersistenceController.shared.fileRepository.lockFileContent(
+                fileObjectID: request.fileObjectID,
+                recoveryKey: recoveryKey
+            )
+            await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
+        } catch let unlockError as LockedContentSystemUnlockError {
+            await handleSavedRecoveryKeyLockError(unlockError, request: request)
+        } catch {
+            alertToast(error)
+        }
+    }
+
+    @MainActor
+    private func shouldAttemptSystemUnlockBeforeLocking() async -> Bool {
+        await hasExistingLockedContentBeforeLocking() || LockedContentSystemUnlockStore.shouldPromptAutomatically()
+    }
+
+    @MainActor
+    private func hasExistingLockedContentBeforeLocking() async -> Bool {
+        var hasExistingLockedContent = false
+
+        do {
+            hasExistingLockedContent = try await PersistenceController.shared.fileRepository.hasLockedFiles(includeTrash: true)
+        } catch {
+            hasExistingLockedContent = false
+        }
+
+#if canImport(AppKit)
+        if !hasExistingLockedContent {
+            hasExistingLockedContent = await backupsContainEncryptedExcalidrawFiles()
+        }
+#endif
+
+        return hasExistingLockedContent
+    }
+
+    @MainActor
+    private func lockFile(request: LockedFileAccessRequest, recoveryKey: RecoveryKey) async {
+        isLockingFile = true
+        defer { isLockingFile = false }
+
+        do {
+            try await PersistenceController.shared.fileRepository.lockFileContent(
+                fileObjectID: request.fileObjectID,
+                recoveryKey: recoveryKey
+            )
+            await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
+        } catch {
+            alertToast(error)
+        }
+    }
+
+    @MainActor
+    private func handleSavedRecoveryKeyLockError(
+        _ error: LockedContentSystemUnlockError,
+        request: LockedFileAccessRequest
+    ) async {
+        switch error {
+            case .noSavedRecoveryKey:
+                await presentRecoveryKeyFallback(for: request)
+            case .canceled:
+                return
+            case .unavailable, .authenticationFailed, .keychainError:
+                alertToast(error)
+        }
+    }
+
+    @MainActor
+    private func presentRecoveryKeyFallback(for request: LockedFileAccessRequest) async {
+        if await hasExistingLockedContentBeforeLocking() {
+            existingRecoveryKeyLockRequest = request
+        } else {
+            lockedFileAccessRequest = request
+        }
+    }
+
+    @MainActor
+    private func relockUnlockedContent() async {
+        await lockedContentState.relockCurrentSession(activeFile: fileState.currentActiveFile)
+    }
+
+    @MainActor
+    private func removeFileLock(fileObjectID: NSManagedObjectID) async {
+        do {
+            try await PersistenceController.shared.fileRepository
+                .removeFileLock(fileObjectID: fileObjectID)
+            await lockedContentState.refresh(activeFile: fileState.currentActiveFile)
+            alertToast(
+                .init(
+                    displayMode: .hud,
+                    type: .complete(.green),
+                    title: String(localizable: .lockedContentLockRemovedToastTitle)
+                )
+            )
+        } catch {
+            alertToast(error)
+        }
+    }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func undoButton() -> some View {
         if let excalidrawCore = fileState.excalidrawWebCoordinator {
             if excalidrawCore.canUndo, excalidrawCore.canRedo {
@@ -220,7 +431,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func title() -> some View {
         if let activeFile = fileState.currentActiveFile {
             ZStack {
@@ -229,7 +440,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                         VStack(alignment: .leading) {
                             Text(file.name ?? String(localizable: .generalUntitled))
                                 .font(.headline)
-                            Text(file.updatedAt?.formatted() ?? "Not modified")
+                            Text(file.updatedAt?.formatted() ?? String(localizable: .generalFileNeverModified))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -239,7 +450,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                         VStack(alignment: .leading) {
                             Text(filename)
                                 .font(.headline)
-                            Text(updatedAt?.formatted() ?? "Not modified")
+                            Text(updatedAt?.formatted() ?? String(localizable: .generalFileNeverModified))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -249,7 +460,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                         VStack(alignment: .leading) {
                             Text(filename)
                                 .font(.headline)
-                            Text(updatedAt?.formatted() ?? "Not modified")
+                            Text(updatedAt?.formatted() ?? String(localizable: .generalFileNeverModified))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -258,7 +469,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
                             VStack(alignment: .leading) {
                                 Text(collaborationFile.name ?? String(localizable: .generalUntitled))
                                     .font(.headline)
-                                Text(collaborationFile.updatedAt?.formatted() ?? "Not modified")
+                                Text(collaborationFile.updatedAt?.formatted() ?? String(localizable: .generalFileNeverModified))
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                             }
@@ -273,7 +484,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func titleBarActionsMenu() -> some View {
         if let file = fileState.currentActiveFile {
             ZStack {
@@ -306,7 +517,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func fileMenuLabel() -> some View {
 #if os(iOS)
         Image(systemSymbol: .ellipsis)
@@ -314,7 +525,7 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
 #endif
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func applePencilToggle() -> some View {
         if containerHorizontalSizeClass == .regular {
             Button {

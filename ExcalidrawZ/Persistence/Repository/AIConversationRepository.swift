@@ -164,7 +164,6 @@ actor AIConversationRepository {
             fetchRequest.relationshipKeyPathsForPrefetching = ["messages"]
 
             let rows = try context.fetch(fetchRequest)
-            print("[AIChatDiag] repo.fetchConversationSnapshots(scope=\(scope.kind.rawValue):\(scope.id)) -> \(rows.count) Core Data rows")
             return rows.map { row in
                 let messageSet = row.messages as? Set<AIConversationMessage> ?? []
                 let messageSnapshots = messageSet
@@ -218,13 +217,12 @@ actor AIConversationRepository {
             fetchRequest.fetchLimit = 1
 
             guard let conversation = try context.fetch(fetchRequest).first else {
-                print("[AIChatDiag] repo.bindConversationToFileScope: conversation \(conversationID) NOT FOUND in Core Data")
+                self.logger.warning("Cannot bind missing AI conversation \(conversationID) to \(scope.kind.rawValue):\(scope.id)")
                 throw AppError.fileError(.notFound)
             }
             conversation.fileScopeKind = scope.kind.rawValue
             conversation.fileScopeID = scope.id
             try context.save()
-            print("[AIChatDiag] repo.bindConversationToFileScope: bound \(conversationID) -> \(scope.kind.rawValue):\(scope.id)")
         }
     }
 
@@ -522,7 +520,7 @@ actor AIConversationRepository {
     func deleteMessages(messageIDs: [String]) async throws {
         let context = PersistenceController.shared.newTaskContext()
 
-        try await context.perform {
+        let blobs = try await context.perform {
             let linkFetch = NSFetchRequest<AIMessageCheckpointLink>(entityName: "AIMessageCheckpointLink")
             linkFetch.predicate = NSPredicate(format: "messageID IN %@", messageIDs)
             for link in try context.fetch(linkFetch) {
@@ -533,6 +531,7 @@ actor AIConversationRepository {
             fetchRequest.predicate = NSPredicate(format: "messageID IN %@", messageIDs)
 
             let messages = try context.fetch(fetchRequest)
+            let blobs = messages.compactMap(\.filesData)
 
             for message in messages {
                 context.delete(message)
@@ -541,7 +540,10 @@ actor AIConversationRepository {
             if context.hasChanges {
                 try context.save()
             }
+            return blobs
         }
+
+        await deleteAttachments(from: blobs)
     }
 
     /// Delete entire conversation and all its messages

@@ -13,24 +13,11 @@ struct ExcalidrawSettingsView: View {
     @State private var editingSettings: UserDrawingSettings = UserDrawingSettings()
 
     var body: some View {
-        if #available(macOS 14.0, *) {
-            Form {
-                content()
-            }
-            .formStyle(.grouped)
-            .onAppear {
-                loadSettings()
-            }
-        } else {
-            ScrollView {
-                VStack {
-                    content()
-                }
-                .padding()
-            }
-            .onAppear {
-                loadSettings()
-            }
+        SettingsFormContainer {
+            content()
+        }
+        .onAppear {
+            loadSettings()
         }
     }
 

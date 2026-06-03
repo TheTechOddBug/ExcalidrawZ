@@ -38,6 +38,10 @@ struct WebFetchTool: Tool {
               let url = URL(string: urlString) else {
             throw ToolError.invalidInput("Invalid URL parameter")
         }
+        guard let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https" else {
+            throw ToolError.invalidInput("Only HTTP and HTTPS URLs can be fetched.")
+        }
 
         // Create URLRequest with proper headers
         var request = URLRequest(url: url)

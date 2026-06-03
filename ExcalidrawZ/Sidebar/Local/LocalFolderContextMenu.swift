@@ -9,8 +9,10 @@ import SwiftUI
 import CoreData
  
 struct LocalFolderMenuProvider: View {
+    @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.alertToast) private var alertToast
     @EnvironmentObject private var fileState: FileState
+    @EnvironmentObject private var localFolderState: LocalFolderState
 
     struct Triggers {
         var onToggleRename: () -> Void
@@ -88,7 +90,11 @@ struct LocalFolderMenuProvider: View {
                         at: subfolderURL,
                         withIntermediateDirectories: false
                     )
-                    // LocalFolder creation will be in FSEventStream...
+                }
+                try await MainActor.run {
+                    try folder.refreshChildren(context: viewContext)
+                    localFolderState.objectWillChange.send()
+                    localFolderState.refreshFilesPublisher.send()
                 }
             } catch {
                 await MainActor.run {
@@ -275,6 +281,11 @@ struct LocalFolderMenuItems: View {
                         try await folder.withSecurityScopedURL { scopedURL async throws in
                             _ = try await FileCoordinator.shared.coordinatedTrash(url: scopedURL)
                         }
+                        try await MainActor.run {
+                            try deleteLocalFolder(folder, context: viewContext)
+                            localFolderState.objectWillChange.send()
+                            localFolderState.refreshFilesPublisher.send()
+                        }
                     } catch {
                         await MainActor.run {
                             alertToast(error)
@@ -287,7 +298,7 @@ struct LocalFolderMenuItems: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func moveLocalFileMenu() -> some View {
         Menu {
             ForEach(topLevelLocalFolders) { folder in

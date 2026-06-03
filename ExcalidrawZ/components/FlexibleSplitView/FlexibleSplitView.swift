@@ -110,7 +110,6 @@ struct FlexibleSplitView<Item: FlexibleItem, ID: Hashable & Transferable>: View 
                         } isTargeted: { isTargeted in
                             let dst = item.wrappedValue[keyPath: itemID]
                             guard isTargeted else { return }
-//                            print(draggedItemID, "draggedIndex: \(items.firstIndex(where: {$0[keyPath: itemID] == draggedItemID})), dstIndex: \(items.firstIndex(where: {$0[keyPath: itemID] == dst}))")
                             withAnimation {
                                 if let draggedIndex = items.firstIndex(where: {$0[keyPath: itemID] == draggedItemID}),
                                    let dstIndex = items.firstIndex(where: {$0[keyPath: itemID] == dst}) {
@@ -167,13 +166,8 @@ struct FlexibleSplitView<Item: FlexibleItem, ID: Hashable & Transferable>: View 
                     .font(.largeTitle)
                     .padding(40)
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-//                    .onAppear {
-//                        print("Dragging item: \(item.title), ID: \(item[keyPath: itemID])")
-//                        self.draggedItemID = item[keyPath: itemID]
-//                    }
             }
             .simultaneousGesture(DragGesture(minimumDistance: 0).onChanged { _ in
-                print("Dragging item: \(item.title), ID: \(item[keyPath: itemID])")
                 if self.draggedItemID != item[keyPath: itemID] {
                     self.draggedItemID = item[keyPath: itemID]
                 }
@@ -230,7 +224,6 @@ fileprivate struct DividerOverlayModifier: ViewModifier {
             .overlay {
                 MouseMoveTrackingView { localPt in
                     // localPt 是视图左下原点的坐标，和 size 对齐
-                    print("Mouse moved at: \(localPt), size: \(size)")
                     activeDivider = detectDivider(at: NSPoint(x: localPt.x, y: size.height - localPt.y), in: size)
                     resizeCursor.set()
                 }
@@ -353,7 +346,7 @@ fileprivate struct SubViewToolbarModifier: ViewModifier {
     }
     
     
-//    @MainActor @ViewBuilder
+//    @ViewBuilder
 //    private func toolbarContent() -> some View {
 //        content
 //            .padding(6)

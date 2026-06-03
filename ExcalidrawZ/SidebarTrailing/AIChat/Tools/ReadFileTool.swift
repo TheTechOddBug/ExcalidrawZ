@@ -14,7 +14,10 @@ struct ReadFileTool: Tool {
     struct ReadFileContext: ToolContext {
         var currentFileData: Data?
         var canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget
+        var readCanvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget?
         var selectedElementIDs: [String]?
+        var currentFileID: UUID? = nil
+        var isCurrentFileContextProtected: Bool = false
     }
 
     var name: String { "read_file" }
@@ -23,10 +26,11 @@ struct ReadFileTool: Tool {
 
     var description: String {
         """
-        Read a filtered, simplified view of the current Excalidraw file.
-        Prefer targeted queries (`query`, `ids`, `types`, `selected_only`,
-        `frame_id`, `group_id`) and pagination (`offset`, `limit`) instead
-        of dumping the whole canvas.
+        Read a filtered, simplified view of the current Excalidraw file
+        when file context is available. Prefer targeted queries
+        (`query`, `ids`, `types`, `selected_only`, `frame_id`, `group_id`)
+        and pagination (`offset`, `limit`) instead of dumping the whole
+        canvas.
         """
     }
     
@@ -40,9 +44,16 @@ struct ReadFileTool: Tool {
         let params = try parseInput(input)
         guard let context else { throw ToolError.executionFailed("Missing ReadFileContext") }
         let readFileContext = try context.resolve(ReadFileContext.self)
+        guard !readFileContext.isCurrentFileContextProtected else {
+            return LockedContentAIGuard.lockedToolResult
+        }
+        guard try await LockedContentAIGuard.canToolAccess(fileID: readFileContext.currentFileID) else {
+            return LockedContentAIGuard.lockedToolResult
+        }
         guard let data = try await CurrentExcalidrawDataResolver.resolveLiveSnapshot(
-            canvasTarget: readFileContext.canvasTarget,
-            baseContent: readFileContext.currentFileData
+            canvasTarget: readFileContext.readCanvasTarget ?? readFileContext.canvasTarget,
+            baseContent: readFileContext.currentFileData,
+            currentFileID: readFileContext.currentFileID
         ) else {
             throw ToolError.executionFailed("Missing current file data")
         }

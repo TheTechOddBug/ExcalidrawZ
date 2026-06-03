@@ -80,7 +80,7 @@ private struct SemiCircleShape: Shape {
 private struct AISettingsGlassChipModifier: ViewModifier {
     let cornerRadius: CGFloat
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func body(content: Content) -> some View {
         if #available(macOS 26.0, iOS 26.0, *) {
             content
@@ -100,7 +100,7 @@ private struct AISettingsGlassCapsuleModifier: ViewModifier {
     let isInteractive: Bool
     let isProminent: Bool
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func body(content: Content) -> some View {
         if #available(macOS 26.0, iOS 26.0, *) {
             let glass = isProminent

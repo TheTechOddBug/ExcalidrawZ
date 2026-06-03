@@ -7,8 +7,11 @@
 
 import SwiftUI
 import CoreData
+import Logging
 
 import ChocofordUI
+
+private let localFilesProviderLogger = Logger(label: "LocalFilesProvider")
 
 struct LocalFilesProvider<Content: View>: View {
     @Environment(\.scenePhase) private var scenePhase
@@ -55,6 +58,7 @@ struct LocalFilesProvider<Content: View>: View {
     
     @State private var files: [URL] = []
     @State private var updateFlags: [URL : Date] = [:]
+    @State private var didLoadInitialCache = false
     
 #if canImport(AppKit)
     @State private var window: NSWindow?
@@ -65,8 +69,11 @@ struct LocalFilesProvider<Content: View>: View {
     var body: some View {
         content(files, updateFlags)
             .bindWindow($window)
-            .watch(value: folder.url) { newValue in
-                DispatchQueue.main.async { getFolderContents() }
+            .onAppear {
+                loadCachedFilesIfNeeded()
+            }
+            .task(id: folderContentsLoadID) {
+                getFolderContents()
             }
 #if os(macOS)
             .onReceive(
@@ -119,6 +126,28 @@ struct LocalFilesProvider<Content: View>: View {
                 }
             }
     }
+
+    private var folderContentsLoadID: String {
+        folder.url?.filePath ?? folder.objectID.uriRepresentation().absoluteString
+    }
+
+    private var folderCacheKey: String {
+        folder.url?.standardizedFileURL.path ?? folder.objectID.uriRepresentation().absoluteString
+    }
+
+    private func loadCachedFilesIfNeeded() {
+        guard !didLoadInitialCache else { return }
+        didLoadInitialCache = true
+
+        guard files.isEmpty,
+              let cachedFiles = LocalFilesProviderCache.files(for: folderCacheKey) else {
+            return
+        }
+
+        self.files = cachedFiles
+        sortFiles(field: sortField)
+        self.updateFlags = cachedFiles.map { [$0: Date()] }.merged()
+    }
     
     private func getFolderContents() {
         // wait a liitle
@@ -160,6 +189,7 @@ struct LocalFilesProvider<Content: View>: View {
                     withAnimation {
                         self.files = files
                         self.sortFiles(field: self.sortField)
+                        LocalFilesProviderCache.setFiles(self.files, for: folderCacheKey)
                         
                         if case .localFolder(let folder) = fileState.currentActiveGroup,
                            folder == self.folder,
@@ -215,22 +245,25 @@ struct LocalFilesProvider<Content: View>: View {
             }
         }
         files.removeAll(where: { $0.filePath == path })
+        LocalFilesProviderCache.setFiles(files, for: folderCacheKey)
         deleteAIConversations(forLocalFileAtPath: path)
     }
 
     private func deleteAIConversations(forLocalFileAtPath path: String) {
         let url = URL(fileURLWithPath: path)
         Task.detached {
+            let scope = AIConversationFileScope(
+                kind: .localFile,
+                id: url.absoluteString
+            )
             do {
                 try await PersistenceController.shared.aiConversationRepository
                     .deleteConversations(
-                        forFileScope: AIConversationFileScope(
-                            kind: .localFile,
-                            id: url.absoluteString
-                        )
+                        forFileScope: scope
                     )
+                await AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
             } catch {
-                print("Warning: Failed to delete AI conversations for removed local file \(path): \(error)")
+                localFilesProviderLogger.warning("Failed to delete AI conversations for removed local file \(path): \(error)")
             }
         }
     }
@@ -241,9 +274,23 @@ struct LocalFilesProvider<Content: View>: View {
         self.files.sort {
             ((try? FileManager.default.attributesOfItem(atPath: $0.filePath)[FileAttributeKey.modificationDate]) as? Date) ?? .distantPast > ((try? FileManager.default.attributesOfItem(atPath: $1.filePath)[FileAttributeKey.modificationDate]) as? Date) ?? .distantPast
         }
+        LocalFilesProviderCache.setFiles(files, for: folderCacheKey)
     }
     
     private func handleItemRenamed(path: String) {
         getFolderContents()
+    }
+}
+
+@MainActor
+private enum LocalFilesProviderCache {
+    private static var filesByFolderPath: [String: [URL]] = [:]
+
+    static func files(for folderPath: String) -> [URL]? {
+        filesByFolderPath[folderPath]
+    }
+
+    static func setFiles(_ files: [URL], for folderPath: String) {
+        filesByFolderPath[folderPath] = files
     }
 }

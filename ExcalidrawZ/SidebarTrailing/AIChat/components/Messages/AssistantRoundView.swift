@@ -196,7 +196,7 @@ struct AssistantRoundView: View {
         revealedIDs.contains(id) ? 1 : 0
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func renderItem(_ item: RenderItem) -> some View {
         switch item {
             case .assistantContent(let content):
@@ -208,7 +208,7 @@ struct AssistantRoundView: View {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func assistantContent(_ c: ChatMessageContent) -> some View {
         let text = displayText(of: c)
         if !text.isEmpty {
@@ -224,7 +224,7 @@ struct AssistantRoundView: View {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func assistantToolCall(_ item: RenderItem) -> some View {
         if case .assistantToolCall(let messageID, let call) = item {
             ToolCallCard(
@@ -533,7 +533,7 @@ struct AssistantRoundView: View {
 
     // MARK: - Action row
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func actionRow(copyText: String, sourceID: String) -> some View {
         HStack(spacing: 0) {
             CopyButton(text: copyText)
@@ -596,47 +596,14 @@ extension EnvironmentValues {
 /// Copy button with an inline "copied" confirmation.
 struct CopyButton: View {
     let text: String
-    @State private var copied: Bool = false
-    @State private var revertTask: Task<Void, Never>?
-
-    private static let revertDelay: Duration = .seconds(1.4)
 
     var body: some View {
-        Button {
-            copyToClipboard(text)
-            withAnimation(.easeInOut(duration: 0.15)) {
-                copied = true
-            }
-            revertTask?.cancel()
-            revertTask = Task { @MainActor in
-                try? await Task.sleep(for: Self.revertDelay)
-                guard !Task.isCancelled else { return }
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    copied = false
-                }
-            }
-        } label: {
-            ZStack {
-                if #available(macOS 15.0, *) {
-                    Image(systemSymbol: copied ? .checkmark : .docOnDoc)
-                        .contentTransition(.symbolEffect(.replace))
-                } else {
-                    Image(systemSymbol: copied ? .checkmark : .docOnDoc)
-                }
-            }
-            .frame(width: 14, height: 14)
-            .font(.caption)
-        }
-        .foregroundStyle(copied ? Color.green : .secondary)
-        .help("Copy message")
-    }
-
-    private func copyToClipboard(_ text: String) {
-#if canImport(AppKit)
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
-#endif
+        CopyFeedbackButton(
+            text: text,
+            help: "Copy message",
+            iconFrame: CGSize(width: 14, height: 14),
+            iconFont: .caption
+        )
     }
 }
 

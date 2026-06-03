@@ -41,7 +41,7 @@ extension ExcalidrawCore: WKScriptMessageHandler {
                     DispatchQueue.main.async {
                         self.isDocumentLoaded = true
                     }
-                    logger.info("onload")
+                    logger.debug("onload")
                 case .legacyNoop:
                     break
                 case .stateChanged(let message):
@@ -243,8 +243,7 @@ extension ExcalidrawCore {
     }
     
     func handleBlobData(_ data: Data) throws {
-        let json = try JSONSerialization.jsonObject(with: data)
-        dump(json)
+        _ = try JSONSerialization.jsonObject(with: data)
     }
     
     func handleCopy(_ data: [WebClipboardItem]) throws {
@@ -270,8 +269,7 @@ extension ExcalidrawCore {
                         )),
                         options: [.ignoreUnknownCharacters]
                     ) {
-                        let success = pasteboard.setData(data, forType: .png)
-                        print(success)
+                        pasteboard.setData(data, forType: .png)
                     } else {
                         pasteboard.setString(string, forType: .png)
                     }
@@ -668,7 +666,7 @@ extension ExcalidrawCore {
 
     struct ExcalidrawState: Codable {
         let showWelcomeScreen: Bool
-        let theme, currentChartType, currentItemBackgroundColor, currentItemEndArrowhead: String
+        let theme, currentItemBackgroundColor, currentItemEndArrowhead: String
         let currentItemFillStyle: String
         let currentItemFontFamily: FontFamily
         let currentItemFontSize, currentItemOpacity, currentItemRoughness: Int
@@ -697,7 +695,7 @@ extension ExcalidrawCore {
 //        let selectedLinearElement: JSONNull?
 
         enum CodingKeys: String, CodingKey {
-            case showWelcomeScreen, theme, currentChartType, currentItemBackgroundColor, currentItemEndArrowhead, currentItemFillStyle, currentItemFontFamily, currentItemFontSize, currentItemOpacity, currentItemRoughness, currentItemStrokeColor, currentItemRoundness, currentItemStrokeStyle, currentItemStrokeWidth, currentItemTextAlign, cursorButton
+            case showWelcomeScreen, theme, currentItemBackgroundColor, currentItemEndArrowhead, currentItemFillStyle, currentItemFontFamily, currentItemFontSize, currentItemOpacity, currentItemRoughness, currentItemStrokeColor, currentItemRoundness, currentItemStrokeStyle, currentItemStrokeWidth, currentItemTextAlign, cursorButton
             
             case activeTool, penMode, penDetected, exportBackground, exportScale, exportEmbedScene, exportWithDarkMode, defaultSidebarDockedPreference, lastPointerDownWith, name
             case previousSelectedElementIDS = "previousSelectedElementIds"

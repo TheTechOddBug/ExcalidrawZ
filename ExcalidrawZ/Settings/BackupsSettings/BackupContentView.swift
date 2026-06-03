@@ -46,7 +46,7 @@ struct BackupContentView: View {
                 }
             }
         }
-        .watch(value: backup) { newValue in
+        .task(id: backup) {
             loadSelectedBackup()
         }
     }

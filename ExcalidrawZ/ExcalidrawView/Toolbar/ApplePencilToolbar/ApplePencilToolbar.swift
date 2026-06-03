@@ -586,7 +586,7 @@ struct ApplePencilToolbar: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func moreTools() -> some View {
         Menu {
             Button {

@@ -56,7 +56,7 @@ struct ExcalidrawEditorOverlayModifier: ViewModifier {
         .animation(.default, value: isProgressViewPresented)
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var recoverOverlayView: some View {
         Rectangle()
             .opacity(0)
@@ -101,7 +101,7 @@ struct ExcalidrawEditorOverlayModifier: ViewModifier {
             }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func selectFilePlaceholderView() -> some View {
         ZStack {
             if isSelectFilePlaceholderPresented {
@@ -120,7 +120,7 @@ struct ExcalidrawEditorOverlayModifier: ViewModifier {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func emptyFilePlaceholderview() -> some View {
         ZStack {
             if isSelectFilePlaceholderPresented {

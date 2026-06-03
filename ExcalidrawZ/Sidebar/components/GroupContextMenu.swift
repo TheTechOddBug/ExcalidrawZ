@@ -7,6 +7,9 @@
 
 import SwiftUI
 import CoreData
+import Logging
+
+private let groupContextMenuLogger = Logger(label: "GroupContextMenu")
 
 struct GroupMenuProvider: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -93,7 +96,7 @@ struct GroupMenuProvider: View {
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func createSubFolderSheetView() -> some View {
         CreateGroupSheetView(
             name: $initialNewGroupName,
@@ -404,7 +407,7 @@ struct GroupMenuItems: View {
             do {
                 try PersistenceController.shared.container.viewContext.save()
             } catch {
-                print(error)
+                groupContextMenuLogger.error("Failed to move files before deleting group: \(error)")
             }
         }
         let groupID = self.group.objectID
@@ -418,7 +421,7 @@ struct GroupMenuItems: View {
             do {
                 try bgContext.save()
             } catch {
-                print(error)
+                groupContextMenuLogger.error("Failed to delete group and files: \(error)")
             }
         }
     }

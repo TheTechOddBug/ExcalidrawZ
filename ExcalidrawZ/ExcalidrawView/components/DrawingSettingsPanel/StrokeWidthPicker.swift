@@ -66,9 +66,7 @@ struct StrokeWidthPicker: View {
             StrokeWidthPicker(
                 widths: [1, 2, 4],
                 selectedWidth: 2
-            ) { width in
-                print("Selected width: \(width)")
-            }
+            ) { _ in }
         }
 
         VStack(alignment: .leading, spacing: 8) {
@@ -79,9 +77,7 @@ struct StrokeWidthPicker: View {
             StrokeWidthPicker(
                 widths: [0.5, 1, 2, 3, 4, 5],
                 selectedWidth: 3
-            ) { width in
-                print("Selected width: \(width)")
-            }
+            ) { _ in }
         }
     }
     .padding()

@@ -8,6 +8,9 @@
 import SwiftUI
 import Combine
 import CoreData
+import Logging
+
+private let localFolderStateLogger = Logger(label: "LocalFolderState")
 
 final class LocalFolderState: ObservableObject {
     var refreshFilesPublisher = PassthroughSubject<Void, Never>()
@@ -68,7 +71,7 @@ final class LocalFolderState: ObservableObject {
                     try? await Task.sleep(nanoseconds: UInt64(1e+9 * 0.2))
                 }
             } catch {
-                print(error)
+                localFolderStateLogger.error("Failed to move local folder: \(error)")
             }
         }
     }
@@ -173,7 +176,7 @@ class LocalFileUtils {
                     try context.save()
                 }
             } catch {
-                print(error)
+                localFolderStateLogger.error("Failed to update local checkpoints after URL change: \(error)")
             }
         }
     }
@@ -213,16 +216,27 @@ class LocalFileUtils {
                 self.updateCheckpoints(oldURL: file, newURL: newURL)
 
                 do {
+                    let oldLocalScope = AIConversationFileScope(kind: .localFile, id: file.absoluteString)
+                    let oldTemporaryScope = AIConversationFileScope(kind: .temporaryFile, id: file.absoluteString)
+                    let newLocalScope = AIConversationFileScope(kind: .localFile, id: newURL.absoluteString)
                     try await PersistenceController.shared.aiConversationRepository.rebindConversations(
-                        from: AIConversationFileScope(kind: .localFile, id: file.absoluteString),
-                        to: AIConversationFileScope(kind: .localFile, id: newURL.absoluteString)
+                        from: oldLocalScope,
+                        to: newLocalScope
+                    )
+                    await AIChatPreferences.shared.rebindFileAccessOverride(
+                        from: oldLocalScope,
+                        to: newLocalScope
                     )
                     try await PersistenceController.shared.aiConversationRepository.rebindConversations(
-                        from: AIConversationFileScope(kind: .temporaryFile, id: file.absoluteString),
-                        to: AIConversationFileScope(kind: .localFile, id: newURL.absoluteString)
+                        from: oldTemporaryScope,
+                        to: newLocalScope
+                    )
+                    await AIChatPreferences.shared.rebindFileAccessOverride(
+                        from: oldTemporaryScope,
+                        to: newLocalScope
                     )
                 } catch {
-                    print("Warning: Failed to rebind AI conversations for moved local file: \(error)")
+                    localFolderStateLogger.warning("Failed to rebind AI conversations for moved local file: \(error)")
                 }
 
                 urlMapping[file] = newURL

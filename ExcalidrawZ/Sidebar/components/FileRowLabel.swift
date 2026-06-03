@@ -17,6 +17,7 @@ struct FileRowLabel: View {
     var fileType: UTType
     var updatedAt: Date
     var isInTrash: Bool
+    var lockState: FileContentLockState
     
     var nameTrailingView: AnyView
     
@@ -25,6 +26,7 @@ struct FileRowLabel: View {
         fileType: UTType = .excalidrawFile,
         updatedAt: Date,
         isInTrash: Bool = false,
+        lockState: FileContentLockState = .plaintext,
         @ViewBuilder nameTrailingView: () -> T = {
             EmptyView()
         }
@@ -33,6 +35,7 @@ struct FileRowLabel: View {
         self.fileType = fileType
         self.updatedAt = updatedAt
         self.isInTrash = isInTrash
+        self.lockState = lockState
         self.nameTrailingView = AnyView(nameTrailingView())
     }
     
@@ -40,6 +43,7 @@ struct FileRowLabel: View {
         fileType: UTType = .excalidrawFile,
         updatedAt: Date,
         isInTrash: Bool = false,
+        lockState: FileContentLockState = .plaintext,
         @ViewBuilder name: () -> N,
         @ViewBuilder nameTrailingView: () -> T = {
             EmptyView()
@@ -49,26 +53,17 @@ struct FileRowLabel: View {
         self.fileType = fileType
         self.updatedAt = updatedAt
         self.isInTrash = isInTrash
+        self.lockState = lockState
         self.nameTrailingView = AnyView(nameTrailingView())
     }
     
     var body: some View {
         HStack(spacing: 10) {
             ZStack {
-                switch fileType {
-                    case .excalidrawPNG:
-                        Image(systemSymbol: .photo)
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundStyle(Color.accentColor)
-                    case .excalidrawSVG:
-                        Image(systemSymbol: .photo)
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundStyle(Color.accentColor)
-                    default:
-                        ExcalidrawIconView()
-                            .opacity(isInTrash ? 0.3 : 1.0)
+                fileIcon
+
+                if lockState != .plaintext {
+                    lockBadgeIcon
                 }
             }
             .frame(height: 14)
@@ -83,6 +78,58 @@ struct FileRowLabel: View {
         .lineLimit(1)
         .truncationMode(.middle)
         .padding(.leading, 2 + CGFloat(depth+1) * 12)
+    }
+
+    @ViewBuilder
+    private var fileIcon: some View {
+        switch fileType {
+            case .excalidrawPNG:
+                Image(systemSymbol: .photo)
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundStyle(Color.accentColor)
+            case .excalidrawSVG:
+                Image(systemSymbol: .photo)
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundStyle(Color.accentColor)
+            default:
+                ExcalidrawIconView()
+                    .opacity(isInTrash ? 0.3 : 1.0)
+        }
+    }
+
+    private var lockBadgeSystemName: String {
+        switch lockState {
+            case .locked:
+                "lock.shield"
+            case .temporarilyUnlocked:
+                LockedContentSymbols.keyShield
+            case .plaintext:
+                "lock.shield"
+        }
+    }
+
+    @ViewBuilder
+    private var lockBadgeIcon: some View {
+        let icon = Image(systemName: lockBadgeSystemName)
+            .font(.system(size: 8.5, weight: .bold))
+            .foregroundStyle(.secondary)
+
+        if #available(macOS 14.0, iOS 17.0, *) {
+            icon
+                .contentTransition(.symbolEffect(.replace))
+                .padding(1.5)
+                .background(.regularMaterial, in: Circle())
+                .offset(x: 5, y: 4)
+                .animation(.smooth(duration: 0.18), value: lockBadgeSystemName)
+        } else {
+            icon
+                .padding(1.5)
+                .background(.regularMaterial, in: Circle())
+                .offset(x: 5, y: 4)
+                .animation(.easeInOut(duration: 0.18), value: lockBadgeSystemName)
+        }
     }
 }
 

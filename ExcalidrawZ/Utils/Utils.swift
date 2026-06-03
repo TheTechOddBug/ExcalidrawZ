@@ -8,11 +8,14 @@
 import Foundation
 import SwiftUI
 import CoreData
+import Logging
 #if canImport(AppKit)
 import AppKit
 #endif
 
 import WebKit
+
+private let utilitiesLogger = Logger(label: "Utilities")
 
 func loadResource<T: Decodable>(_ filename: String) -> T {
     let data: Data
@@ -49,61 +52,95 @@ func getBackupsDir() throws -> URL {
     return backupsDir
 }
 
-func backupFiles(context: NSManagedObjectContext) async throws {
+enum BackupFilesReason {
+    case regular
+    case unlockedContent
+
+    var replacesExistingToday: Bool {
+        switch self {
+            case .regular:
+                false
+            case .unlockedContent:
+                true
+        }
+    }
+}
+
+@discardableResult
+func backupFiles(
+    context: NSManagedObjectContext,
+    reason: BackupFilesReason = .regular
+) async throws -> Bool {
     let fileManager = FileManager.default
     let backupsDir = try getBackupsDir()
+    let replaceExistingToday = reason.replacesExistingToday
 
     let today = Date()
     let formatter = DateFormatter()
     formatter.dateFormat = "yyyy-MM-dd"
-    let exportURL = backupsDir.appendingPathComponent(formatter.string(from: today), conformingTo: .directory)
-    if fileManager.fileExists(at: exportURL) { return }
+    let backupFolderName = formatter.string(from: today)
+    let exportURL = backupsDir.appendingPathComponent(backupFolderName, conformingTo: .directory)
+    let existingBackupExists = fileManager.fileExists(at: exportURL)
+    if existingBackupExists && !replaceExistingToday { return false }
 
+    switch reason {
+        case .regular:
+            if try await cloudBackupHasEncryptedContent(context: context) {
+                utilitiesLogger.debug("Skipping regular backup because encrypted files exist")
+                return false
+            }
+        case .unlockedContent:
+            if try await cloudBackupHasLockedContentUnavailable(context: context) {
+                utilitiesLogger.debug("Skipping unlock-triggered backup because locked files are not unlocked")
+                return false
+            }
+    }
+
+    let workingExportURL: URL
+    if replaceExistingToday {
+        workingExportURL = backupsDir.appendingPathComponent(
+            ".\(backupFolderName)-staging-\(UUID().uuidString)",
+            conformingTo: .directory
+        )
+    } else {
+        workingExportURL = exportURL
+    }
+    var didInstallWorkingBackup = !replaceExistingToday
+    defer {
+        if replaceExistingToday && !didInstallWorkingBackup {
+            try? fileManager.removeItem(at: workingExportURL)
+        }
+    }
 
     // Cloud
-    let cloudExportURL = exportURL.appendingPathComponent("Cloud", conformingTo: .directory)
+    let cloudExportURL = workingExportURL.appendingPathComponent("Cloud", conformingTo: .directory)
     do {
-        print("[Backup Files] Start... \(cloudExportURL)")
+        utilitiesLogger.debug("Starting cloud backup at \(cloudExportURL.path)")
         try fileManager.createDirectory(at: cloudExportURL, withIntermediateDirectories: true)
-        try await archiveAllCloudFiles(to: cloudExportURL, context: context)
+        try await backupAllCloudFiles(to: cloudExportURL, context: context)
+    } catch let error as EncryptedContentError where error.isContentLocked {
+        utilitiesLogger.debug("Skipping backup because locked files are not unlocked")
+        try? fileManager.removeItem(at: workingExportURL)
+        return false
     } catch {
-        print("[Backup Files] backup cloud files done, but with error: \(error)")
+        utilitiesLogger.warning("Cloud backup completed with error: \(error)")
     }
     // Local
-    let localExportURL = exportURL.appendingPathComponent("Local", conformingTo: .directory)
-    Task {
-        do {
-            print("[Backup Files] Start... \(localExportURL)")
-            try fileManager.createDirectory(at: localExportURL, withIntermediateDirectories: true)
-            let context = PersistenceController.shared.container.newBackgroundContext()
-            try await context.perform {
-                let fileManager = FileManager.default
-                let fetchRequest = NSFetchRequest<LocalFolder>(entityName: "LocalFolder")
-                fetchRequest.predicate = NSPredicate(format: "parent = nil")
-                let allFolders = try context.fetch(fetchRequest)
-                for folder in allFolders {
-                    // Files in iCloud will not be copied if not downloaded...
-                    try folder.withSecurityScopedURL { scopedURL in
-                        Task {
-                            let fileCoordinator = NSFileCoordinator()
-                            fileCoordinator.coordinate(readingItemAt: scopedURL, error: nil) { url in
-                                do {
-                                    try fileManager.copyItem(
-                                        at: url,
-                                        to: localExportURL.appendingPathComponent(url.lastPathComponent, conformingTo: .directory)
-                                    )
-                                } catch {
-                                    print("[Backup Files] error occured when copy local folder: \(url)")
-                                }
-                            }
-                            
-                        }
-                    }
-                }
-            }
-        } catch {
-            print("[Backup Files] backup local files done, but with error: \(error)")
+    let localExportURL = workingExportURL.appendingPathComponent("Local", conformingTo: .directory)
+    do {
+        utilitiesLogger.debug("Starting local backup at \(localExportURL.path)")
+        try fileManager.createDirectory(at: localExportURL, withIntermediateDirectories: true)
+        try await backupLocalFolders(to: localExportURL)
+    } catch {
+        utilitiesLogger.warning("Local backup completed with error: \(error)")
+    }
+
+    if replaceExistingToday {
+        if existingBackupExists {
+            try fileManager.removeItem(at: exportURL)
         }
+        try fileManager.moveItem(at: workingExportURL, to: exportURL)
+        didInstallWorkingBackup = true
     }
     
     // clean
@@ -142,13 +179,386 @@ func backupFiles(context: NSManagedObjectContext) async throws {
         }
     }
     let foldersToDelete = Set(sortedFolders.map { $0.0 }).subtracting(foldersToKeep)
-    print("[Backup files] folder to keep: \(foldersToKeep.count), folder to delete: \(foldersToDelete.count)")
+    utilitiesLogger.debug("Backup retention keeps \(foldersToKeep.count) folder(s), deletes \(foldersToDelete.count)")
     for folder in foldersToDelete {
         do {
             try fileManager.removeItem(at: folder)
         } catch {
-            print(error)
+            utilitiesLogger.warning("Failed to remove old backup folder \(folder.path): \(error)")
         }
+    }
+
+    return true
+}
+
+private func backupLocalFolders(to localExportURL: URL) async throws {
+    let context = PersistenceController.shared.container.newBackgroundContext()
+    try await context.perform {
+        let fetchRequest = NSFetchRequest<LocalFolder>(entityName: "LocalFolder")
+        fetchRequest.predicate = NSPredicate(format: "parent = nil")
+        let allFolders = try context.fetch(fetchRequest)
+        for folder in allFolders {
+            // Files in iCloud will not be copied if not downloaded.
+            try folder.withSecurityScopedURL { scopedURL in
+                let fileCoordinator = NSFileCoordinator()
+                var coordinationError: NSError?
+                fileCoordinator.coordinate(readingItemAt: scopedURL, error: &coordinationError) { url in
+                    do {
+                        try copyEncryptedBackupItem(
+                            at: url,
+                            to: localExportURL.appendingPathComponent(url.lastPathComponent, conformingTo: .directory)
+                        )
+                    } catch {
+                        utilitiesLogger.warning("Failed to copy local folder during backup \(url.path): \(error)")
+                    }
+                }
+                if let coordinationError {
+                    throw coordinationError
+                }
+            }
+        }
+    }
+}
+
+private func copyEncryptedBackupItem(at sourceURL: URL, to destinationURL: URL) throws {
+    let fileManager = FileManager.default
+    let values = try sourceURL.resourceValues(forKeys: [.isDirectoryKey, .isRegularFileKey])
+
+    if values.isDirectory == true {
+        try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true)
+        let children = try fileManager.contentsOfDirectory(
+            at: sourceURL,
+            includingPropertiesForKeys: [.isDirectoryKey, .isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        )
+        for child in children {
+            try copyEncryptedBackupItem(
+                at: child,
+                to: destinationURL.appendingPathComponent(child.lastPathComponent)
+            )
+        }
+        return
+    }
+
+    guard values.isRegularFile == true else { return }
+
+    try fileManager.createDirectory(
+        at: destinationURL.deletingLastPathComponent(),
+        withIntermediateDirectories: true
+    )
+    let encryptedData = try EncryptedBackupService.encrypt(Data(contentsOf: sourceURL))
+    try encryptedData.write(to: destinationURL, options: .atomic)
+}
+
+struct BackupRecoveryKeyRewrapResult: Sendable {
+    let rewrappedCount: Int
+    let failedCount: Int
+}
+
+struct BackupEncryptedFileDeletionResult: Sendable {
+    let deletedCount: Int
+    let failedCount: Int
+}
+
+struct BackupEncryptedFileValidationResult: Sendable {
+    let validCount: Int
+    let failedCount: Int
+}
+
+func backupsContainEncryptedExcalidrawFiles() async -> Bool {
+    await Task.detached(priority: .utility) {
+        do {
+            return try backupDirectoryContainsEncryptedExcalidrawFiles(try getBackupsDir())
+        } catch {
+            utilitiesLogger.warning("Failed to scan backups for locked content: \(error)")
+            return false
+        }
+    }.value
+}
+
+func countEncryptedBackupExcalidrawFiles() async -> Int {
+    await Task.detached(priority: .utility) {
+        do {
+            return try countEncryptedExcalidrawFiles(in: try getBackupsDir())
+        } catch {
+            utilitiesLogger.warning("Failed to count encrypted backup files: \(error)")
+            return 0
+        }
+    }.value
+}
+
+func countEncryptedBackupExcalidrawFilesStrict() async throws -> Int {
+    try await Task.detached(priority: .utility) {
+        try countEncryptedExcalidrawFiles(in: try getBackupsDir())
+    }.value
+}
+
+func validateEncryptedBackupExcalidrawFiles(with recoveryKey: RecoveryKey) async -> BackupEncryptedFileValidationResult {
+    await Task.detached(priority: .utility) {
+        do {
+            return try validateEncryptedExcalidrawFiles(
+                in: try getBackupsDir(),
+                recoveryKey: recoveryKey
+            )
+        } catch {
+            utilitiesLogger.warning("Failed to validate encrypted backup files: \(error)")
+            return BackupEncryptedFileValidationResult(validCount: 0, failedCount: 1)
+        }
+    }.value
+}
+
+func deleteEncryptedBackupExcalidrawFiles() async -> BackupEncryptedFileDeletionResult {
+    await Task.detached(priority: .utility) {
+        do {
+            return try deleteEncryptedExcalidrawFiles(in: try getBackupsDir())
+        } catch {
+            utilitiesLogger.warning("Failed to delete encrypted backup files: \(error)")
+            return BackupEncryptedFileDeletionResult(deletedCount: 0, failedCount: 1)
+        }
+    }.value
+}
+
+func canUnlockEncryptedBackupExcalidrawFile(with recoveryKey: RecoveryKey) async -> Bool {
+    await Task.detached(priority: .utility) {
+        do {
+            return try canUnlockEncryptedExcalidrawFile(
+                in: try getBackupsDir(),
+                recoveryKey: recoveryKey
+            )
+        } catch {
+            utilitiesLogger.warning("Failed to validate encrypted backup Recovery Key: \(error)")
+            return false
+        }
+    }.value
+}
+
+func backupDirectoryContainsEncryptedExcalidrawFiles(_ directory: URL) throws -> Bool {
+    try countEncryptedExcalidrawFiles(in: directory, stopAfterFirstMatch: true) > 0
+}
+
+private func countEncryptedExcalidrawFiles(
+    in directory: URL,
+    stopAfterFirstMatch: Bool = false
+) throws -> Int {
+    let fileManager = FileManager.default
+    guard let enumerator = fileManager.enumerator(
+        at: directory,
+        includingPropertiesForKeys: [.isRegularFileKey],
+        options: [.skipsHiddenFiles]
+    ) else {
+        return 0
+    }
+
+    var count = 0
+    var visitedCount = 0
+    while let url = enumerator.nextObject() as? URL {
+        visitedCount += 1
+        if visitedCount.isMultiple(of: 20) {
+            try Task.checkCancellation()
+        }
+
+        guard url.pathExtension == "excalidraw" else { continue }
+        let values = try? url.resourceValues(forKeys: [.isRegularFileKey])
+        guard values?.isRegularFile == true else { continue }
+
+        let data = try Data(contentsOf: url)
+        if EncryptedContentService.isEncryptedEnvelope(data) {
+            count += 1
+            if stopAfterFirstMatch {
+                return count
+            }
+        }
+    }
+
+    return count
+}
+
+private func validateEncryptedExcalidrawFiles(
+    in directory: URL,
+    recoveryKey: RecoveryKey
+) throws -> BackupEncryptedFileValidationResult {
+    let fileManager = FileManager.default
+    guard let enumerator = fileManager.enumerator(
+        at: directory,
+        includingPropertiesForKeys: [.isRegularFileKey],
+        options: [.skipsHiddenFiles]
+    ) else {
+        return BackupEncryptedFileValidationResult(validCount: 0, failedCount: 0)
+    }
+
+    var validCount = 0
+    var failedCount = 0
+    var visitedCount = 0
+    while let url = enumerator.nextObject() as? URL {
+        visitedCount += 1
+        if visitedCount.isMultiple(of: 20) {
+            try Task.checkCancellation()
+        }
+
+        guard url.pathExtension == "excalidraw" else { continue }
+        let values = try? url.resourceValues(forKeys: [.isRegularFileKey])
+        guard values?.isRegularFile == true else { continue }
+
+        let data = try Data(contentsOf: url)
+        guard EncryptedContentService.isEncryptedEnvelope(data) else { continue }
+
+        do {
+            _ = try EncryptedContentService.unlockContentKey(
+                data,
+                recoveryKey: recoveryKey
+            )
+            validCount += 1
+        } catch {
+            failedCount += 1
+        }
+    }
+
+    return BackupEncryptedFileValidationResult(
+        validCount: validCount,
+        failedCount: failedCount
+    )
+}
+
+private func deleteEncryptedExcalidrawFiles(in directory: URL) throws -> BackupEncryptedFileDeletionResult {
+    let fileManager = FileManager.default
+    guard let enumerator = fileManager.enumerator(
+        at: directory,
+        includingPropertiesForKeys: [.isRegularFileKey],
+        options: [.skipsHiddenFiles]
+    ) else {
+        return BackupEncryptedFileDeletionResult(deletedCount: 0, failedCount: 0)
+    }
+
+    var deletedCount = 0
+    var failedCount = 0
+    var visitedCount = 0
+
+    while let url = enumerator.nextObject() as? URL {
+        visitedCount += 1
+        if visitedCount.isMultiple(of: 20) {
+            try Task.checkCancellation()
+        }
+
+        guard url.pathExtension == "excalidraw" else { continue }
+        let values = try? url.resourceValues(forKeys: [.isRegularFileKey])
+        guard values?.isRegularFile == true else { continue }
+
+        do {
+            let data = try Data(contentsOf: url)
+            guard EncryptedContentService.isEncryptedEnvelope(data) else { continue }
+            try fileManager.removeItem(at: url)
+            deletedCount += 1
+        } catch {
+            failedCount += 1
+            utilitiesLogger.warning("Failed to delete encrypted backup file \(url.path): \(error)")
+        }
+    }
+
+    return BackupEncryptedFileDeletionResult(
+        deletedCount: deletedCount,
+        failedCount: failedCount
+    )
+}
+
+private func canUnlockEncryptedExcalidrawFile(
+    in directory: URL,
+    recoveryKey: RecoveryKey
+) throws -> Bool {
+    let fileManager = FileManager.default
+    guard let enumerator = fileManager.enumerator(
+        at: directory,
+        includingPropertiesForKeys: [.isRegularFileKey],
+        options: [.skipsHiddenFiles]
+    ) else {
+        return false
+    }
+
+    var visitedCount = 0
+    while let url = enumerator.nextObject() as? URL {
+        visitedCount += 1
+        if visitedCount.isMultiple(of: 20) {
+            try Task.checkCancellation()
+        }
+
+        guard url.pathExtension == "excalidraw" else { continue }
+        let values = try? url.resourceValues(forKeys: [.isRegularFileKey])
+        guard values?.isRegularFile == true else { continue }
+
+        let data = try Data(contentsOf: url)
+        guard EncryptedContentService.isEncryptedEnvelope(data) else { continue }
+
+        do {
+            _ = try EncryptedContentService.unlockContentKey(
+                data,
+                recoveryKey: recoveryKey
+            )
+            return true
+        } catch {
+            continue
+        }
+    }
+
+    return false
+}
+
+func rewrapEncryptedBackupFilesRecoveryKey(
+    oldRecoveryKey: RecoveryKey,
+    newRecoveryKey: RecoveryKey
+) async -> BackupRecoveryKeyRewrapResult {
+    let fileManager = FileManager.default
+    do {
+        let backupsDir = try getBackupsDir()
+        guard let enumerator = fileManager.enumerator(
+            at: backupsDir,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        ) else {
+            return BackupRecoveryKeyRewrapResult(rewrappedCount: 0, failedCount: 0)
+        }
+
+        var rewrappedCount = 0
+        var failedCount = 0
+        var visitedCount = 0
+
+        while let url = enumerator.nextObject() as? URL {
+            try Task.checkCancellation()
+            visitedCount += 1
+            if visitedCount.isMultiple(of: 20) {
+                await Task.yield()
+            }
+
+            guard url.pathExtension == "excalidraw" else { continue }
+            let values = try? url.resourceValues(forKeys: [.isRegularFileKey])
+            guard values?.isRegularFile == true else { continue }
+
+            do {
+                let data = try Data(contentsOf: url)
+                guard EncryptedContentService.isEncryptedEnvelope(data) else { continue }
+
+                let unlockedKey = try EncryptedContentService.unlockContentKey(
+                    data,
+                    recoveryKey: oldRecoveryKey
+                )
+                let rewrapped = try EncryptedContentService.rewrapRecoveryKey(
+                    existingEnvelopeData: data,
+                    unlockedKey: unlockedKey,
+                    newRecoveryKey: newRecoveryKey
+                )
+                try rewrapped.write(to: url, options: .atomic)
+                rewrappedCount += 1
+            } catch {
+                failedCount += 1
+                utilitiesLogger.warning("Failed to reset Recovery Key for backup file \(url.path): \(error)")
+            }
+        }
+
+        return BackupRecoveryKeyRewrapResult(
+            rewrappedCount: rewrappedCount,
+            failedCount: failedCount
+        )
+    } catch {
+        utilitiesLogger.warning("Failed to scan backups for Recovery Key reset: \(error)")
+        return BackupRecoveryKeyRewrapResult(rewrappedCount: 0, failedCount: 1)
     }
 }
 
@@ -283,10 +693,9 @@ func exportPDF(image: UIImage, name: String? = nil, to url: URL? = nil) throws -
             }
         }
         
-        print("PDF saved to: \(pdfURL)")
         return pdfURL
     } catch {
-        print("Failed to create PDF: \(error)")
+        utilitiesLogger.warning("Failed to create PDF: \(error)")
         throw error
     }
 }
@@ -343,8 +752,6 @@ func flatFiles(in directory: URL) throws -> [URL] {
 
     let contents = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [])
     let files = try contents.flatMap { try flatFiles(in: $0) }
-
-    print(#function, "files: \(files)")
     return files
 }
 

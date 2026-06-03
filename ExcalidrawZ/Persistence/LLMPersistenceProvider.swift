@@ -148,7 +148,10 @@ struct LLMPersistenceProvider: PersistenceProvider {
                     remains: snapshot.usageRemains
                 )
                 let toolCalls = decodeToolCalls(snapshot.toolCallsData)
-                let files = await resolveFiles(from: snapshot.filesData)
+                let files = shouldDropRestoredFiles(
+                    role: role,
+                    content: contentText
+                ) ? [] : await resolveFiles(from: snapshot.filesData)
                 let content = ChatMessageContent(
                     id: messageID,
                     role: role,
@@ -185,6 +188,13 @@ struct LLMPersistenceProvider: PersistenceProvider {
             default:
                 return nil
         }
+    }
+
+    private func shouldDropRestoredFiles(
+        role: ChatMessageContent.Role,
+        content: String
+    ) -> Bool {
+        role == .tool && AIProposalArtifact.parse(from: content) != nil
     }
 
     // MARK: - Conversion: LLMKit → Core Data

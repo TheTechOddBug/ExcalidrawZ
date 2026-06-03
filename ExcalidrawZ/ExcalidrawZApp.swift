@@ -28,6 +28,8 @@ extension Notification.Name {
     static let toggleSidebar = Notification.Name("ToggleSidebar")
     static let toggleInspector = Notification.Name("ToggleInspector")
     static let toggleShare = Notification.Name("ToggleShare")
+    static let lockedContentDidReset = Notification.Name("LockedContentDidReset")
+    static let lockedContentDidDeleteFile = Notification.Name("LockedContentDidDeleteFile")
 }
 
 extension LLMClient {
@@ -74,6 +76,7 @@ struct ExcalidrawZApp: App {
 #endif
             return stdoutHandler
         }
+        FeatureDiscoveryTips.configureIfAvailable()
 
         // If you want to start the updater manually, pass false to startingUpdater and call .startUpdater() later
         // This is where you can also pass an updater delegate if you need one
@@ -101,12 +104,13 @@ struct ExcalidrawZApp: App {
             shouldRefreshSpotlightIndex = true
         }
         if shouldRefreshSpotlightIndex {
+            let startupLogger = Logging.Logger(label: "ExcalidrawApp")
             Task {
                 do {
                     try await PersistenceController.shared.refreshIndices()
                     UserDefaults.standard.set(Date.now.formatted(.iso8601), forKey: "LastSpotlightIndexRefreshTime")
                 } catch {
-                    print(error)
+                    startupLogger.error("Failed to refresh Spotlight index: \(error)")
                 }
             }
         }
@@ -125,6 +129,7 @@ struct ExcalidrawZApp: App {
             WebFetchTool(),
             CalculatorTool(),
             DateTimeTool(),
+            FileAccessStatusTool(),
             ReadFileTool(),
             ReadCanvasImageTool(),
             AdjustElementsTool(),
@@ -137,7 +142,7 @@ struct ExcalidrawZApp: App {
             QueryLibraryItemTool(),
             AddLibraryItemToCanvasTool(),
             FinalAnswerTool()
-        ]
+        ].map(LockedContentProtectedTool.init)
         ToolDisplayNameCache.register(tools)
         Task {
             await toolRegistry.register(tools)
@@ -205,6 +210,7 @@ struct ExcalidrawZApp: App {
 #endif
     @StateObject private var llmState: LLMStateObject
     @StateObject private var aiChatState = AIChatState()
+    @StateObject private var lockedContentState = LockedContentStateStore()
 
     @State private var isArchiveFilesExporterPresented = false
 
@@ -224,7 +230,9 @@ struct ExcalidrawZApp: App {
                 .environmentObject(appPrefernece)
                 .environmentObject(store)
                 .environmentObject(aiChatState)
+                .environmentObject(lockedContentState)
                 .llmProvider(state: llmState, client: .shared)
+                .lockedContentAutoRelock(lockedContentState: lockedContentState)
                 .onAppear {
 #if os(macOS) && !APP_STORE
                     updateChecker.assignUpdater(updater: updaterController.updater)
@@ -348,6 +356,7 @@ struct ExcalidrawZApp: App {
                 .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
                 .environmentObject(appPrefernece)
                 .environmentObject(store)
+                .environmentObject(lockedContentState)
                 .llmProvider(state: llmState, client: .shared)
 #if !APP_STORE
                 .environmentObject(updateChecker)

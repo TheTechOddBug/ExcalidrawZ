@@ -64,7 +64,9 @@ struct AIChatIslandView: View {
     /// Used to dedupe `latestAssistantMessageID` onChange firings against
     /// re-renders for unrelated state changes.
     @State private var lastSeenAssistantMessageID: String?
-
+    @State private var tickerTrackingConversationID: String?
+    @State private var hasObservedActiveGenerationInTrackedConversation = false
+    @State private var renderedIslandHeaderPayload: AIChatIslandHeaderPayload?
 
     /// How long the ticker lingers after a round finishes before the header
     /// reverts to the credits banner. 3 s is enough to read a one-line
@@ -87,6 +89,7 @@ struct AIChatIslandView: View {
     private let bottomPadding: CGFloat = 24
     /// How long after a drag release we wait before snapping back.
     private let snapBackDelay: Duration = .seconds(1)
+    private let lowCreditsBannerThreshold: Double = 50
 
     /// Bridges the `FileState`-owned conversation id to `PromptInputView`'s
     /// `Binding<String?>` API. `PromptInputView` mutates this when it creates
@@ -117,9 +120,37 @@ struct AIChatIslandView: View {
         aiChatState.isCompacting(conversationID: fileState.aiChatConversationID)
     }
 
+    private var shouldShowLowCreditsBanner: Bool {
+        guard let balance = llmState.creditsInfo?.balance else { return false }
+        return balance < lowCreditsBannerThreshold
+    }
+
+    private var shouldShowIslandHeader: Bool {
+        displayedReplyText != nil
+            || shouldShowLowCreditsBanner
+            || !aiChatState.pendingQueue.isEmpty
+    }
+
+    private var islandHeaderPayload: AIChatIslandHeaderPayload? {
+        guard shouldShowIslandHeader else { return nil }
+        return AIChatIslandHeaderPayload(
+            replyText: displayedReplyText,
+            showsLowCreditsBanner: shouldShowLowCreditsBanner,
+            pendingQueue: aiChatState.pendingQueue
+        )
+    }
+
+    private var islandHeaderPresence: Bool? {
+        shouldShowIslandHeader ? true : nil
+    }
+
     private var conversation: Conversation? {
         llmState.conversations.value?
             .first { $0.id == fileState.aiChatConversationID }
+    }
+
+    private var conversationMessageCount: Int {
+        conversation?.messages.count ?? 0
     }
 
     private var activeStreamingAssistantContent: ChatMessageContent? {
@@ -189,30 +220,34 @@ struct AIChatIslandView: View {
             .name
     }
 
-    /// Show the streaming preview only while the assistant is actively
-    /// generating *and* has produced enough text to be meaningful — same
-    /// threshold as the inspector view, so the user doesn't see "OK!" flash
-    /// here either.
-    private var visibleStreamingText: String? {
-        if let content = activeStreamingAssistantContent {
-            let text = displayText(of: content)
-            return text.isEmpty ? nil : text
-        }
-        return nil
-    }
-
     var body: some View {
-        VStack(spacing: 10) {
-            islandHeader()
+        CollapsibleSpacingVStack(spacing: 10) {
+            AnimatedPresence(
+                value: islandHeaderPresence,
+                contentAnimation: .easeOut(duration: 0.12),
+                contentTransition: .deferredOpacity,
+                contentTransitionDelay: .milliseconds(130),
+                removalAnimation: .linear(duration: 0.001),
+                removalDelay: .milliseconds(40)
+            ) { _ in
+                if let payload = renderedIslandHeaderPayload ?? islandHeaderPayload {
+                    islandHeader(payload)
+                }
+            }
             
             islandBody()
         }
+        .modifier(AIChatIslandProposalModifier(
+            conversationID: fileState.aiChatConversationID,
+            conversation: conversation,
+            conversationMessageCount: conversationMessageCount,
+            islandWidth: islandWidth
+        ))
+        .readHeight($measuredHeight)
         .offset(
             x: layoutState.aiChatIslandOffset.width + dragDelta.width,
             y: layoutState.aiChatIslandOffset.height + dragDelta.height
         )
-        .animation(.easeInOut(duration: 0.25), value: visibleStreamingText != nil)
-        .animation(.easeInOut(duration: 0.25), value: displayedReplyText != nil)
         // Window resize / split changes shrink `canvasSize` and may strand
         // the island outside the new bounds. Clamp immediately (no 1 s
         // delay) — there's no drag in flight to wait for.
@@ -224,13 +259,25 @@ struct AIChatIslandView: View {
         // Token-level streaming can pause around tool calls; `isRunning`
         // remains true through those seams.
         .onAppear {
-            updateGenerationTicker(hasActiveGeneration: hasActiveGeneration)
+            resetTickerTrackingForCurrentConversation()
+            renderedIslandHeaderPayload = islandHeaderPayload
         }
         .task {
             await LLMCreditsRefreshCoordinator.shared.refreshCredits(reason: .aiChatAppear)
         }
         .watch(value: hasActiveGeneration) { _, active in
+            if active {
+                hasObservedActiveGenerationInTrackedConversation = true
+            }
             updateGenerationTicker(hasActiveGeneration: active)
+        }
+        .watch(value: fileState.aiChatConversationID) { _, _ in
+            resetTickerTrackingForCurrentConversation()
+            renderedIslandHeaderPayload = islandHeaderPayload
+        }
+        .watch(value: islandHeaderPayload) { _, payload in
+            guard let payload else { return }
+            renderedIslandHeaderPayload = payload
         }
         // Real-time tool-call surfacing. The streaming message accumulates
         // tool calls before the message itself commits; reflecting that
@@ -250,13 +297,36 @@ struct AIChatIslandView: View {
         // against `lastSeenAssistantMessageID` so unrelated re-renders don't
         // re-process the same message and double-fire the timing chain.
         .watch(value: latestAssistantMessageID) { _, newID in
+            if tickerTrackingConversationID != fileState.aiChatConversationID {
+                resetTickerTrackingForCurrentConversation()
+            }
             guard let newID, newID != lastSeenAssistantMessageID else { return }
+
+            guard hasObservedActiveGenerationInTrackedConversation || hasActiveGeneration else {
+                lastSeenAssistantMessageID = newID
+                return
+            }
+
             lastSeenAssistantMessageID = newID
             handleNewAssistantMessage()
         }
         .onDisappear {
             autoHideTask?.cancel()
             toolCallSwitchTask?.cancel()
+        }
+    }
+
+    private func resetTickerTrackingForCurrentConversation() {
+        tickerTrackingConversationID = fileState.aiChatConversationID
+        hasObservedActiveGenerationInTrackedConversation = hasActiveGeneration
+        lastSeenAssistantMessageID = latestAssistantMessageID
+
+        autoHideTask?.cancel()
+        toolCallSwitchTask?.cancel()
+        if hasActiveGeneration {
+            updateGenerationTicker(hasActiveGeneration: true)
+        } else {
+            displayedReplyText = nil
         }
     }
 
@@ -275,34 +345,37 @@ struct AIChatIslandView: View {
     }
 
     @ViewBuilder
-    private func islandHeader() -> some View {
+    private func islandHeader(_ payload: AIChatIslandHeaderPayload) -> some View {
         VStack {
-            ZStack {
-                if let text = displayedReplyText {
-                    ReplyTickerView(text: text)
-                        .transition(.opacity)
-                } else {
-                    LowCreditsBannerView()
-                        .font(.body)
-                        .transition(.opacity)
-                }
-            }
-            .background {
-                islandBackground(shape: Capsule())
-                    .contentShape(Rectangle())
-                    .gesture(dragGesture)
-            }
-            .frame(height: 36, alignment: .bottom)
-            
-            PendingQueueView(
-                messages: aiChatState.pendingQueue,
-                onRemove: { id in
-                    withAnimation(.smooth(duration: 0.2)) {
-                        aiChatState.pendingQueue.removeAll { $0.id == id }
+            if payload.replyText != nil || payload.showsLowCreditsBanner {
+                ZStack {
+                    if let text = payload.replyText {
+                        ReplyTickerView(text: text)
+                            .transition(.opacity)
+                    } else {
+                        LowCreditsBannerView(threshold: lowCreditsBannerThreshold)
+                            .font(.body)
+                            .transition(.opacity)
                     }
                 }
-            )
-
+                .background {
+                    islandBackground(shape: Capsule())
+                        .contentShape(Rectangle())
+                        .gesture(dragGesture)
+                }
+                .frame(height: 36, alignment: .bottom)
+            }
+            
+            if !payload.pendingQueue.isEmpty {
+                PendingQueueView(
+                    messages: payload.pendingQueue,
+                    onRemove: { id in
+                        withAnimation(.smooth(duration: 0.2)) {
+                            aiChatState.pendingQueue.removeAll { $0.id == id }
+                        }
+                    }
+                )
+            }
         }
         .frame(width: islandWidth)
     }
@@ -327,7 +400,7 @@ struct AIChatIslandView: View {
                 pendingQueue: $aiChatState.pendingQueue,
                 style: .island
             )
-            .disabled(fileState.currentActiveFileIsInTrash)
+            .disabled(fileState.isAIChatConversationLoading || fileState.currentActiveFileIsInTrash)
         }
         .padding(16)
         // Drive on the gate result (`pendingApprovalRequest != nil`
@@ -351,13 +424,12 @@ struct AIChatIslandView: View {
             .contentShape(Rectangle())
             .simultaneousGesture(dragGesture)
         }
-        .readHeight($measuredHeight)
         .overlay(
             RoundedRectangle(cornerRadius: 24)
                 .stroke(.separator, lineWidth: 0.5)
         )
     }
-    
+
     // MARK: - Header / drag handle
 
     @ViewBuilder
@@ -569,6 +641,12 @@ struct AIChatIslandView: View {
                 .fill(.regularMaterial)
         }
     }
+}
+
+private struct AIChatIslandHeaderPayload: Equatable {
+    let replyText: String?
+    let showsLowCreditsBanner: Bool
+    let pendingQueue: [PendingQueueMessage]
 }
 
 // MARK: - ReplyTickerView

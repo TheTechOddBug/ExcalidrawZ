@@ -22,6 +22,7 @@ private struct FolderChildren: Identifiable, Hashable {
 
 struct GeneralSettingsView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.alertToast) private var alertToast
 #if os(macOS) && !APP_STORE
     @EnvironmentObject var updateChecker: UpdateChecker
 #endif
@@ -39,22 +40,12 @@ struct GeneralSettingsView: View {
     }
 
     var body: some View {
-        if #available(macOS 14.0, *) {
-            Form {
-                content()
-            }
-            .formStyle(.grouped)
-        } else {
-            ScrollView {
-                VStack {
-                    content()
-                }
-                .padding()
-            }
+        SettingsFormContainer {
+            content()
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         Section {
             settingCellView(.localizable(.settingsAppAppearanceName)) {
@@ -216,7 +207,20 @@ struct GeneralSettingsView: View {
         } header: {
             Text("Layout")
         }
+
 #endif
+
+        if FeatureDiscoveryTips.isAvailable {
+            Section {
+                Button {
+                    resetFeatureTips()
+                } label: {
+                    Label(.localizable(.featureTipsResetButton), systemImage: "lightbulb")
+                }
+            } header: {
+                Text(.localizable(.generalHelpTitle))
+            }
+        }
         
 #if os(macOS) && !APP_STORE
         Section {
@@ -265,7 +269,7 @@ struct GeneralSettingsView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func settingCellView<T: View, V: View>(
         _ title: LocalizedStringKey,
         @ViewBuilder trailing: @escaping () -> T,
@@ -281,6 +285,15 @@ struct GeneralSettingsView: View {
             
             content()
         }
+    }
+
+    private func resetFeatureTips() {
+        FeatureDiscoveryTips.requestResetOnNextLaunch()
+        alertToast(.init(
+            displayMode: .hud,
+            type: .complete(.green),
+            title: String(localizable: .featureTipsResetToastTitle)
+        ))
     }
 }
 

@@ -33,7 +33,7 @@ extension ExcalidrawCore {
             arguments: [:],
             contentWorld: .page
         )
-        self.logger.info("User settings applied successfully: \(jsonString)")
+        self.logger.debug("User settings applied successfully")
     }
     
     /// Fetch current drawing settings from Excalidraw

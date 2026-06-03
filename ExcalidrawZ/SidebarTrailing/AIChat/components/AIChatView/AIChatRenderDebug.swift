@@ -5,8 +5,11 @@
 
 import Foundation
 import SwiftUI
+import Logging
 
 #if DEBUG
+private let aiChatRenderDebugLogger = Logger(label: "AIChatRenderDebug")
+
 final class AIChatRenderDebugState: ObservableObject {
     @Published var isEnabled = false
     @Published var hideMessageList = false
@@ -136,7 +139,7 @@ enum AIChatRenderDebug {
             lock.unlock()
 
             if !snapshot.isEmpty {
-                print("[AIChatRender] \(snapshot)")
+                aiChatRenderDebugLogger.debug("\(snapshot)")
             }
         }
     }

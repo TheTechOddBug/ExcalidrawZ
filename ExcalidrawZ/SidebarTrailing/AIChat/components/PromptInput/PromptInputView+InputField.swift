@@ -29,7 +29,7 @@ extension PromptInputView {
     /// `.shadow(color: .clear, radius: 0)` fallback: SwiftUI still spins up
     /// a shadow effect layer even when all parameters are zero-equivalent,
     /// which left a faint compositing artifact in island mode.
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var inputBox: some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.inputBox")
 
@@ -71,7 +71,7 @@ extension PromptInputView {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var debugMinimalInputBox: some View {
         PromptDraftInputField(
             draftKey: promptDraftKey,
@@ -92,7 +92,7 @@ extension PromptInputView {
         .background { style.background }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func inputField() -> some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.inputField")
 
@@ -338,9 +338,8 @@ private struct PromptDraftTextArea: View {
     }
 }
 
-private extension View {
-    @ViewBuilder
-    func promptInputSubmitOnReturn(_ submit: @escaping () -> Void) -> some View {
+private extension TextArea {
+    func promptInputSubmitOnReturn(_ submit: @escaping () -> Void) -> TextArea {
 #if os(macOS)
         self.keyDownHandler(
             TextFieldKeyDownEventHandler(triggers: [(36, nil)]) { event in

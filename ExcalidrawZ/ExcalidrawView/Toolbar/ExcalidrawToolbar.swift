@@ -39,7 +39,7 @@ struct ExcalidrawToolbar: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func toolbar() -> some View {
         toolbarContent()
             .animation(.smooth, value: toolState.activatedTool)
@@ -65,7 +65,7 @@ struct ExcalidrawToolbar: View {
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func toolbarContent() -> some View {
 #if os(iOS)
         if horizontalSizeClass == .compact {
@@ -137,7 +137,7 @@ struct ExcalidrawToolbar: View {
 #endif
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func leadingTollsContent() -> some View {
         Button {
             toolState.toggleToolLock()
@@ -158,7 +158,7 @@ struct ExcalidrawToolbar: View {
     
     @State private var lastActivatedSecondaryTool: ExcalidrawTool?
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func segmentedPicker(
         sizeClass: ExcalidrawToolbarToolSizeClass,
         size: CGFloat = 20,
@@ -266,7 +266,7 @@ struct ExcalidrawToolbar: View {
         }())
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func secondaryPickerItemsMenu(
         tool: ExcalidrawTool,
         size: CGFloat = 20,
@@ -310,7 +310,7 @@ struct ExcalidrawToolbar: View {
     @State private var primaryPickerItems: [ExcalidrawTool] = []
     @State private var secondaryPickerItems: [ExcalidrawTool] = []
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func primaryToolPikcerItems(size: CGFloat, withFooter: Bool) -> some View {
         ForEach(primaryPickerItems, id: \.self) { tool in
             toolPickerItemView(tool: tool, size: size, withFooter: withFooter)
@@ -318,7 +318,7 @@ struct ExcalidrawToolbar: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func secondaryToolPikcerItems(size: CGFloat, withFooter: Bool) -> some View {
         ForEach(secondaryPickerItems, id: \.self) { tool in
             toolPickerItemView(tool: tool, size: size, withFooter: withFooter)
@@ -326,7 +326,7 @@ struct ExcalidrawToolbar: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func toolPickerItemView(
         tool: ExcalidrawTool,
         size: CGFloat,
@@ -342,7 +342,7 @@ struct ExcalidrawToolbar: View {
         .help(tool.help)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func compactContent() -> some View {
         if toolState.inDragMode {
             HStack(spacing: 20) {
@@ -533,7 +533,7 @@ struct ExcalidrawToolbar: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func denseContent() -> some View {
         HStack {
             Picker(selection: $toolState.activatedTool) {
@@ -549,12 +549,12 @@ struct ExcalidrawToolbar: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func densePickerItems(tool: ExcalidrawTool) -> some View {
         Text(tool.localization)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func activeShape() -> some View {
         switch toolState.activatedTool {
             case .rectangle:
@@ -573,7 +573,7 @@ struct ExcalidrawToolbar: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func moreTools() -> some View {
         Menu {
 #if DEBUG
@@ -647,7 +647,6 @@ struct ExcalidrawToolbarToolContainer<Content: View>: View {
         content(sizeClass)
             .background {
                 WithContainerSize { containerSize in
-                    // let _ = print(containerSize)
                     Color.clear
                         .watch(value: containerSize) { _, newValue in
                             let newSizeClass = getSizeClass(containerSize.width)
@@ -682,33 +681,33 @@ struct ExcalidrawToolbarToolContainer<Content: View>: View {
             if layoutState.isInspectorPresented,
                layoutState.isSidebarPresented {
                 switch width {
-                    case ..<1600:
+                    case ..<1660:
                         return .dense
-                    case ..<1770:
+                    case ..<1830:
                         return .compact
-                    case ..<1920:
+                    case ..<1980:
                         return .regular
                     default:
                         return .expanded
                 }
             } else if layoutState.isSidebarPresented {
                 switch width {
-                    case ..<1310:
+                    case ..<1330:
                         return .dense
-                    case ..<1460:
+                    case ..<1480:
                         return .compact
-                    case ..<1660:
+                    case ..<1680:
                         return .regular
                     default:
                         return .expanded
                 }
             } else if layoutState.isInspectorPresented {
                 switch width {
-                    case ..<1410:
+                    case ..<1510:
                         return .dense
-                    case ..<1570:
+                    case ..<1680:
                         return .compact
-                    case ..<1760:
+                    case ..<1860:
                         return .regular
                     default:
                         return .expanded

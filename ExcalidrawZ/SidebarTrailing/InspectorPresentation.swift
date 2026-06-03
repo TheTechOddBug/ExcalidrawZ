@@ -19,6 +19,7 @@ struct InspectorPresentationModifier: ViewModifier {
     @EnvironmentObject private var appPreference: AppPreference
     @EnvironmentObject private var layoutState: LayoutState
     @EnvironmentObject private var fileState: FileState
+    @EnvironmentObject private var lockedContentState: LockedContentStateStore
 
     @State private var librariesToImport: [ExcalidrawLibrary] = []
 
@@ -46,6 +47,11 @@ struct InspectorPresentationModifier: ViewModifier {
         layoutState.activeInspectorTab != .history
     }
 
+    private var shouldShowInspectorPresentation: Bool {
+        layoutState.isInspectorPresented &&
+        !fileState.activeCollaborationFileIsLoading
+    }
+
     func body(content: Content) -> some View {
         ZStack {
             if shouldUseFloatingInspector {
@@ -71,6 +77,12 @@ struct InspectorPresentationModifier: ViewModifier {
         // is the actual frame the user perceives as "the canvas", and bottom-
         // center should be the canvas's bottom-center, not the whole window's.
         .modifier(ExcalidrawLibraryImporter(items: $librariesToImport))
+        .onChange(of: lockedContentState.activeFileLockState) { lockState in
+            guard lockState == .locked,
+                  layoutState.isInspectorPresented else { return }
+
+            layoutState.isInspectorPresented = false
+        }
     }
 
     /// Picks the view shown inside the inspector based on the active tab.
@@ -83,7 +95,7 @@ struct InspectorPresentationModifier: ViewModifier {
     /// condition means closing → reopening to the same tab is free,
     /// while switching to a different tab still rebuilds (which is
     /// what we want — different tabs have entirely different state).
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func inspectorContent() -> some View {
         switch layoutState.activeInspectorTab {
             case .aiChat:
@@ -122,13 +134,13 @@ struct InspectorPresentationModifier: ViewModifier {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func floatingInspector(content: Content) -> some View {
         ZStack {
             content
             HStack {
                 Spacer()
-                if layoutState.isInspectorPresented {
+                if shouldShowInspectorPresentation {
                     VStack {
                         Text(inspectorTitle)
                             .foregroundStyle(.secondary)
@@ -158,7 +170,7 @@ struct InspectorPresentationModifier: ViewModifier {
                     .transition(.move(edge: .trailing))
                 }
             }
-            .animation(.easeOut, value: layoutState.isInspectorPresented)
+            .animation(.easeOut, value: shouldShowInspectorPresentation)
 #if os(macOS)
             .padding(.top, 10)
             .padding(.bottom, 40)
@@ -169,12 +181,12 @@ struct InspectorPresentationModifier: ViewModifier {
             .ignoresSafeArea(edges: .bottom)
         }
         .overlay(alignment: .topTrailing) {
-            if layoutState.isInspectorPresented {
+            if shouldShowInspectorPresentation {
                 ExcalidrawTrailingControls()
                     .transition(.opacity)
             }
         }
-        .animation(.easeOut, value: layoutState.isInspectorPresented)
+        .animation(.easeOut, value: shouldShowInspectorPresentation)
     }
 }
 

@@ -319,8 +319,6 @@ struct FileRowDragDropModifier<DraggableFile: DragMovableFile>: ViewModifier {
                                     }
                                     draggedFile.rank = Int64(toIndex+1)
                                 }
-                                
-                                print("perfrom rank. \(fromIndex) -> \(toIndex)")
                             }
                         } else {
                             withAnimation {

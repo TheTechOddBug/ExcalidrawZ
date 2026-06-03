@@ -53,13 +53,27 @@ struct ExcalidrawFileCover: View {
     }
     
     private let source: Source
+    private let refreshToken: String?
+    private let allowsGeneration: Bool
     
-    init(file: FileState.ActiveFile) {
+    init(
+        file: FileState.ActiveFile,
+        refreshToken: String? = nil,
+        allowsGeneration: Bool = true
+    ) {
         self.source = .activeFile(file)
+        self.refreshToken = refreshToken
+        self.allowsGeneration = allowsGeneration
     }
     
-    init(excalidrawFile: ExcalidrawFile) {
+    init(
+        excalidrawFile: ExcalidrawFile,
+        refreshToken: String? = nil,
+        allowsGeneration: Bool = true
+    ) {
         self.source = .excalidrawFile(excalidrawFile)
+        self.refreshToken = refreshToken
+        self.allowsGeneration = allowsGeneration
     }
     
     var fileID: String {
@@ -76,6 +90,14 @@ struct ExcalidrawFileCover: View {
     var cacheKey: String {
         colorScheme == .light ? fileID + "_light" : fileID + "_dark"
     }
+
+    private var coverTaskID: String {
+        [
+            cacheKey,
+            refreshToken ?? "default",
+            allowsGeneration ? "enabled" : "disabled"
+        ].joined(separator: "|")
+    }
     
     @State private var coverImage: Image? = nil
     @State private var error: Error?
@@ -88,7 +110,8 @@ struct ExcalidrawFileCover: View {
             .apply { view in
                 applyListeners(to: view)
             }
-            .task(id: cacheKey) {
+            .task(id: coverTaskID) {
+                guard allowsGeneration else { return }
                 loadCover()
             }
             .onReceive(
@@ -96,8 +119,6 @@ struct ExcalidrawFileCover: View {
             ) { notification in
                 guard let fileID = notification.object as? String,
                       self.fileID == fileID else { return }
-                
-                print("Refreshing preview for file: \(fileID)")
 
                 cache.removePreviewCache(forID: fileID)
                 self.generateCover(forceRefresh: true)
@@ -177,6 +198,8 @@ struct ExcalidrawFileCover: View {
     }
 
     private func generateCover(forceRefresh: Bool = false) {
+        guard allowsGeneration else { return }
+
         let fileID = self.fileID
         let colorScheme = self.colorScheme
         let cacheKey = self.cacheKey
@@ -190,6 +213,7 @@ struct ExcalidrawFileCover: View {
         }
 
         generationTask?.cancel()
+        error = nil
         generatingCacheKey = cacheKey
         let generationToken = UUID()
         self.generationToken = generationToken
@@ -206,8 +230,7 @@ struct ExcalidrawFileCover: View {
                                 let content = try await file.loadContent()
                                 excalidrawFile = try ExcalidrawFile(data: content, id: activeFile.id)
                             case .localFile(let url):
-                                try await FileCoordinator.shared.downloadFile(url: url)
-                                excalidrawFile = try ExcalidrawFile(contentsOf: url)
+                                excalidrawFile = try await loadLocalFileForPreview(at: url)
                             case .temporaryFile(let url):
                                 excalidrawFile = try ExcalidrawFile(contentsOf: url)
                             case .collaborationFile(let collaborationFile):
@@ -276,6 +299,13 @@ struct ExcalidrawFileCover: View {
         }
     }
 
+    private func loadLocalFileForPreview(at url: URL) async throws -> ExcalidrawFile {
+        try await LocalFolder.withSecurityScopedAccessToContainingFolder(for: url) {
+            try await FileCoordinator.shared.downloadFile(url: url)
+            return try ExcalidrawFile(contentsOf: url)
+        }
+    }
+
     @MainActor
     private func finishGeneration(cacheKey: String, generationToken: UUID) {
         guard self.generationToken == generationToken,
@@ -284,7 +314,6 @@ struct ExcalidrawFileCover: View {
         generationTask = nil
     }
 }
-
 
 #if canImport(AppKit)
 extension NSImage {

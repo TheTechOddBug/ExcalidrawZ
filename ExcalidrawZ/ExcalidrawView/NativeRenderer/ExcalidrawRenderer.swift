@@ -34,7 +34,7 @@ struct ExcalidrawRenderer: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         // Guard against invalid frame dimensions
         if frame != .zero && frame.width > 0 && frame.height > 0 && frame.width.isFinite && frame.height.isFinite {
@@ -60,7 +60,7 @@ struct ExcalidrawRenderer: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func canvasView() -> some View {
         Canvas(rendersAsynchronously: true) { context, size in
             var widthScaleEffect: CGFloat { size.width / self.frame.width }

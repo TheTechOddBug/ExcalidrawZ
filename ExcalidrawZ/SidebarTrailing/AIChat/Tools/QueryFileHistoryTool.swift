@@ -63,12 +63,21 @@ struct QueryFileHistoryTool: Tool {
         let limit = min(max(params.limit, 1), 200)
 
         let ctx = PersistenceController.shared.newTaskContext()
-        let payload: Output = try await ctx.perform {
-            // Resolve the file by UUID.
+        let fileObjectID: NSManagedObjectID = try await ctx.perform {
             let fileFetch = NSFetchRequest<File>(entityName: "File")
             fileFetch.predicate = NSPredicate(format: "id == %@", params.fileID as CVarArg)
             fileFetch.fetchLimit = 1
             guard let file = try ctx.fetch(fileFetch).first else {
+                throw ToolError.executionFailed("File not found: \(params.fileID)")
+            }
+            return file.objectID
+        }
+        guard try await LockedContentAIGuard.canToolAccess(fileObjectID: fileObjectID) else {
+            return LockedContentAIGuard.lockedToolResult
+        }
+
+        let payload: Output = try await ctx.perform {
+            guard let file = try ctx.existingObject(with: fileObjectID) as? File else {
                 throw ToolError.executionFailed("File not found: \(params.fileID)")
             }
 

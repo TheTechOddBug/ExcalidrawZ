@@ -127,7 +127,7 @@ extension PrinterWebView: WKNavigationDelegate {
         if let window = webView.window ?? NSApp.keyWindow {
             printOperation.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
         } else {
-            Swift.print("No window for print")
+            logger.warning("No window available for print operation")
         }
 
         if let url = webView.url {

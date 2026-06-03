@@ -65,7 +65,7 @@ struct WhatsNewSheetViewModifier: ViewModifier {
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func sheetContent() -> some View {
         WhatsNewView()
     }
@@ -226,7 +226,7 @@ struct WhatsNewView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func navigationContent() -> some View {
         ScrollView {
             if containerHorizontalSizeClass == .compact {
@@ -320,7 +320,7 @@ struct WhatsNewView: View {
 #endif
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         VStack(spacing: 0) {
 #if os(macOS)
@@ -421,7 +421,7 @@ struct WhatsNewView: View {
         .padding(.bottom, 40)
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func warnningSection() -> some View {
         VStack {
             Text(.localizable(.whatsNewWarningBody))
@@ -448,7 +448,7 @@ struct WhatsNewView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func communityLinks() -> some View {
         SwiftUI.Group {
             Link(destination: URL(string: "https://github.com/chocoford/ExcalidrawZ")!) {
@@ -492,7 +492,7 @@ struct WhatsNewView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func dismissButton() -> some View {
         Button {
             dismiss()

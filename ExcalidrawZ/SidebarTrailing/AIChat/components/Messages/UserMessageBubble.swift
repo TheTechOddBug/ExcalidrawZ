@@ -104,7 +104,7 @@ struct UserMessageBubble: View {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private var bubbleContents: some View {
 
         let imageFiles = (content.files ?? []).filter { file in

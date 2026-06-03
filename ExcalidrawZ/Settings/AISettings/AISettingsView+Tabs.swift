@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension AISettingsView {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func settingsTabHeader<Leading: View, Accessory: View>(
         @ViewBuilder leading: () -> Leading,
         @ViewBuilder accessory: () -> Accessory
@@ -28,7 +28,7 @@ extension AISettingsView {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     func settingsTabHeader<Leading: View>(
         @ViewBuilder leading: () -> Leading
     ) -> some View {
@@ -83,7 +83,7 @@ extension AISettingsView {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var selectedTabContent: some View {
         if !prefs.isAIEnabled {
             informationSection
@@ -92,7 +92,7 @@ extension AISettingsView {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var selectedEnabledTabContent: some View {
         switch selectedTab {
             case .usage:
@@ -125,7 +125,7 @@ extension AISettingsView {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var informationSection: some View {
         Section {
             aiInformationRows

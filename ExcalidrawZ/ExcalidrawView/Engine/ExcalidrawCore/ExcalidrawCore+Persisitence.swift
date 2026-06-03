@@ -11,7 +11,7 @@ extension ExcalidrawCore {
     func loadFile(from file: File?, force: Bool = false) async {
         guard let fileID = file?.id,
               let data = file?.content else {
-            logLoadFileDiag(logger, "[LoadFileDiag] coreDataLoad skipped: missing file id or content", level: .warning)
+            logFileLoad(logger, "Core Data file load skipped: missing file id or content", level: .warning)
             return
         }
         await documentSyncController.load(

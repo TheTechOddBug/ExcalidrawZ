@@ -189,7 +189,7 @@ struct TipDetailContainer: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func dismissButton() -> some View {
         Button {
             dismiss()

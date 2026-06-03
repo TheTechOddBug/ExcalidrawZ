@@ -4,9 +4,9 @@
 //
 //  Single source of truth for ExcalidrawZ's chat agent wiring.
 //
-//  This app's chat is **not user-selectable**: every conversation runs
-//  against the `excalidraw-canvas` server-side agent. The baseline
-//  local tool roster lives here, and model capability filters derive
+//  Every conversation runs against the `excalidraw-canvas` server-side
+//  agent, while the local tool roster is selected by chat mode. The
+//  baseline rosters live here, and model capability filters derive
 //  from the same list so create/send/restore can't drift:
 //
 //  - `PromptInputView.startSend` calls `defaultConfig()` when minting a
@@ -53,6 +53,31 @@ enum ExcalidrawAgentConfig {
         "final_answer"
     ]
 
+    static let askToolNames: [String] = [
+        "web_search",
+        "web_fetch",
+        "read_file",
+        "read_canvas_image",
+        "calculator",
+        "datetime",
+        "adjust_elements",
+        "final_answer"
+    ]
+
+    /// Locked or user-disabled file access keeps real ExcalidrawZ files
+    /// out of the tool surface. Proposal-writing remains available, but
+    /// file-reading tools are intentionally removed so the model does
+    /// not interpret protected content as an empty canvas.
+    static let limitedFileAccessToolNames: [String] = [
+        "web_search",
+        "web_fetch",
+        "file_access_status",
+        "calculator",
+        "datetime",
+        "adjust_elements",
+        "final_answer"
+    ]
+
     static func toolNames(supportsImageInput: Bool) -> [String] {
         guard supportsImageInput else {
             return toolNames.filter { $0 != "read_canvas_image" }
@@ -60,11 +85,42 @@ enum ExcalidrawAgentConfig {
         return toolNames
     }
 
+    static func toolNames(
+        mode: AIChatInteractionMode,
+        supportsImageInput: Bool,
+        includesCurrentFileContext: Bool
+    ) -> [String] {
+        let baseTools: [String] = switch mode {
+            case .agent:
+                includesCurrentFileContext ? toolNames : limitedFileAccessToolNames
+            case .ask:
+                includesCurrentFileContext ? askToolNames : limitedFileAccessToolNames
+        }
+        guard supportsImageInput else {
+            return baseTools.filter { $0 != "read_canvas_image" }
+        }
+        return baseTools
+    }
+
     /// Build the `AgentConfig` used by every chat conversation in this
     /// app. Centralized so the create-conversation path and the
     /// restore-conversation path can't drift.
     static func defaultConfig(supportsImageInput: Bool = true) -> AgentConfig {
         defaultConfig(tools: toolNames(supportsImageInput: supportsImageInput))
+    }
+
+    static func defaultConfig(
+        mode: AIChatInteractionMode,
+        supportsImageInput: Bool,
+        includesCurrentFileContext: Bool
+    ) -> AgentConfig {
+        defaultConfig(
+            tools: toolNames(
+                mode: mode,
+                supportsImageInput: supportsImageInput,
+                includesCurrentFileContext: includesCurrentFileContext
+            )
+        )
     }
 
     static func defaultConfig(tools: [String]?) -> AgentConfig {

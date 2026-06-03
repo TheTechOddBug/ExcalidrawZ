@@ -11,7 +11,7 @@ import ChocofordUI
 import SFSafeSymbols
 
 extension AISettingsView {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var usageHeader: some View {
         VStack(alignment: .leading, spacing: 22) {
             settingsTabHeader {
@@ -48,7 +48,7 @@ extension AISettingsView {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var activityHeader: some View {
         HStack(alignment: .center) {
             Label(.localizable(.settingsAIUsageActivityTitle), systemSymbol: .chartLineUptrendXyaxis)
@@ -91,7 +91,7 @@ extension AISettingsView {
         }
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var settingsHeader: some View {
         VStack(alignment: .leading, spacing: 16) {
             settingsTabHeader {
@@ -109,7 +109,7 @@ extension AISettingsView {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var usageGauge: some View {
         let metrics = usageMetrics
         SemiCircularUsageGauge(
@@ -120,7 +120,7 @@ extension AISettingsView {
         .frame(width: 176, height: 106)
     }
 
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var dailyUsageChart: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {

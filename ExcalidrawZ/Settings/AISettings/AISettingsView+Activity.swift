@@ -11,7 +11,7 @@ import LLMCore
 import SFSafeSymbols
 
 extension AISettingsView {
-    @MainActor @ViewBuilder
+    @ViewBuilder
     var activityBody: some View {
         if let error = transactionLoadError {
             Text(localizable: .settingsAIUsageActivityLoadFailTitle(error.localizedDescription))
@@ -157,6 +157,12 @@ extension AISettingsView {
         if tx.type == .consume {
             return String(localizable: .aiChatUsageTitle)
         }
+        if tx.type == .renewal {
+            return String(localizable: .settingsAIUsageTransactionTitleRenewal)
+        }
+        if tx.type == .expiration {
+            return String(localizable: .settingsAIUsageTransactionTitleExpired)
+        }
         if let reason = tx.reason, !reason.isEmpty { return reason }
         switch tx.type {
             case .purchase:
@@ -200,7 +206,7 @@ extension AISettingsView {
     }
 
     var fileActivityGroups: [FileActivityGroup] {
-        let grouped = Dictionary(grouping: allTransactions.filter { $0.amount < 0 }) { transaction in
+        let grouped = Dictionary(grouping: allTransactions.filter { $0.type == .consume }) { transaction in
             transactionFileLabel(transaction) ?? String(localizable: .settingsAIUsageTransactionUnknownFile)
         }
 

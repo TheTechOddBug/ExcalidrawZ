@@ -85,9 +85,7 @@ struct OptionButtonGroup<T: Hashable>: View {
         
         var body: some View {
             ScrollView {
-                DrawingSettingsPanel(settings: $settings) {
-                    print("Settings changed: \(settings)")
-                }
+                DrawingSettingsPanel(settings: $settings) {}
                 .padding()
             }
         }

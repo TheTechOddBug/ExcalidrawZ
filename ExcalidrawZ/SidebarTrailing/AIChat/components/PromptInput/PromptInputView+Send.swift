@@ -17,8 +17,11 @@
 
 import SwiftUI
 import CoreData
+import Logging
 import LLMKit
 import LLMCore
+
+private let promptInputSendLogger = Logger(label: "PromptInputSend")
 
 extension PromptInputView {
     /// Pre-send threshold (fraction of the active model's context window).
@@ -160,6 +163,7 @@ extension PromptInputView {
     /// (success or failure) it clears the slot and drains the queue.
     func startSend(prompt: String, files: [ChatMessageContent.File] = []) {
         guard AIChatAvailability.canUseAI else { return }
+        let preferredInteractionMode = prefs.interactionMode(for: fileState.currentActiveFile)
         let newConversationID = UUID().uuidString
         let conversationIDForSession: String = self.conversationID ?? newConversationID
         aiChatState.clearGenerationCancellation(for: conversationIDForSession)
@@ -188,36 +192,6 @@ extension PromptInputView {
                 await MainActor.run {
                     aiChatState.clearTransientError(for: conversationIDForSession)
                 }
-                await MainActor.run {
-                    ExcalidrawCoordinatorRegistry.shared.update(
-                        normal: fileState.excalidrawWebCoordinator,
-                        collaboration: fileState.excalidrawCollaborationWebCoordinator
-                    )
-                }
-                let canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget = {
-                    switch fileState.currentActiveFile {
-                        case .collaborationFile:
-                            .collaboration
-                        default:
-                            .normal
-                    }
-                }()
-                let selectedElementIDs: [String]? = await MainActor.run {
-                    let coordinator: ExcalidrawCanvasView.Coordinator? = switch canvasTarget {
-                        case .normal:
-                            fileState.excalidrawWebCoordinator
-                        case .collaboration:
-                            fileState.excalidrawCollaborationWebCoordinator
-                    }
-                    let ids = coordinator?.selectedElementIDs ?? []
-                    return ids.isEmpty ? nil : ids
-                }
-                let currentFileID: UUID? = await MainActor.run {
-                    if case .file(let file) = fileState.currentActiveFile {
-                        return file.id
-                    }
-                    return nil
-                }
                 // Make sure agent config is loaded so `activeModel` resolves to the
                 // server-blessed default (or the user's picker selection) rather
                 // than the hard-coded fallback.
@@ -226,104 +200,114 @@ extension PromptInputView {
                 let model = await MainActor.run { modelForSend(files: files) }
                 attemptedModel = model
                 let isNewConversation = self.conversation == nil
+                let canIncludeActiveFileContext = await activeFileAllowsAIContext()
+                let invocationPlan = AIChatInvocationPlan.make(
+                    fileState: fileState,
+                    preferredInteractionMode: preferredInteractionMode,
+                    includesCurrentFileContext: canIncludeActiveFileContext
+                )
                 if !isNewConversation {
                     try await refreshExistingConversationToolsIfNeeded(
                         conversationID: conversationIDForSession,
+                        model: model,
+                        mode: invocationPlan.interactionMode,
+                        includesCurrentFileContext: invocationPlan.includesCurrentFileContext
+                    )
+                }
+                try await LockedContentAIGuard.withProtectedContentAccessDenied {
+                    guard AIChatAvailability.canUseAI else { throw CancellationError() }
+                    let context = try await invocationPlan.makeContext(
+                        fileState: fileState,
                         model: model
                     )
-                }
-                guard AIChatAvailability.canUseAI else { throw CancellationError() }
-                let context = try await ExcalidrawChatInvocationContext(
-                    currentFileData: currentFileData,
-                    canvasTarget: canvasTarget,
-                    selectedElementIDs: selectedElementIDs,
-                    currentFileID: currentFileID,
-                    currentModelSupportsImageInput: model.supportsExcalidrawImageInput
-                )
-                let metadata = await makeTransactionMetadata(
-                    conversationID: conversationIDForSession,
-                    userMessageID: userMessageID,
-                    requestKind: isNewConversation ? .createConversation : .sendMessage,
-                    model: model,
-                    canvasTarget: canvasTarget,
-                    selectedElementCount: selectedElementIDs?.count ?? 0,
-                    attachmentCount: files.count,
-                    hasCurrentFileData: context.currentFileData != nil,
-                    isNewConversation: isNewConversation
-                )
-                guard AIChatAvailability.canUseAI else { throw CancellationError() }
-
-                // Open the AI chat session: snapshots the current active
-                // file as `.aiPre` (anchored to this user message) and
-                // flips suppression on so all canvas mutations during
-                // the round don't write to user history.
-                try await fileState.beginAIChatSession(
-                    conversationID: conversationIDForSession,
-                    userMessageID: userMessageID
-                )
-                sessionOpened = true
-
-                if isNewConversation {
-                    self.conversationID = newConversationID
-                    // Promote the staged tier (if any) to a per-conversation
-                    // override now that we have an id. Without this, the
-                    // user's pre-send tier choice would be lost on reopen
-                    // — `pendingTierSelection` is @State, conversation
-                    // overrides survive the view's lifetime.
-                    if let pendingTier = await MainActor.run(body: { pendingTierSelection }) {
-                        await MainActor.run {
-                            prefs.setTier(pendingTier, for: newConversationID)
-                            pendingTierSelection = nil
-                        }
-                    }
-                    try await llmState.createConversation(
-                        id: newConversationID,
-                        type: .regular,
+                    let metadata = await makeTransactionMetadata(
+                        conversationID: conversationIDForSession,
+                        userMessageID: userMessageID,
+                        requestKind: isNewConversation ? .createConversation : .sendMessage,
                         model: model,
-                        // Tool roster + agentID centralized in
-                        // `ExcalidrawAgentConfig` so the persistence
-                        // restore path uses the exact same wiring.
-                        agentConfig: ExcalidrawAgentConfig.defaultConfig(
-                            supportsImageInput: model.supportsExcalidrawImageInput
-                        ),
-                        messages: [.content(userMessage)],
-                        metadata: metadata,
-                        context: context
+                        invocationPlan: invocationPlan,
+                        attachmentCount: files.count,
+                        hasCurrentFileData: context.currentFileData != nil,
+                        isNewConversation: isNewConversation
                     )
+                    guard AIChatAvailability.canUseAI else { throw CancellationError() }
 
-                    // Bind the new conversation to the active file's
-                    // unified scope so library files, URL-backed files,
-                    // and collaboration files can all resume their own
-                    // latest conversation on the next open.
-                    let scopeForBinding = await MainActor.run {
-                        fileState.currentActiveFile?.aiConversationFileScope
+                    // Open the AI chat session: snapshots the current active
+                    // file as `.aiPre` (anchored to this user message) and
+                    // flips suppression on so all canvas mutations during
+                    // the round don't write to user history.
+                    if invocationPlan.usesMutationSession {
+                        try await fileState.beginAIChatSession(
+                            conversationID: conversationIDForSession,
+                            userMessageID: userMessageID
+                        )
+                        sessionOpened = true
                     }
-                    if let scope = scopeForBinding {
-                        do {
-                            try await PersistenceController.shared.aiConversationRepository
-                                .bindConversationToFileScope(
-                                    conversationID: newConversationID,
-                                    scope: scope
-                                )
-                        } catch {
-                            print("[AIChatDiag] post-create bind threw \(error.localizedDescription)")
+
+                    if isNewConversation {
+                        self.conversationID = newConversationID
+                        // Promote the staged tier (if any) to a per-conversation
+                        // override now that we have an id. Without this, the
+                        // user's pre-send tier choice would be lost on reopen
+                        // — `pendingTierSelection` is @State, conversation
+                        // overrides survive the view's lifetime.
+                        if let pendingTier = await MainActor.run(body: { pendingTierSelection }) {
+                            await MainActor.run {
+                                prefs.setTier(pendingTier, for: newConversationID)
+                                pendingTierSelection = nil
+                            }
                         }
-                    }
-                } else {
-                    try await llmState.sendMessage(
-                        to: self.conversationID!,
-                        model: model,
-                        message: .content(userMessage),
-                        metadata: metadata,
-                        context: context
-                    )
-                }
+                        try await llmState.createConversation(
+                            id: newConversationID,
+                            type: .regular,
+                            model: model,
+                            // Tool roster + agentID centralized in
+                            // `ExcalidrawAgentConfig` so the persistence
+                            // restore path uses the exact same wiring.
+                            agentConfig: ExcalidrawAgentConfig.defaultConfig(
+                                mode: invocationPlan.interactionMode,
+                                supportsImageInput: model.supportsExcalidrawImageInput,
+                                includesCurrentFileContext: invocationPlan.includesCurrentFileContext
+                            ),
+                            messages: [.content(userMessage)],
+                            metadata: metadata,
+                            context: context
+                        )
 
-                // Stream completed without throwing. The `.aiPost`
-                // snapshot will anchor to whatever the trailing assistant
-                // message id ends up being — read after-the-fact rather
-                // than guessing.
-                streamSucceeded = true
+                        // Bind the new conversation to the active file's
+                        // unified scope so library files, URL-backed files,
+                        // and collaboration files can all resume their own
+                        // latest conversation on the next open.
+                        let scopeForBinding = await MainActor.run {
+                            fileState.currentActiveFile?.aiConversationFileScope
+                        }
+                        if let scope = scopeForBinding {
+                            do {
+                                try await PersistenceController.shared.aiConversationRepository
+                                    .bindConversationToFileScope(
+                                        conversationID: newConversationID,
+                                        scope: scope
+                                    )
+                            } catch {
+                                promptInputSendLogger.warning("Failed to bind new AI conversation to file scope: \(error)")
+                            }
+                        }
+                    } else {
+                        try await llmState.sendMessage(
+                            to: self.conversationID!,
+                            model: model,
+                            message: .content(userMessage),
+                            metadata: metadata,
+                            context: context
+                        )
+                    }
+
+                    // Stream completed without throwing. The `.aiPost`
+                    // snapshot will anchor to whatever the trailing assistant
+                    // message id ends up being — read after-the-fact rather
+                    // than guessing.
+                    streamSucceeded = true
+                }
             } catch {
                 // Keep send-pipeline failures in the chat transcript area as
                 // a transient client row. It is not committed to LLMKit's
@@ -389,12 +373,16 @@ extension PromptInputView {
         }
     }
 
-    private func refreshExistingConversationToolsIfNeeded(
+    func refreshExistingConversationToolsIfNeeded(
         conversationID: String,
-        model: SupportedModel
+        model: SupportedModel,
+        mode: AIChatInteractionMode,
+        includesCurrentFileContext: Bool
     ) async throws {
         let tools = ExcalidrawAgentConfig.toolNames(
-            supportsImageInput: model.supportsExcalidrawImageInput
+            mode: mode,
+            supportsImageInput: model.supportsExcalidrawImageInput,
+            includesCurrentFileContext: includesCurrentFileContext
         )
         let currentTools = await MainActor.run {
             conversation?.agentConfig.tools
@@ -413,14 +401,15 @@ extension PromptInputView {
         userMessageID: String,
         requestKind: ExcalidrawAITransactionRequestKind,
         model: SupportedModel,
-        canvasTarget: ExcalidrawCoordinatorRegistry.CanvasTarget,
-        selectedElementCount: Int,
+        invocationPlan: AIChatInvocationPlan,
         attachmentCount: Int,
         hasCurrentFileData: Bool,
         isNewConversation: Bool
     ) async -> ExcalidrawAITransactionMetadata {
         let fileContext = await MainActor.run {
-            transactionFileContext(for: fileState.currentActiveFile)
+            invocationPlan.includesCurrentFileContext
+                ? transactionFileContext(for: fileState.currentActiveFile)
+                : (id: nil, name: nil, kind: nil)
         }
 
         return ExcalidrawAITransactionMetadata(
@@ -431,11 +420,11 @@ extension PromptInputView {
             requestKind: requestKind,
             agentID: agentID,
             model: model.rawValue,
-            canvasTarget: canvasTarget.rawValue,
+            canvasTarget: invocationPlan.toolCanvasTarget.rawValue,
             fileID: fileContext.id,
             fileName: fileContext.name,
             fileKind: fileContext.kind,
-            selectedElementCount: selectedElementCount,
+            selectedElementCount: invocationPlan.selectedElementCount,
             attachmentCount: attachmentCount,
             hasCurrentFileData: hasCurrentFileData,
             isNewConversation: isNewConversation

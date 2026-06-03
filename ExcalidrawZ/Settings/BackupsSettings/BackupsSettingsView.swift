@@ -6,11 +6,21 @@
 //
 
 import SwiftUI
+import CoreData
+#if os(macOS)
+import AppKit
+#endif
 
 import ChocofordUI
 
 #if os(macOS)
+private struct BackupFilePreview {
+    let url: URL
+    let file: ExcalidrawFile
+}
+
 struct BackupsSettingsView: View {
+    @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.alertToast) var alertToast
     
     @State private var backups: [URL] = []
@@ -23,6 +33,12 @@ struct BackupsSettingsView: View {
     @State private var selectedFile: URL?
     
     @State private var backupToBeDeleted: URL?
+    @State private var isExportingBackup = false
+    @State private var unlockedBackupPreview: BackupFilePreview?
+    @State private var isUnlockingBackupPreview = false
+    @State private var backupPreviewErrorMessage: String?
+    @State private var isBackupPreviewRecoveryKeySheetPresented = false
+    @State private var systemUnlockAvailability: LockedContentSystemUnlockAvailability = .unavailable
     
     enum Route: Hashable {
         case dateList
@@ -73,8 +89,19 @@ struct BackupsSettingsView: View {
             Divider()
             
             ZStack {
-                if let selectedFile, let excalidrawFile = try? ExcalidrawFile(contentsOf: selectedFile) {
-                    ExcalidrawRenderer(file: excalidrawFile)
+                if let selectedFile {
+                    if let unlockedBackupPreview,
+                       unlockedBackupPreview.url == selectedFile {
+                        ExcalidrawRenderer(file: unlockedBackupPreview.file)
+                    } else if let excalidrawFile = try? ExcalidrawFile(contentsOf: selectedFile) {
+                        ExcalidrawRenderer(file: excalidrawFile)
+                    } else if isAppEncryptedBackupFile(selectedFile) {
+                        backupEncryptedPreviewLoadingView()
+                    } else if isRecoveryKeyEncryptedBackupFile(selectedFile) {
+                        encryptedBackupFileView(selectedFile)
+                    } else if let selectedBackup {
+                        backupHomeView(selectedBackup)
+                    }
                 } else if let selectedBackup {
                     backupHomeView(selectedBackup)
                 } else {
@@ -82,6 +109,21 @@ struct BackupsSettingsView: View {
                 }
             }
             .frame(maxWidth: .infinity)
+        }
+        .onChange(of: selectedFile) { newValue in
+            unlockedBackupPreview = nil
+            backupPreviewErrorMessage = nil
+            isBackupPreviewRecoveryKeySheetPresented = false
+            guard let newValue else { return }
+            if isAppEncryptedBackupFile(newValue) {
+                Task {
+                    await loadBackupPreviewWithBackupKey(newValue)
+                }
+            } else if isRecoveryKeyEncryptedBackupFile(newValue) {
+                Task {
+                    await unlockBackupPreviewWithSystemAuthentication(newValue, isAutomatic: true)
+                }
+            }
         }
         .confirmationDialog(
             String(localizable: .backupsDeleteConfirmationTitle),
@@ -93,12 +135,33 @@ struct BackupsSettingsView: View {
                 Text(.localizable(.generalButtonConfirm))
             }
         }
+        .sheet(isPresented: $isBackupPreviewRecoveryKeySheetPresented) {
+            if let selectedFile {
+                RecoveryKeyInputSheet(
+                    title: String(localizable: .lockedContentUseRecoveryKeyButton),
+                    subtitle: selectedFile.deletingPathExtension().lastPathComponent,
+                    primaryButtonTitle: String(localizable: .lockedContentUnlockButton),
+                    headerLayout: .compact,
+                    width: 520
+                ) { recoveryKey in
+                    try await unlockBackupPreview(selectedFile, recoveryKey: recoveryKey)
+                }
+            } else {
+                EmptyView()
+            }
+        }
         .onAppear {
+            systemUnlockAvailability = LockedContentSystemUnlockStore.availability()
             loadBackups()
+        }
+        .onDisappear {
+            unlockedBackupPreview = nil
+            backupPreviewErrorMessage = nil
+            isBackupPreviewRecoveryKeySheetPresented = false
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func backupsDateList() -> some View {
         ScrollView {
             LazyVStack(spacing: 4) {
@@ -134,64 +197,186 @@ struct BackupsSettingsView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func placeholderView() -> some View {
-        VStack {
-            Text(.localizable(.settingsBackupsName)).font(.largeTitle)
-            VStack(alignment: .leading) {
-                Text(.localizable(.settingsBackupsDescription))
-                Divider()
-                Text(.localizable(.settingsBackupsDescriptionSecondary))
-            }
-            .padding()
-            .background {
-                let roundedRectangle = RoundedRectangle(cornerRadius: 8)
-                ZStack {
-                    roundedRectangle.fill(.regularMaterial)
-                    roundedRectangle.stroke(.separator)
-                }
-            }
-        }
-        .frame(maxWidth: 400)
+        BackupsPlaceholderView()
     }
 
-    @MainActor @ViewBuilder
-    private func backupHomeView(_ backup: URL) -> some View {
-        let title = String(
-            localizable: .backupName(
-                (try? backup.resourceValues(forKeys: [.creationDateKey]).creationDate?.formatted()) ?? String(localizable: .generalUnknown)
-            )
+    @ViewBuilder
+    private func encryptedBackupFileView(_ url: URL) -> some View {
+        BackupLockedPreviewView(
+            isUnlocking: isUnlockingBackupPreview,
+            errorMessage: backupPreviewErrorMessage,
+            systemUnlockAvailability: systemUnlockAvailability
+        ) {
+            Task {
+                await unlockBackupPreviewWithSystemAuthentication(url)
+            }
+        } onUseRecoveryKey: {
+            isBackupPreviewRecoveryKeySheetPresented = true
+        }
+    }
+
+    @ViewBuilder
+    private func backupEncryptedPreviewLoadingView() -> some View {
+        BackupEncryptedPreviewLoadingView(
+            isUnlocking: isUnlockingBackupPreview,
+            errorMessage: backupPreviewErrorMessage
         )
-    
-        VStack {
-            Text(title).font(.title)
-            
-            Text(String(localizable: .generalTotalSizeLabel) + selectedBackupSize.formatted(.byteCount(style: .file)))
-            
-            HStack {
-                Button {
-                    do {
-                        let panel = NSSavePanel()
-                        panel.nameFieldStringValue = title
-                        if panel.runModal() == .OK, let targetURL = panel.url {
-                            try FileManager.default.copyItem(at: backup, to: targetURL)
-                        }
-                    } catch {
-                        alertToast(error)
+    }
+
+    @MainActor
+    private func loadBackupPreviewWithBackupKey(_ url: URL) async {
+        guard selectedFile == url else { return }
+        guard !isUnlockingBackupPreview else { return }
+        backupPreviewErrorMessage = nil
+
+        isUnlockingBackupPreview = true
+        defer { isUnlockingBackupPreview = false }
+
+        do {
+            let file = try await backupExcalidrawFile(
+                from: url,
+                context: viewContext,
+                recoveryKey: nil
+            )
+            guard selectedFile == url else { return }
+            unlockedBackupPreview = BackupFilePreview(url: url, file: file)
+        } catch {
+            guard selectedFile == url else { return }
+            backupPreviewErrorMessage = LockedContentErrorPresenter.message(for: error)
+        }
+    }
+
+    @MainActor
+    private func unlockBackupPreviewWithSystemAuthentication(
+        _ url: URL,
+        isAutomatic: Bool = false
+    ) async {
+        guard selectedFile == url else { return }
+        guard !isUnlockingBackupPreview else { return }
+        backupPreviewErrorMessage = nil
+        systemUnlockAvailability = LockedContentSystemUnlockStore.availability()
+
+        isUnlockingBackupPreview = true
+        defer { isUnlockingBackupPreview = false }
+
+        do {
+            let recoveryKey: RecoveryKey
+            if let currentRecoveryKey = await RecoveryKeyVault.shared.currentRecoveryKey() {
+                recoveryKey = currentRecoveryKey
+            } else {
+                recoveryKey = try await LockedContentSystemUnlockStore.loadRecoveryKey(
+                    reason: LockedContentSystemUnlockReason.previewBackupFile
+                )
+            }
+            try await unlockBackupPreview(url, recoveryKey: recoveryKey)
+        } catch let unlockError as LockedContentSystemUnlockError {
+            systemUnlockAvailability = LockedContentSystemUnlockStore.availability()
+            switch unlockError {
+                case .canceled:
+                    break
+                case .noSavedRecoveryKey:
+                    if !isAutomatic {
+                        isBackupPreviewRecoveryKeySheetPresented = true
                     }
-                } label: {
-                    Label(.localizable(.backupButtonExport), systemSymbol: .squareAndArrowUp)
-                }
-                
-                Button(role: .destructive) {
-                    backupToBeDeleted = backup
-                } label: {
-                    Label(.localizable(.backupButtonDelete), systemSymbol: .trash)
-                }
+                default:
+                    if !isAutomatic {
+                        backupPreviewErrorMessage = LockedContentErrorPresenter.message(for: unlockError)
+                    }
+            }
+        } catch {
+            if !isAutomatic {
+                backupPreviewErrorMessage = LockedContentErrorPresenter.message(for: error)
             }
         }
     }
-    
+
+    @MainActor
+    private func unlockBackupPreview(_ url: URL, recoveryKey: RecoveryKey) async throws {
+        guard selectedFile == url else { return }
+        let file = try await unlockedEncryptedBackupExcalidrawFile(
+            from: url,
+            context: viewContext,
+            recoveryKey: recoveryKey
+        )
+        guard selectedFile == url else { return }
+        await RecoveryKeyVault.shared.activate(recoveryKey)
+        unlockedBackupPreview = BackupFilePreview(url: url, file: file)
+        backupPreviewErrorMessage = nil
+    }
+
+    @ViewBuilder
+    private func backupHomeView(_ backup: URL) -> some View {
+        BackupHomeView(
+            backup: backup,
+            selectedBackupSize: selectedBackupSize,
+            isExporting: isExportingBackup
+        ) { title in
+            Task {
+                await exportBackup(backup, title: title)
+            }
+        } onRevealInFinder: {
+#if DEBUG
+            NSWorkspace.shared.activateFileViewerSelecting([backup])
+#endif
+        } onDelete: {
+            backupToBeDeleted = backup
+        }
+    }
+
+    @MainActor
+    private func exportBackup(_ backup: URL, title: String) async {
+        guard !isExportingBackup else { return }
+
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = title
+        panel.canCreateDirectories = true
+
+        guard panel.runModal() == .OK, let targetURL = panel.url else {
+            return
+        }
+
+        isExportingBackup = true
+        defer { isExportingBackup = false }
+
+        do {
+            let recoveryKey: RecoveryKey?
+            let containsEncryptedFiles = try await Task.detached(priority: .userInitiated) {
+                try backupContainsEncryptedExcalidrawFiles(backup)
+            }.value
+
+            if containsEncryptedFiles {
+                if let currentRecoveryKey = await RecoveryKeyVault.shared.currentRecoveryKey() {
+                    recoveryKey = currentRecoveryKey
+                } else {
+                    recoveryKey = try await LockedContentSystemUnlockStore.loadRecoveryKey(
+                        reason: LockedContentSystemUnlockReason.exportBackup
+                    )
+                }
+            } else {
+                recoveryKey = nil
+            }
+
+            try await exportBackupRecord(
+                from: backup,
+                to: targetURL,
+                context: viewContext,
+                recoveryKey: recoveryKey
+            )
+
+            alertToast(.init(
+                displayMode: .hud,
+                type: .complete(.green),
+                title: String(localizable: .generalFileExporterSaved)
+            ))
+        } catch let unlockError as LockedContentSystemUnlockError where unlockError == .canceled {
+            return
+        } catch {
+            alertToast(error)
+        }
+    }
+
     private func loadBackups() {
         do {
             let backupsDir = try getBackupsDir()
@@ -222,13 +407,13 @@ struct BackupsSettingsView: View {
             selectedBackupSize = 0
             selectedBackupDirs = [:]
             selectedFile = nil
+            backupToBeDeleted = nil
+            route = .dateList
         } catch {
             alertToast(error)
         }
     }
 }
-
-
 
 #elseif os(iOS)
 struct BackupsSettingsView: View {

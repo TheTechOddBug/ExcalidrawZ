@@ -11,22 +11,12 @@ struct PencilSettingsView: View {
     @StateObject var toolState = ToolState()
     
     var body: some View {
-        if #available(macOS 14.0, *) {
-            Form {
-                content()
-            }
-            .formStyle(.grouped)
-        } else {
-            ScrollView {
-                VStack {
-                    content()
-                }
-                .padding()
-            }
+        SettingsFormContainer {
+            content()
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         Section {
             Picker(selection: $toolState.pencilInteractionMode) {

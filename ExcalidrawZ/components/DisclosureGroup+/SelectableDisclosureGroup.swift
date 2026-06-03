@@ -81,7 +81,7 @@ struct SelectableDisclosureGroup: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func labelView() -> some View {
         Button {
             isSelected = true

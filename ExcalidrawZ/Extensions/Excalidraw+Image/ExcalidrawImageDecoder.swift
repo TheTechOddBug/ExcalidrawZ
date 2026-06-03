@@ -38,7 +38,6 @@ class ExcalidrawImageDecoder {
     
     // 解压缩函数
     internal func inflate(_ encodedString: String) throws -> String {
-//        print("infalte - \(encodedString)")
         let data = byteStringToData(encodedString)
         
         let decompressedData = data.decompressed

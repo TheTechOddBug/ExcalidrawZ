@@ -10,7 +10,6 @@ import ChocofordUI
 import UniformTypeIdentifiers
 
 struct ExportFileView: View {
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.managedObjectContext) var viewContext
     @Environment(\.dismiss) var mordenDismiss
     @Environment(\.alertToast) var alertToast
@@ -45,50 +44,50 @@ struct ExportFileView: View {
     @State private var fileDocument: ExcalidrawFile?
         
     var body: some View {
-        SwiftUI.Group {
+        ShareSubViewContainer(dismiss: dismiss) {
+            SwiftUI.Group {
 #if os(macOS)
-            Center {
-                if #available(macOS 13.0, *) {
-                    Image(nsImage: NSWorkspace.shared.icon(for: .excalidrawFile))
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(height: 80)
-                        .draggable(file)
-                        .padding()
-                } else {
-                    Image(nsImage: NSWorkspace.shared.icon(for: .excalidrawFile))
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(height: 80)
-                        .padding()
+                Center {
+                    if #available(macOS 13.0, *) {
+                        Image(nsImage: NSWorkspace.shared.icon(for: .excalidrawFile))
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 80)
+                            .draggable(file)
+                            .padding()
+                    } else {
+                        Image(nsImage: NSWorkspace.shared.icon(for: .excalidrawFile))
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 80)
+                            .padding()
+                    }
+                    actionsView()
                 }
-                actionsView()
-            }
 #else
-            VStack(spacing: 20) {
-                VStack(spacing: 4) {
-                    Image(systemSymbol: .docText)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(height: 80)
-                        .padding()
-                    Text(fileName + ".excalidraw")
+                VStack(spacing: 20) {
+                    VStack(spacing: 4) {
+                        Image(systemSymbol: .docText)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 80)
+                            .padding()
+                        Text(fileName + ".excalidraw")
+                    }
+                    actionsView()
                 }
-                actionsView()
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemSymbol: .xmark)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemSymbol: .xmark)
+                        }
                     }
                 }
-            }
 #endif
+            }
         }
-        .modifier(ShareSubViewBackButtonModifier(dismiss: dismiss))
-        .padding(horizontalSizeClass == .compact ? 0 : 20)
         .task {
             saveFileToTemp()
             fileName = file.name ?? String(localizable: .newFileNamePlaceholder)

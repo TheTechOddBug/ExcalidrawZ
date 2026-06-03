@@ -7,7 +7,10 @@
 
 import SwiftUI
 import CoreData
+import Logging
 import ChocofordUI
+
+private let localFileContextMenuLogger = Logger(label: "LocalFileContextMenu")
 
 struct LocalFileMenuProvider: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -100,12 +103,18 @@ struct LocalFileMenuProvider: View {
     private func rebindAIConversations(oldURL: URL, newURL: URL) {
         Task.detached {
             do {
+                let oldScope = AIConversationFileScope(kind: .localFile, id: oldURL.absoluteString)
+                let newScope = AIConversationFileScope(kind: .localFile, id: newURL.absoluteString)
                 try await PersistenceController.shared.aiConversationRepository.rebindConversations(
-                    from: AIConversationFileScope(kind: .localFile, id: oldURL.absoluteString),
-                    to: AIConversationFileScope(kind: .localFile, id: newURL.absoluteString)
+                    from: oldScope,
+                    to: newScope
+                )
+                await AIChatPreferences.shared.rebindFileAccessOverride(
+                    from: oldScope,
+                    to: newScope
                 )
             } catch {
-                print("Warning: Failed to rebind AI conversations for renamed local file: \(error)")
+                localFileContextMenuLogger.warning("Failed to rebind AI conversations for renamed local file: \(error)")
             }
         }
     }
@@ -350,7 +359,7 @@ struct LocalFileRowMenuItems: View {
     }
     
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func moveLocalFileMenu() -> some View {
         if case .localFolder(let currentLocalFolder) = fileState.currentActiveGroup {
             Menu {
@@ -473,16 +482,18 @@ struct LocalFileRowMenuItems: View {
                         // Item removed will be handled in `LocalFilesListView`
                         for file in filesToDelete {
                             _ = try await FileCoordinator.shared.coordinatedTrash(url: file)
+                            let scope = AIConversationFileScope(
+                                kind: .localFile,
+                                id: file.absoluteString
+                            )
                             do {
                                 try await PersistenceController.shared.aiConversationRepository
                                     .deleteConversations(
-                                        forFileScope: AIConversationFileScope(
-                                            kind: .localFile,
-                                            id: file.absoluteString
-                                        )
+                                        forFileScope: scope
                                     )
+                                AIChatPreferences.shared.deleteFileAccessOverride(for: scope)
                             } catch {
-                                print("Warning: Failed to delete AI conversations for local file \(file): \(error)")
+                                localFileContextMenuLogger.warning("Failed to delete AI conversations for local file \(file): \(error)")
                             }
                         }
                     }

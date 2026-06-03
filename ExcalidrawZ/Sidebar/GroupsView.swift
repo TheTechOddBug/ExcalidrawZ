@@ -110,7 +110,7 @@ struct GroupsView: View {
             }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func content() -> some View {
         if #available(macOS 13.0, *), folderStructStyle == .disclosureGroup {
             diclsureGroupView()
@@ -166,7 +166,7 @@ struct GroupsView: View {
     
     
     @available(macOS 13.0, *)
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func diclsureGroupView() -> some View {
         SelectableDisclosureGroup(
             isSelected: isSelectedBinding,
@@ -266,7 +266,7 @@ struct GroupsView: View {
         }
     }
     
-    @MainActor @ViewBuilder
+    @ViewBuilder
     private func treeView() -> some View {
         TreeStructureView(children: children, paddingLeading: 6) {
             GroupRowView(
