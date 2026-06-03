@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 import CoreData
 
 final class FileHomeItemTransitionState: ObservableObject {
@@ -70,7 +71,7 @@ struct FileHomeItemTransitionModifier: ViewModifier {
             }
             .environmentObject(state)
             .environmentObject(itemState)
-            .onChange(of: fileState.currentActiveFile) { newValue in
+            .watch(value: fileState.currentActiveFile) { newValue in
                 let oldValue = self.file
                 transitionRevision += 1
                 let revision = transitionRevision
@@ -272,7 +273,7 @@ struct FileHomeItemHeroLayer: View {
             .onAppear {
                 clearPreviewCacheIfLocked(lockState)
             }
-            .onChange(of: lockState) { newValue in
+            .watch(value: lockState) { newValue in
                 clearPreviewCacheIfLocked(newValue)
             }
         }

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 
 struct ToggleICloudSyncingModifier: ViewModifier {
     @AppStorage("DisableCloudSync") var isICloudDisabled: Bool = false
@@ -48,7 +49,7 @@ struct ToggleICloudSyncingModifier: ViewModifier {
             } message: {
                 Text(.localizable(.settingsICloudDisableByAccountMessage))
             }
-            .onChange(of: isICloudDisabled) { newValue in
+            .watch(value: isICloudDisabled) { newValue in
                 if newValue || FileManager.default.ubiquityIdentityToken != nil {
                     isRestartAlertPresented.toggle()
                 } else if !newValue,
@@ -83,7 +84,7 @@ struct EnableICloudSyncingModifier: ViewModifier {
             } message: {
                 Text(.localizable(.settingsICloudDisableByAccountMessage))
             }
-            .onChange(of: isICloudDisabled) { newValue in
+            .watch(value: isICloudDisabled) { newValue in
                 if !newValue,
                    FileManager.default.ubiquityIdentityToken == nil {
                     DispatchQueue.main.async {

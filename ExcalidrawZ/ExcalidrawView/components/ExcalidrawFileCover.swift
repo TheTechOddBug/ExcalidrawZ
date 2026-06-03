@@ -123,7 +123,7 @@ struct ExcalidrawFileCover: View {
                 cache.removePreviewCache(forID: fileID)
                 self.generateCover(forceRefresh: true)
             }
-            .onChange(of: scenePhase) { newValue in
+            .watch(value: scenePhase) { newValue in
                 guard fileState.currentActiveFile == nil else { return }
                 if newValue == .active {
                     self.loadCover(delay: 0.5)

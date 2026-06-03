@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 import SFSafeSymbols
 
 @available(macOS 13.0, *)
@@ -24,10 +25,10 @@ struct ContentViewModern: View {
         ZStack {
             content()
         }
-        .onChange(of: columnVisibility) { newValue in
+        .watch(value: columnVisibility) { newValue in
             layoutState.isSidebarPresented = newValue != .detailOnly
         }
-        .onChange(of: layoutState.isSidebarPresented) { newValue in
+        .watch(value: layoutState.isSidebarPresented) { newValue in
             if newValue {
                 withAnimation {
                     columnVisibility = .all

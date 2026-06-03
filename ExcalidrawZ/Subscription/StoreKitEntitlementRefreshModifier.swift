@@ -32,7 +32,7 @@ struct StoreKitEntitlementRefreshModifier: ViewModifier {
                 refresh(reason: .windowBecameKey)
             }
 #else
-            .onChange(of: scenePhase) { newValue in
+            .watch(value: scenePhase) { newValue in
                 if newValue == .active {
                     refresh(reason: .appBecameActive)
                 }

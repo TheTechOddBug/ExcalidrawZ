@@ -37,7 +37,7 @@ struct SettingsView: View {
             // The Settings window is reused across openings on macOS, so a
             // second deep-link request after the window already exists won't
             // re-fire `.task` — observe the published value to handle that.
-            .onChange(of: router.pendingRoute) { newValue in
+            .watch(value: router.pendingRoute) { newValue in
                 guard let newValue else { return }
                 selection = newValue
                 router.pendingRoute = nil

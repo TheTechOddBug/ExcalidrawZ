@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 
 struct LoadingView<Content: View, S: ShapeStyle>: View {
     var progress: Float
@@ -129,7 +130,7 @@ struct LoadingView<Content: View, S: ShapeStyle>: View {
             }
             
         }
-        .onChange(of: progress) { p in
+        .watch(value: progress) { p in
             if p > 0 {
                 indeterminateLoading = false
             } else if indeterminateLoading {

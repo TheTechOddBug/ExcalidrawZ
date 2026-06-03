@@ -484,7 +484,7 @@ struct OpenURLSheetView: View {
         .animation(.smooth, value: isPreviewWebView)
         .bindWindow($window)
 #if os(macOS)
-        .onChange(of: isPreviewWebView) { newValue in
+        .watch(value: isPreviewWebView) { newValue in
             changeViewSize(isPreviewWebView: newValue, window: window)
         }
         .watch(value: window) { newValue in

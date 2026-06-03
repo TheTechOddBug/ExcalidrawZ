@@ -97,13 +97,13 @@ struct LocalFilesProvider<Content: View>: View {
                 }
             }
 #elseif os(iOS)
-            .onChange(of: scenePhase) { newValue in
+            .watch(value: scenePhase) { newValue in
                 if newValue == .active {
                     getFolderContents()
                 }
             }
 #endif
-            .onChange(of: sortField) { newValue in
+            .watch(value: sortField) { newValue in
                 sortFiles(field: newValue)
             }
             .onReceive(localFolderState.itemCreatedPublisher) { path in

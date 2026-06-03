@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 
 struct AnimatedPresence<Value: Equatable, Content: View>: View {
     let value: Value?
@@ -180,14 +181,8 @@ private extension View {
         of value: Value,
         perform action: @escaping (Value) -> Void
     ) -> some View {
-        if #available(macOS 14.0, iOS 17.0, *) {
-            self.onChange(of: value) { _, newValue in
-                action(newValue)
-            }
-        } else {
-            self.onChange(of: value) { newValue in
-                action(newValue)
-            }
+        self.watch(value: value) { newValue in
+            action(newValue)
         }
     }
 }

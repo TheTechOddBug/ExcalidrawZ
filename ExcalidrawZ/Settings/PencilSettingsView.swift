@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 
 struct PencilSettingsView: View {
     @StateObject var toolState = ToolState()
@@ -47,7 +48,7 @@ struct PencilSettingsView: View {
                 Text(.localizable(.applePencilConnectToPencil))
             }
             .disabled(!toolState.inPenMode)
-            .onChange(of: toolState.inPenMode) { newValue in
+            .watch(value: toolState.inPenMode) { newValue in
                 if !newValue {
                     Task {
                         try? await toolState.togglePenMode(enabled: false)

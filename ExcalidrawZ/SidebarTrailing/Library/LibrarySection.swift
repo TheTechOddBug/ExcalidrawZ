@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 
 struct LibrarySectionContent: View {
     var allLibraries: FetchedResults<Library>
@@ -107,7 +108,7 @@ struct LibrarySectionContent: View {
         .disclosureGroupStyle(.leadingChevron)
 #endif
         .animation(.default, value: selections != nil)
-        .onChange(of: searchQuery) { newValue in
+        .watch(value: searchQuery) { newValue in
             // Auto-expand sections while filtering so matches are visible.
             if !newValue.isEmpty {
                 isExpanded = true

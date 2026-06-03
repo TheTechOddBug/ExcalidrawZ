@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import ChocofordUI
 
 struct ExcalidrawDocumentLoadCompletion: Equatable {
     let fileID: String
@@ -49,14 +50,14 @@ struct LockedFileUnlockOverlayModifier: ViewModifier {
                 overlay
             }
             .animation(.smooth(duration: 0.4), value: isVisible)
-            .onChange(of: activeFile?.id) { _ in
+            .watch(value: activeFile?.id) { _ in
                 reset()
                 presentIfNeeded()
             }
-            .onChange(of: lockedContentState.activeFileLockState) { lockState in
+            .watch(value: lockedContentState.activeFileLockState) { lockState in
                 handleLockStateChange(lockState)
             }
-            .onChange(of: documentLoadCompletion) { completion in
+            .watch(value: documentLoadCompletion) { completion in
                 guard let completion else { return }
                 handleDocumentLoadFinished(fileID: completion.fileID)
             }

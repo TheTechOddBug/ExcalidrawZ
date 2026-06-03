@@ -201,7 +201,11 @@ class ExcalidrawCore: NSObject, ObservableObject {
 /// Keep stateless
 extension ExcalidrawCore {
     struct JSONEncodingFailed: Error {}
-    struct InvalidJavaScriptResult: Error {}
+    struct InvalidJavaScriptResult: LocalizedError {
+        var errorDescription: String? {
+            "The Excalidraw web view did not return a valid JavaScript result."
+        }
+    }
 
     struct CameraState: Codable, Hashable {
         var scrollX: Double = 0
@@ -1222,11 +1226,13 @@ extension ExcalidrawCore {
         let definitionJSON = try encodeJSON(definition)
         let optionsJSON = try encodeJSON(options)
         let result = try await webView.callAsyncJavaScript(
-            "return JSON.stringify(await window.excalidrawZHelper.convertMermaidToExcalidraw(\(definitionJSON), \(optionsJSON)));",
+            makeJavaScriptHelperCall(
+                "window.excalidrawZHelper.convertMermaidToExcalidraw(\(definitionJSON), \(optionsJSON))"
+            ),
             arguments: [:],
             contentWorld: .page
         )
-        return try decodeJavaScriptResult(result, as: MermaidConvertResult.self)
+        return try decodeJavaScriptHelperResult(result, as: MermaidConvertResult.self)
     }
 
     @MainActor
@@ -1480,6 +1486,13 @@ extension ExcalidrawCore {
     /// Most work (fetching, loading files) runs on background threads for better performance
     /// - Returns: The count of injected MediaItems
     func injectAllMediaItems() async throws -> Int {
+        let hasParent = await MainActor.run {
+            parent != nil
+        }
+        guard hasParent else {
+            return 0
+        }
+
         // Check WebView readiness on main thread
         let isReady = await MainActor.run {
             !isNavigating && (hasInjectIndexedDBData || isDocumentLoaded)
@@ -1521,10 +1534,8 @@ extension ExcalidrawCore {
         }
 
         // Insert to IndexedDB and update state on main thread
+        try await self.insertMediaFiles(mediaFiles)
         await MainActor.run {
-            Task { @MainActor in
-                try? await self.insertMediaFiles(mediaFiles)
-            }
             // Update loaded IDs
             self.loadedMediaItemIDs = Set(allMediaIDs)
             self.hasInjectIndexedDBData = true

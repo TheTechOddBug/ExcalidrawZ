@@ -460,7 +460,7 @@ struct PromptInputView<Background: View, Header: View>: View {
         .task {
             await loadAgentConfigIfNeeded()
         }
-        .onChange(of: prefs.isAIEnabled) { isEnabled in
+        .watch(value: prefs.isAIEnabled) { isEnabled in
             guard !isEnabled else { return }
             cancelCurrentGeneration()
         }

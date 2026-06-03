@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 import Logging
 
 /// View modifier that enables FileStorage sync after migration completes
@@ -20,7 +21,7 @@ struct StartupSyncModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onChange(of: migrationState.phase) { newPhase in
+            .watch(value: migrationState.phase) { newPhase in
                 if newPhase == .closed && !hasEnabledSync {
                     logger.info("Migration phase → .closed, triggering sync enable")
                     hasEnabledSync = true

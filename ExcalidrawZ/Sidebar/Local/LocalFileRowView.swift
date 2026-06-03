@@ -135,10 +135,10 @@ struct LocalFileRowView: View {
             updateModifiedDate()
             isWaitingForOpeningFile = false
         }
-        .onChange(of: updateFlag) { _ in
+        .watch(value: updateFlag) { _ in
             updateModifiedDate()
         }
-        .onChange(of: fileState.currentActiveFile) { newValue in
+        .watch(value: fileState.currentActiveFile) { newValue in
             if case .localFile(let localFile) = newValue,
                localFile != file,
                isWaitingForOpeningFile {

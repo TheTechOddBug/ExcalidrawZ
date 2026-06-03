@@ -139,11 +139,11 @@ struct FlexibleSplitView<Item: FlexibleItem, ID: Hashable & Transferable>: View 
                 ratioB: $ratioB
             )
         )
-        .onChange(of: arrangement?.wrappedValue) { newValue in
+        .watch(value: arrangement?.wrappedValue) { newValue in
             guard let newValue else { return }
             self.localArrangement = newValue
         }
-        .onChange(of: localArrangement) { newValue in
+        .watch(value: localArrangement) { newValue in
             self.arrangement?.wrappedValue = newValue
         }
         .watch(value: items.count) { newValue in

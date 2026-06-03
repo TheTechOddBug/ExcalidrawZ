@@ -67,19 +67,19 @@ struct SegmentedPicker<Selection, Content>: View where Selection : Hashable, Con
         .apply { content in
             if #available(iOS 17.0, macOS 14.0, *) {
                 content
-                    .onChange(of: selection) { oldValue, newValue in
+                    .watch(value: selection) { oldValue, newValue in
                         if newValue != viewModel.selection {
                             viewModel.selection = newValue
                         }
                     }
-                    .onChange(of: viewModel.selection, initial: true) { oldValue, newValue in
+                    .watch(value: viewModel.selection, initial: true) { _, newValue in
                         if newValue != selection {
                             selection = newValue
                         }
                     }
             } else {
                 content
-                    .onChange(of: selection) { newValue in
+                    .watch(value: selection) { newValue in
                         if newValue != viewModel.selection {
                             viewModel.selection = newValue
                         }

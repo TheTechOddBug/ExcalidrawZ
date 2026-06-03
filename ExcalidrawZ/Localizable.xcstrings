@@ -104771,6 +104771,83 @@
         }
       }
     },
+    "mermaidInputSheetInputTab": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Input"
+          }
+        }
+      }
+    },
+    "mermaidInputSheetNoActiveCanvasError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No active canvas is available."
+          }
+        }
+      }
+    },
+    "mermaidInputSheetPasteButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste"
+          }
+        }
+      }
+    },
+    "mermaidInputSheetPlaceholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "graph TD\n    A[Start] --> B[Draw in ExcalidrawZ]"
+          }
+        }
+      }
+    },
+    "mermaidInputSheetPreviewEmpty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter Mermaid syntax to preview it here."
+          }
+        }
+      }
+    },
+    "mermaidInputSheetPreviewTab": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview"
+          }
+        }
+      }
+    },
+    "mermaidInputSheetPreviewUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview unavailable."
+          }
+        }
+      }
+    },
     "toolbarMoreTools": {
       "extractionState": "manual",
       "localizations": {

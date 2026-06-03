@@ -65,7 +65,9 @@ extension ExcalidrawCore: WKNavigationDelegate {
                     }
                     
                 } catch {
-                    self.parent?.onError(error)
+                    self.logger.error("Failed to finish Excalidraw web view initialization: \(error)")
+                    self.parent?.loadingState = .error(error)
+                    self.publishError(error)
                 }
             }
         }

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 
 struct ExcalidrawHomeView: View {
     @Environment(\.colorScheme) var colorScheme
@@ -173,7 +174,7 @@ struct ExcalidrawHomeView: View {
                 SyncStatusPopover()
             }
         }
-        .onChange(of: fileState.currentActiveFile) { newValue in
+        .watch(value: fileState.currentActiveFile) { newValue in
             if newValue == nil {
                 initCurrentGroups()
                 

@@ -30,7 +30,17 @@ struct ExcalidrawToolbar: View {
     @State private var isApplePencilDisconnectConfirmationDialogPresented = false
     
     @State private var isMathInputSheetPresented = false
+    @State private var isMermaidInputSheetPresented = false
     @State private var isPDFPickerPresented = false
+
+    private var activeCoordinator: ExcalidrawCanvasView.Coordinator? {
+        switch fileState.currentActiveFile {
+            case .collaborationFile:
+                fileState.excalidrawCollaborationWebCoordinator ?? toolState.excalidrawWebCoordinator
+            default:
+                fileState.excalidrawWebCoordinator ?? toolState.excalidrawWebCoordinator
+        }
+    }
     
     
     var body: some View {
@@ -250,7 +260,7 @@ struct ExcalidrawToolbar: View {
                                 .stroke(.secondary, lineWidth: 0.5)
                         }
                     }
-                    .onChange(of: toolState.activatedTool) { newValue in
+                    .watch(value: toolState.activatedTool) { newValue in
                         if let newValue, secondaryPickerItems.contains(newValue) {
                             lastActivatedSecondaryTool = newValue
                         }
@@ -377,13 +387,7 @@ struct ExcalidrawToolbar: View {
                             if case .file(let file) = fileState.currentActiveFile, file.inTrash {
                                 layoutState.isResotreAlertIsPresented.toggle()
                             } else {
-                                Task {
-                                    do {
-                                        try await toolState.excalidrawWebCoordinator?.toggleToolbarAction(key: "h")
-                                    } catch {
-                                        alertToast(error)
-                                    }
-                                }
+                                toolState.setActivedTool(.cursor)
                             }
                         } label: {
                             Text(.localizable(.toolbarEdit))
@@ -515,12 +519,16 @@ struct ExcalidrawToolbar: View {
                 Spacer()
                 
                 if toolState.activatedTool == .cursor {
-                    Button {
-                        Task {
-                            try? await toolState.excalidrawWebCoordinator?.toggleToolbarAction(key: "h")
+                    if let activeCoordinator {
+                        CursorModeTrailingButton(coordinator: activeCoordinator) {
+                            toolState.setActivedTool(.hand)
                         }
-                    } label: {
-                        Text(.localizable(.generalButtonDone))
+                    } else {
+                        Button {
+                            toolState.setActivedTool(.hand)
+                        } label: {
+                            Text(.localizable(.generalButtonDone))
+                        }
                     }
                 } else {
                     Button {
@@ -577,6 +585,7 @@ struct ExcalidrawToolbar: View {
     private func moreTools() -> some View {
         Menu {
 #if DEBUG
+#if !os(iOS)
             Button {
                 Task {
                     try? await toolState.excalidrawWebCoordinator?.toggleToolbarAction(tool: .text2Diagram)
@@ -585,10 +594,9 @@ struct ExcalidrawToolbar: View {
                 Text(.localizable(.toolbarText2Diagram))
             }
 #endif
+#endif
             Button {
-                Task {
-                    try? await toolState.excalidrawWebCoordinator?.toggleToolbarAction(tool: .mermaid)
-                }
+                isMermaidInputSheetPresented.toggle()
             } label: {
                 Text(.localizable(.toolbarMermaid))
             }
@@ -617,6 +625,7 @@ struct ExcalidrawToolbar: View {
 #if os(iOS)
         .menuOrder(.fixed)
 #endif
+        .modifier(MermaidInputSheetViewModifier(isPresented: $isMermaidInputSheetPresented))
         .modifier(MathInputSheetViewModifier(isPresented: $isMathInputSheetPresented))
         .modifier(PDFInsertSheetViewModifier(isPresented: $isPDFPickerPresented))
     }
@@ -654,12 +663,12 @@ struct ExcalidrawToolbarToolContainer<Content: View>: View {
                                 self.sizeClass = newSizeClass
                             }
                         }
-                        .onChange(of: layoutState.isInspectorPresented) { _ in
+                        .watch(value: layoutState.isInspectorPresented) { _ in
                             DispatchQueue.main.async {
                                 self.sizeClass = getSizeClass(containerSize.width)
                             }
                         }
-                        .onChange(of: layoutState.isSidebarPresented) { _ in
+                        .watch(value: layoutState.isSidebarPresented) { _ in
                             DispatchQueue.main.async {
                                 self.sizeClass = getSizeClass(containerSize.width)
                             }
@@ -814,6 +823,48 @@ struct ExcalidrawToolbarItemModifer: ViewModifier {
                     .font(.footnote)
             }
             .padding(1)
+    }
+}
+
+private struct CursorModeTrailingButton: View {
+    @Environment(\.alertToast) private var alertToast
+
+    @ObservedObject var coordinator: ExcalidrawCanvasView.Coordinator
+    var onDone: () -> Void
+
+    private var hasSelection: Bool {
+        !coordinator.selectedElementIDs.isEmpty
+    }
+
+    var body: some View {
+        Button(role: hasSelection ? .destructive : nil) {
+            if hasSelection {
+                deleteSelectedElements()
+            } else {
+                onDone()
+            }
+        } label: {
+            if hasSelection {
+                Label(.localizable(.generalButtonDelete), systemSymbol: .trash)
+                    .labelStyle(.iconOnly)
+                    .foregroundStyle(.red)
+            } else {
+                Text(.localizable(.generalButtonDone))
+            }
+        }
+        .contentTransition(.opacity)
+        .animation(.smooth, value: hasSelection)
+    }
+
+    private func deleteSelectedElements() {
+        Task { @MainActor in
+            do {
+                try await coordinator.toggleDeleteAction()
+                coordinator.clearSelectedElementIDs()
+            } catch {
+                alertToast(error)
+            }
+        }
     }
 }
 

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 import PDFKit
 
 
@@ -71,7 +72,7 @@ struct PDFViewerSheet: View {
         .onAppear {
             loadPDF()
         }
-        .onChange(of: pdfData) { newValue in
+        .watch(value: pdfData) { newValue in
             loadPDF(data: newValue)
         }
     }

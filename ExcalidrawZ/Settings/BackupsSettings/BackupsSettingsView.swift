@@ -110,7 +110,7 @@ struct BackupsSettingsView: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .onChange(of: selectedFile) { newValue in
+        .watch(value: selectedFile) { newValue in
             unlockedBackupPreview = nil
             backupPreviewErrorMessage = nil
             isBackupPreviewRecoveryKeySheetPresented = false

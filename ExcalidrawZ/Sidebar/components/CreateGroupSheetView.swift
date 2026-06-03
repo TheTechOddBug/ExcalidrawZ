@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 import CoreData
 
 struct CreateGroupModifier: ViewModifier {
@@ -55,7 +56,7 @@ struct CreateGroupModifier: ViewModifier {
                     createFolderSheetView()
                 }
             }
-            .onChange(of: groups.count) { _ in
+            .watch(value: groups.count) { _ in
                 initialNewGroupName = getNextGroupName()
             }
             .onAppear {

@@ -77,7 +77,7 @@ struct InspectorPresentationModifier: ViewModifier {
         // is the actual frame the user perceives as "the canvas", and bottom-
         // center should be the canvas's bottom-center, not the whole window's.
         .modifier(ExcalidrawLibraryImporter(items: $librariesToImport))
-        .onChange(of: lockedContentState.activeFileLockState) { lockState in
+        .watch(value: lockedContentState.activeFileLockState) { lockState in
             guard lockState == .locked,
                   layoutState.isInspectorPresented else { return }
 

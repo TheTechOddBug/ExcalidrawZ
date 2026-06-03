@@ -159,7 +159,7 @@ struct ShareView: View {
 
                 Color.clear.frame(height: 40)
             }
-            .onChange(of: route) { newValue in
+            .watch(value: route) { newValue in
                 activeRoute = newValue.last
             }
             .navigationDestination(for: Route.self) { route in
@@ -191,7 +191,7 @@ struct ShareView: View {
             .onAppear {
                 resizeSheetWindow(animated: false)
             }
-            .onChange(of: preferredSheetHeight) { _ in
+            .watch(value: preferredSheetHeight) { _ in
                 resizeSheetWindow(animated: true)
             }
             .overlay(alignment: .topLeading) {

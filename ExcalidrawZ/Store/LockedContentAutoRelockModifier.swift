@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ChocofordUI
 
 #if os(macOS)
 import AppKit
@@ -37,7 +38,7 @@ struct LockedContentAutoRelockModifier: ViewModifier {
                 removeActivityMonitor()
                 removeSystemLockObserver()
             }
-            .onChange(of: scenePhase) { newValue in
+            .watch(value: scenePhase) { newValue in
                 handleScenePhaseChange(newValue)
             }
     }
