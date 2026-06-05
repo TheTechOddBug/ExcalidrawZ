@@ -18,6 +18,7 @@ struct AIChatView: View {
     @EnvironmentObject var llmState: LLMStateObject
     @EnvironmentObject var aiChatState: AIChatState
     @Environment(\.alertToast) var alertToast
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
     @ObservedObject var prefs = AIChatPreferences.shared
     
     /// Conversation id lives on `FileState` (chats are scoped to the current
@@ -116,6 +117,14 @@ struct AIChatView: View {
         AIChatAvailability.isAvailable
     }
 
+    private var isCompactIOS: Bool {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact
+#else
+        false
+#endif
+    }
+
     @MainActor
     func activeFileAllowsAIContext() async -> Bool {
         guard let activeFile = fileState.currentActiveFile else { return false }
@@ -152,6 +161,12 @@ struct AIChatView: View {
                     withAnimation(.easeInOut(duration: 0.25)) {
                         hasDismissedWelcome = true
                         isShowingWelcomeManually = false
+                    }
+                    if isCompactIOS,
+                       fileState.currentActiveFile != nil,
+                       !fileState.currentActiveFileIsInTrash {
+                        layoutState.isInspectorPresented = false
+                        layoutState.enterAIChatIsland()
                     }
                 }
                 .transition(.opacity)

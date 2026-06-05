@@ -25,7 +25,6 @@ struct ExcalidrawEditor: View {
     /// lives here rather than at the NavigationSplitView level.
     @EnvironmentObject var layoutState: LayoutState
     @EnvironmentObject private var lockedContentState: LockedContentStateStore
-    @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
 
     let logger = Logger(label: "ExcalidrawEditor")
 
@@ -144,14 +143,7 @@ struct ExcalidrawEditor: View {
         // home content are *not* in this view's frame, so bottom-center here
         // means bottom-center of the actual canvas the user is looking at.
         .overlay(alignment: .bottom) {
-            if layoutState.isAIChatIslandMode,
-               AIChatAvailability.isAvailable,
-               aiChatPreferences.isAIEnabled,
-               !fileState.currentActiveFileIsInTrash {
-                AIChatIslandView(canvasSize: editorContentSize)
-                    .padding(.bottom, 24)
-                    .transition(.scale.combined(with: .opacity))
-            }
+            AIChatIslandOverlay(canvasSize: editorContentSize)
         }
         .animation(.smooth(duration: 0.3), value: layoutState.isAIChatIslandMode)
         .modifier(
@@ -162,7 +154,6 @@ struct ExcalidrawEditor: View {
                 onApplyUnlockedContent: applyUnlockedFileContentToEditor
             )
         )
-        .modifier(InspectorPresentationModifier())
         .allowsHitTesting(interactionEnabled)
         .observeExcalidrawFileStatus(
             for: activeFile,

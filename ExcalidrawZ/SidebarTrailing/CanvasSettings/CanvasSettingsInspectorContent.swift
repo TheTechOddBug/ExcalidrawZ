@@ -12,6 +12,8 @@ import ChocofordUI
 /// Inspector content for canvas-level preferences. Bindings drive `CanvasPreferencesState`
 /// directly — its per-field `didSet` pushes partial updates to the web side.
 struct CanvasSettingsInspectorContent: View {
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
+
     @EnvironmentObject var fileState: FileState
     @EnvironmentObject var layoutState: LayoutState
     @EnvironmentObject var appPreference: AppPreference
@@ -24,6 +26,30 @@ struct CanvasSettingsInspectorContent: View {
     /// state is purely derived from the canvas-vs-global comparison. User toggling the
     /// switch ON sets this to true (sticky until reset / file switch).
     @State private var customizeDrawingSettingsOverride: Bool = false
+
+    private var isCompactIOS: Bool {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact
+#else
+        false
+#endif
+    }
+
+    private var contentSpacing: CGFloat {
+        isCompactIOS ? 20 : 16
+    }
+
+    private var rowSpacing: CGFloat {
+        isCompactIOS ? 10 : 8
+    }
+
+    private var horizontalPadding: CGFloat {
+        isCompactIOS ? 20 : 16
+    }
+
+    private var verticalPadding: CGFloat {
+        isCompactIOS ? 18 : 16
+    }
 
     var body: some View {
 #if os(macOS)
@@ -46,7 +72,7 @@ struct CanvasSettingsInspectorContent: View {
     @ViewBuilder
     private func content() -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: contentSpacing) {
                 canvasBackgroundRow
 
                 Divider()
@@ -65,7 +91,8 @@ struct CanvasSettingsInspectorContent: View {
 
                 drawingPreferencesSection
             }
-            .padding(16)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, verticalPadding)
         }
         .watch(value: fileState.currentActiveFile) { _ in
             // New file → drop the manual override so the toggle reflects the new
@@ -76,7 +103,7 @@ struct CanvasSettingsInspectorContent: View {
 
     @ViewBuilder
     private var canvasBackgroundRow: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: rowSpacing) {
             Text(localizable: .canvasPreferencesCanvasBackgroundTitle)
             ColorButtonGroup(
                 colors: ColorPalette.canvasBackgroundQuickPicks,
@@ -89,30 +116,43 @@ struct CanvasSettingsInspectorContent: View {
 
     @ViewBuilder
     private var selectModeRow: some View {
-        HStack {
-            Text(localizable: .canvasPreferencesSelectOnTitle)
-            Spacer()
-            Picker(
-                String(localizable: .canvasPreferencesSelectOnTitle),
-                selection: $canvasPrefs.boxSelectionMode
-            ) {
-                Text(
-                    localizable: .canvasPreferencesSelectOnOptionWrap
-                ).tag(CanvasPreferencesState.BoxSelectionMode.contain)
-                Text(
-                    localizable: .canvasPreferencesSelectOnOptionOverlap
-                ).tag(CanvasPreferencesState.BoxSelectionMode.overlap)
+        if isCompactIOS {
+            VStack(alignment: .leading, spacing: rowSpacing) {
+                Text(localizable: .canvasPreferencesSelectOnTitle)
+                selectModePicker
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
-            .modernButtonStyle(style: .glass, size: .regular, shape: .capsule)
+        } else {
+            HStack {
+                Text(localizable: .canvasPreferencesSelectOnTitle)
+                Spacer()
+                selectModePicker
+                    .fixedSize()
+            }
         }
     }
 
     @ViewBuilder
+    private var selectModePicker: some View {
+        Picker(
+            String(localizable: .canvasPreferencesSelectOnTitle),
+            selection: $canvasPrefs.boxSelectionMode
+        ) {
+            Text(
+                localizable: .canvasPreferencesSelectOnOptionWrap
+            ).tag(CanvasPreferencesState.BoxSelectionMode.contain)
+            Text(
+                localizable: .canvasPreferencesSelectOnOptionOverlap
+            ).tag(CanvasPreferencesState.BoxSelectionMode.overlap)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .modernButtonStyle(style: .glass, size: .regular, shape: .capsule)
+    }
+
+    @ViewBuilder
     private var shortcutToggles: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: rowSpacing) {
             toggleRow(
                 String(localizable: .canvasPreferencesToolLockTitle),
                 shortcut: "Q",
@@ -148,7 +188,7 @@ struct CanvasSettingsInspectorContent: View {
 
     @ViewBuilder
     private var plainToggles: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: rowSpacing) {
             toggleRow(
                 String(localizable: .canvasPreferencesArrowBindingTitle),
                 shortcut: nil,
@@ -166,7 +206,7 @@ struct CanvasSettingsInspectorContent: View {
 
     @ViewBuilder
     private var drawingPreferencesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: rowSpacing) {
             HStack {
                 Text(localizable: .drawingPreferencesTitle)
                     .font(.headline)
@@ -191,7 +231,7 @@ struct CanvasSettingsInspectorContent: View {
             )
             .disabled(!isCustomizingDrawingSettings)
             .opacity(isCustomizingDrawingSettings ? 1 : 0.55)
-            .padding(.top, 4)
+            .padding(.top, isCompactIOS ? 6 : 4)
         }
     }
 

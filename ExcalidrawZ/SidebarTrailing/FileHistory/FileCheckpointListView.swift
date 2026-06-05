@@ -54,8 +54,6 @@ struct FileHistoryInspectorContent: View {
 }
 
 struct FileCheckpointListView<Checkpoint: FileCheckpointRepresentable>: View {
-    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
-    @Environment(\.containerVerticalSizeClass) private var containerVerticalSizeClass
     @Environment(\.dismiss) private var dismiss
 
     @FetchRequest
@@ -108,15 +106,11 @@ struct FileCheckpointListView<Checkpoint: FileCheckpointRepresentable>: View {
                     FileCheckpointRowView(checkpoint: checkpoint)
                 }
             }
-            .navigationTitle("File history")
+            .navigationTitle(String(localizable: .checkpoints))
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    if containerVerticalSizeClass == .compact {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Label(.localizable(.generalButtonClose), systemSymbol: .chevronDown)
-                        }
+                ToolbarItem(placement: .topBarTrailing) {
+                    ToolbarDoneButton {
+                        dismiss()
                     }
                 }
             }

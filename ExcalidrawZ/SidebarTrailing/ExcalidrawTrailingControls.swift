@@ -15,6 +15,7 @@ struct ExcalidrawTrailingControls: View {
 
     @EnvironmentObject private var layoutState: LayoutState
     @EnvironmentObject private var fileState: FileState
+    @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
 
     private var historyDisabled: Bool {
         fileState.currentActiveFile == nil
@@ -31,6 +32,14 @@ struct ExcalidrawTrailingControls: View {
         true
 #else
         containerHorizontalSizeClass != .compact
+#endif
+    }
+
+    private var isCompactIOS: Bool {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact
+#else
+        false
 #endif
     }
 
@@ -64,6 +73,24 @@ struct ExcalidrawTrailingControls: View {
                 return historyDisabled
             default:
                 return false
+        }
+    }
+
+    private var shouldOpenAIChatAsIsland: Bool {
+        isCompactIOS &&
+        AIChatAvailability.isAvailable &&
+        aiChatPreferences.isAIEnabled &&
+        !fileState.currentActiveFileIsInTrash
+    }
+
+    private func toggleAIChatPresentation() {
+        if layoutState.isAIChatIslandMode {
+            layoutState.isAIChatIslandMode = false
+        } else if shouldOpenAIChatAsIsland {
+            layoutState.isInspectorPresented = false
+            layoutState.enterAIChatIsland()
+        } else {
+            layoutState.toggleInspector(.aiChat)
         }
     }
 
@@ -103,7 +130,8 @@ struct ExcalidrawTrailingControls: View {
                     tab: .aiChat,
                     icon: .sparkles,
                     title: "AI Chat",
-                    isDisabled: isDisabled(tab: .aiChat)
+                    isDisabled: isDisabled(tab: .aiChat),
+                    action: toggleAIChatPresentation
                 )
 
 #if DEBUG
@@ -129,9 +157,13 @@ private struct InspectorTabButton: View {
     let icon: SFSymbol
     let title: String
     var isDisabled: Bool = false
+    var action: (() -> Void)?
 
     private var isActive: Bool {
-        layoutState.isInspectorPresented && layoutState.activeInspectorTab == tab
+        if tab == .aiChat, layoutState.isAIChatIslandMode {
+            return true
+        }
+        return layoutState.isInspectorPresented && layoutState.activeInspectorTab == tab
     }
 
     private var isCompactIOS: Bool {
@@ -157,7 +189,11 @@ private struct InspectorTabButton: View {
     var body: some View {
         Button {
             guard !isDisabled else { return }
-            layoutState.toggleInspector(tab)
+            if let action {
+                action()
+            } else {
+                layoutState.toggleInspector(tab)
+            }
         } label: {
             Label(title, systemSymbol: icon)
                 .font(.system(size: iconSize))

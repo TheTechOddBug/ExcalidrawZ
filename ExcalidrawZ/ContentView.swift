@@ -18,6 +18,7 @@ import LLMKit
 
 struct ContentView: View {
     @Environment(\.managedObjectContext) var viewContext
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @EnvironmentObject var appPreference: AppPreference
     /// Pulled from the app-level environment (see `ExcalidrawZApp`).
     /// Both are needed here because we trigger conversation
@@ -126,7 +127,13 @@ struct ContentView: View {
     @ViewBuilder
     private func content() -> some View {
         ZStack {
-            contentView()
+            if horizontalSizeClass == .regular {
+                contentView()
+                    .modifier(InspectorPresentationModifier())
+            } else {
+                // Compact uses TabView, can not use library here.
+                contentView()
+            }
         }
     }
     

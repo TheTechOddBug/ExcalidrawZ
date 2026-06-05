@@ -8,6 +8,7 @@ import ChocofordUI
 import SFSafeSymbols
 
 struct AIEnableConsentSheet: View {
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
     @Environment(\.dismiss) private var dismiss
 
     var onEnable: () -> Void
@@ -15,46 +16,22 @@ struct AIEnableConsentSheet: View {
     @State private var hasAcceptedTerms = false
 
     var body: some View {
+        ZStack {
+            if isCompactIOS {
+                compactBody
+            } else {
+                regularBody
+            }
+        }
+#if os(macOS)
+        .frame(width: 640)
+#endif
+    }
+
+    private var regularBody: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 22) {
-                header
-                
-                VStack(spacing: 14) {
-                    consentRow(
-                        icon: .cloud,
-                        title: String(localizable: .aiChatEnableConsentCloudTitle),
-                        message: String(localizable: .aiChatEnableConsentCloudMessage)
-                    )
-                    
-                    consentRow(
-                        icon: .docTextMagnifyingglass,
-                        title: String(localizable: .aiChatEnableConsentDataTitle),
-                        message: String(localizable: .aiChatEnableConsentDataMessage)
-                    )
-                    
-                    consentRow(
-                        icon: .lock,
-                        title: String(localizable: .aiChatEnableConsentSensitiveTitle),
-                        message: String(localizable: .aiChatEnableConsentSensitiveMessage)
-                    )
-                    
-                    consentRow(
-                        icon: .gearshape,
-                        title: String(localizable: .aiChatEnableConsentProviderTitle),
-                        message: String(localizable: .aiChatEnableConsentProviderMessage)
-                    )
-                }
-                
-                policyLinks
-                
-                Toggle(isOn: $hasAcceptedTerms) {
-                    Text(localizable: .aiChatEnableConsentAgreement)
-                        .font(.callout.weight(.medium))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-#if os(macOS)
-                .toggleStyle(.checkbox)
-#endif
+                content
             }
             .padding(24)
 
@@ -67,14 +44,83 @@ struct AIEnableConsentSheet: View {
             .padding(.top, 10)
             .padding(.bottom, 22)
         }
-#if os(macOS)
-        .frame(width: 640)
+    }
+
+    private var compactBody: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: contentSpacing) {
+                    content
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, horizontalPadding)
+                .padding(.top, topPadding)
+                .padding(.bottom, 12)
+
+                Spacer(minLength: 18)
+
+                enableButtonRow
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, bottomPadding)
+            }
+        }
+    }
+
+    private var isCompactIOS: Bool {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact
+#else
+        false
 #endif
+    }
+
+    private var contentSpacing: CGFloat {
+        isCompactIOS ? 16 : 22
+    }
+
+    private var rowSpacing: CGFloat {
+        isCompactIOS ? 10 : 14
+    }
+
+    private var horizontalPadding: CGFloat {
+        isCompactIOS ? 20 : 24
+    }
+
+    private var topPadding: CGFloat {
+        isCompactIOS ? 18 : 24
+    }
+
+    private var bottomPadding: CGFloat {
+        isCompactIOS ? 20 : 22
+    }
+
+    private var identityIconSize: CGFloat {
+        isCompactIOS ? 42 : 48
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        header
+
+        consentList
+
+        policyLinks
+
+        agreementToggle
+    }
+
+    private var cancelButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Text(localizable: .generalButtonCancel)
+        }
+        .keyboardShortcut(.cancelAction)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            AIIdentityIcon(size: 48)
+            AIIdentityIcon(size: identityIconSize)
                 .padding(.bottom, 2)
 
             Text(localizable: .aiChatEnableConfirmationTitle)
@@ -84,6 +130,102 @@ struct AIEnableConsentSheet: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var consentList: some View {
+        VStack(alignment: .leading, spacing: rowSpacing) {
+            consentRow(
+                icon: .cloud,
+                title: String(localizable: .aiChatEnableConsentCloudTitle),
+                message: String(localizable: .aiChatEnableConsentCloudMessage)
+            )
+
+            consentRow(
+                icon: .docTextMagnifyingglass,
+                title: String(localizable: .aiChatEnableConsentDataTitle),
+                message: String(localizable: .aiChatEnableConsentDataMessage)
+            )
+
+            consentRow(
+                icon: .lock,
+                title: String(localizable: .aiChatEnableConsentSensitiveTitle),
+                message: String(localizable: .aiChatEnableConsentSensitiveMessage)
+            )
+
+            consentRow(
+                icon: .gearshape,
+                title: String(localizable: .aiChatEnableConsentProviderTitle),
+                message: String(localizable: .aiChatEnableConsentProviderMessage)
+            )
+        }
+    }
+
+    private var agreementToggle: some View {
+        Toggle(isOn: $hasAcceptedTerms) {
+            Text(localizable: .aiChatEnableConsentAgreement)
+                .font(.callout.weight(.medium))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+#if os(macOS)
+        .toggleStyle(.checkbox)
+#endif
+    }
+
+    private var enableButtonRow: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Spacer(minLength: 0)
+
+                enableButton
+            }
+
+            cancelButton
+        }
+    }
+
+    private var enableButton: some View {
+        Button {
+            dismiss()
+            onEnable()
+        } label: {
+            Text(localizable: .aiChatEnableConfirmationButtonEnable)
+                .frame(maxWidth: isCompactIOS ? .infinity : nil)
+        }
+        .keyboardShortcut(.defaultAction)
+        .modernButtonStyle(style: .glassProminent, size: .large, shape: .capsule)
+        .frame(maxWidth: isCompactIOS ? .infinity : nil)
+        .disabled(!hasAcceptedTerms)
+    }
+
+    @ViewBuilder
+    private var footerButtons: some View {
+        if #available(macOS 26.0, iOS 26.0, *) {
+            GlassEffectContainer(spacing: 10) {
+                footerButtonContent
+            }
+        } else {
+            footerButtonContent
+        }
+    }
+
+    private var footerButtonContent: some View {
+        HStack(spacing: 10) {
+            Button(.localizable(.generalButtonCancel)) {
+                dismiss()
+            }
+            .keyboardShortcut(.cancelAction)
+            .modernButtonStyle(style: .glass, size: .large, shape: .capsule)
+
+            Button {
+                dismiss()
+                onEnable()
+            } label: {
+                Text(localizable: .aiChatEnableConfirmationButtonEnable)
+            }
+            .keyboardShortcut(.defaultAction)
+            .modernButtonStyle(style: .glassProminent, size: .large, shape: .capsule)
+            .disabled(!hasAcceptedTerms)
         }
     }
 
@@ -126,36 +268,6 @@ struct AIEnableConsentSheet: View {
         .font(.callout.weight(.semibold))
     }
 
-    @ViewBuilder
-    private var footerButtons: some View {
-        if #available(macOS 26.0, iOS 26.0, *) {
-            GlassEffectContainer(spacing: 10) {
-                footerButtonContent
-            }
-        } else {
-            footerButtonContent
-        }
-    }
-
-    private var footerButtonContent: some View {
-        HStack(spacing: 10) {
-            Button(.localizable(.generalButtonCancel)) {
-                dismiss()
-            }
-            .keyboardShortcut(.cancelAction)
-            .modernButtonStyle(style: .glass, size: .large, shape: .capsule)
-
-            Button {
-                dismiss()
-                onEnable()
-            } label: {
-                Text(localizable: .aiChatEnableConfirmationButtonEnable)
-            }
-            .keyboardShortcut(.defaultAction)
-            .modernButtonStyle(style: .glassProminent, size: .large, shape: .capsule)
-            .disabled(!hasAcceptedTerms)
-        }
-    }
 }
 
 #Preview {

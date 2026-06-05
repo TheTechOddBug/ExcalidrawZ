@@ -8,10 +8,13 @@
 import SwiftUI
 
 import ChocofordUI
+import SFSafeSymbols
 
 /// Inspector content that bridges to Excalidraw's global search.
 /// Plan B: each query also paints highlights on the canvas via `highlightOnCanvas: true`.
 struct SearchInspectorContent: View {
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
+
     @EnvironmentObject var fileState: FileState
     @EnvironmentObject var layoutState: LayoutState
     @EnvironmentObject var appPreference: AppPreference
@@ -23,6 +26,54 @@ struct SearchInspectorContent: View {
     @State private var caseSensitive: Bool = true
 
     private let debounceNanoseconds: UInt64 = 200_000_000  // 0.2s
+
+    private var isCompactIOS: Bool {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact
+#else
+        false
+#endif
+    }
+
+    private var contentSpacing: CGFloat {
+        isCompactIOS ? 16 : 12
+    }
+
+    private var horizontalPadding: CGFloat {
+        isCompactIOS ? 20 : 16
+    }
+
+    private var verticalPadding: CGFloat {
+        isCompactIOS ? 14 : 16
+    }
+
+    private var searchFieldVerticalPadding: CGFloat {
+        isCompactIOS ? 10 : 8
+    }
+
+    private var navigationSpacing: CGFloat {
+        isCompactIOS ? 10 : 6
+    }
+
+    private var caseToggleSize: CGSize {
+        isCompactIOS ? CGSize(width: 32, height: 24) : CGSize(width: 22, height: 18)
+    }
+
+    private var caseToggleCornerRadius: CGFloat {
+        isCompactIOS ? 12 : 4
+    }
+
+    private var resultRowHorizontalPadding: CGFloat {
+        isCompactIOS ? 10 : 8
+    }
+
+    private var resultRowVerticalPadding: CGFloat {
+        isCompactIOS ? 8 : 6
+    }
+
+    private var resultRowCornerRadius: CGFloat {
+        isCompactIOS ? 8 : 6
+    }
 
     var body: some View {
 #if os(macOS)
@@ -44,12 +95,13 @@ struct SearchInspectorContent: View {
 
     @ViewBuilder
     private func content() -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: contentSpacing) {
             searchField
             navigationRow
             resultsList
         }
-        .padding(16)
+        .padding(.horizontal, horizontalPadding)
+        .padding(.vertical, verticalPadding)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .watch(value: query) { newValue in
             scheduleSearch(for: newValue)
@@ -83,7 +135,7 @@ struct SearchInspectorContent: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.vertical, searchFieldVerticalPadding)
         .background {
             Capsule()
                 .fill(.regularMaterial)
@@ -94,7 +146,7 @@ struct SearchInspectorContent: View {
 
     @ViewBuilder
     private var navigationRow: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: navigationSpacing) {
             caseSensitiveToggle
 
             Spacer()
@@ -107,8 +159,7 @@ struct SearchInspectorContent: View {
             Button {
                 goToPrevious()
             } label: {
-                Image(systemSymbol: .chevronLeft)
-                    .contentShape(Rectangle())
+                navigationButtonIcon(.chevronLeft)
             }
             .buttonStyle(.plain)
             .disabled(results.isEmpty)
@@ -116,8 +167,7 @@ struct SearchInspectorContent: View {
             Button {
                 goToNext()
             } label: {
-                Image(systemSymbol: .chevronRight)
-                    .contentShape(Rectangle())
+                navigationButtonIcon(.chevronRight)
             }
             .buttonStyle(.plain)
             .disabled(results.isEmpty)
@@ -128,6 +178,8 @@ struct SearchInspectorContent: View {
 
     @ViewBuilder
     private var caseSensitiveToggle: some View {
+        let shape = RoundedRectangle(cornerRadius: caseToggleCornerRadius)
+
         Button {
             caseSensitive.toggle()
             if !query.isEmpty {
@@ -136,13 +188,13 @@ struct SearchInspectorContent: View {
         } label: {
             Text("Aa")
                 .font(.system(size: 11, weight: .semibold))
-                .frame(width: 22, height: 18)
+                .frame(width: caseToggleSize.width, height: caseToggleSize.height)
                 .background(
-                    RoundedRectangle(cornerRadius: 4)
+                    shape
                         .fill(caseSensitive ? Color.accentColor.opacity(0.2) : Color.clear)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 4)
+                    shape
                         .strokeBorder(
                             caseSensitive ? Color.accentColor.opacity(0.6) : Color.secondary.opacity(0.3),
                             lineWidth: 0.5
@@ -157,6 +209,19 @@ struct SearchInspectorContent: View {
             ? String(localizable: .canvasSearchCaseSensitiveOn)
             : String(localizable: .canvasSearchCaseSensitiveOff)
         )
+    }
+
+    @ViewBuilder
+    private func navigationButtonIcon(_ symbol: SFSymbol) -> some View {
+        if isCompactIOS {
+            Image(systemSymbol: symbol)
+                .font(.caption.weight(.semibold))
+                .frame(width: 28, height: 28)
+                .contentShape(Circle())
+        } else {
+            Image(systemSymbol: symbol)
+                .contentShape(Rectangle())
+        }
     }
 
     private var navigationLabel: String {
@@ -225,15 +290,15 @@ struct SearchInspectorContent: View {
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .contentShape(RoundedRectangle(cornerRadius: 6))
+            .padding(.horizontal, resultRowHorizontalPadding)
+            .padding(.vertical, resultRowVerticalPadding)
+            .contentShape(RoundedRectangle(cornerRadius: resultRowCornerRadius))
             .background(
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: resultRowCornerRadius)
                     .fill(isSelected ? Color.accentColor.opacity(0.18) : Color.secondary.opacity(0.08))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: resultRowCornerRadius)
                     .strokeBorder(isSelected ? Color.accentColor.opacity(0.6) : .clear, lineWidth: 1)
             )
         }

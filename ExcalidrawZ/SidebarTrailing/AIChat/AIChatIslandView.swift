@@ -15,6 +15,8 @@ import SFSafeSymbols
 import ChocofordUI
 
 struct AIChatIslandView: View {
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
+
     @EnvironmentObject private var layoutState: LayoutState
     @EnvironmentObject private var fileState: FileState
     @EnvironmentObject private var llmState: LLMStateObject
@@ -78,7 +80,6 @@ struct AIChatIslandView: View {
     /// frame for messages that carry a non-final-answer tool call.
     private let toolCallSwitchDelay: Duration = .seconds(1)
 
-    private let islandWidth: CGFloat = 420
     private let previewMaxHeight: CGFloat = 200
     /// How close to the editor edge the island is allowed to settle after a
     /// clamp — small breathing room so it doesn't visually kiss the border.
@@ -90,6 +91,21 @@ struct AIChatIslandView: View {
     /// How long after a drag release we wait before snapping back.
     private let snapBackDelay: Duration = .seconds(1)
     private let lowCreditsBannerThreshold: Double = 50
+
+    private var layoutConfiguration: AIChatIslandLayoutConfiguration {
+        .current(
+            containerHorizontalSizeClass: containerHorizontalSizeClass,
+            canvasWidth: canvasSize.width
+        )
+    }
+
+    private var islandWidth: CGFloat {
+        layoutConfiguration.width
+    }
+
+    private var isDraggable: Bool {
+        layoutConfiguration.isDraggable
+    }
 
     /// Bridges the `FileState`-owned conversation id to `PromptInputView`'s
     /// `Binding<String?>` API. `PromptInputView` mutates this when it creates
@@ -245,13 +261,14 @@ struct AIChatIslandView: View {
         ))
         .readHeight($measuredHeight)
         .offset(
-            x: layoutState.aiChatIslandOffset.width + dragDelta.width,
-            y: layoutState.aiChatIslandOffset.height + dragDelta.height
+            x: isDraggable ? layoutState.aiChatIslandOffset.width + dragDelta.width : 0,
+            y: isDraggable ? layoutState.aiChatIslandOffset.height + dragDelta.height : 0
         )
         // Window resize / split changes shrink `canvasSize` and may strand
         // the island outside the new bounds. Clamp immediately (no 1 s
         // delay) — there's no drag in flight to wait for.
         .onChange(of: canvasSize, debounce: 1) { _ in
+            guard isDraggable else { return }
             snapBackTask?.cancel()
             snapBackIfOutOfBounds()
         }
@@ -361,7 +378,7 @@ struct AIChatIslandView: View {
                 .background {
                     islandBackground(shape: Capsule())
                         .contentShape(Rectangle())
-                        .gesture(dragGesture)
+                        .aiChatIslandDragGesture(dragGesture, isEnabled: isDraggable)
                 }
                 .frame(height: 36, alignment: .bottom)
             }
@@ -402,7 +419,7 @@ struct AIChatIslandView: View {
             )
             .disabled(fileState.isAIChatConversationLoading || fileState.currentActiveFileIsInTrash)
         }
-        .padding(16)
+        .padding(layoutConfiguration.contentPadding)
         // Drive on the gate result (`pendingApprovalRequest != nil`
         // AND the matching tool-call card revealed) — same reasoning
         // as `AIChatView`. A bare `pendingApprovalRequest?.id` value
@@ -418,14 +435,18 @@ struct AIChatIslandView: View {
         .frame(width: islandWidth)
         .background {
             islandBackground(
-                shape: RoundedRectangle(cornerRadius: 24),
-                fallbackShape: RoundedRectangle(cornerRadius: 16)
+                shape: RoundedRectangle(cornerRadius: layoutConfiguration.cornerRadius),
+                fallbackShape: RoundedRectangle(cornerRadius: layoutConfiguration.fallbackCornerRadius)
             )
             .contentShape(Rectangle())
-            .simultaneousGesture(dragGesture)
+            .aiChatIslandDragGesture(
+                dragGesture,
+                isEnabled: isDraggable,
+                simultaneous: true
+            )
         }
         .overlay(
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: layoutConfiguration.cornerRadius)
                 .stroke(.separator, lineWidth: 0.5)
         )
     }
@@ -639,6 +660,59 @@ struct AIChatIslandView: View {
         } else {
             fallbackShape
                 .fill(.regularMaterial)
+        }
+    }
+}
+
+private struct AIChatIslandLayoutConfiguration {
+    let width: CGFloat
+    let contentPadding: CGFloat
+    let cornerRadius: CGFloat
+    let fallbackCornerRadius: CGFloat
+    let isDraggable: Bool
+
+    static func current(
+        containerHorizontalSizeClass: UserInterfaceSizeClass?,
+        canvasWidth: CGFloat
+    ) -> AIChatIslandLayoutConfiguration {
+#if os(iOS)
+        if containerHorizontalSizeClass == .compact {
+            let availableWidth = canvasWidth > 0 ? canvasWidth - 32 : 360
+            return AIChatIslandLayoutConfiguration(
+                width: max(260, min(420, availableWidth)),
+                contentPadding: 12,
+                cornerRadius: 22,
+                fallbackCornerRadius: 16,
+                isDraggable: false
+            )
+        }
+#endif
+
+        return AIChatIslandLayoutConfiguration(
+            width: 420,
+            contentPadding: 16,
+            cornerRadius: 24,
+            fallbackCornerRadius: 16,
+            isDraggable: true
+        )
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func aiChatIslandDragGesture<G: Gesture>(
+        _ gesture: G,
+        isEnabled: Bool,
+        simultaneous: Bool = false
+    ) -> some View {
+        if isEnabled {
+            if simultaneous {
+                self.simultaneousGesture(gesture)
+            } else {
+                self.gesture(gesture)
+            }
+        } else {
+            self
         }
     }
 }

@@ -52,6 +52,14 @@ struct InspectorPresentationModifier: ViewModifier {
         !fileState.activeCollaborationFileIsLoading
     }
 
+    private var isCompactIOS: Bool {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact
+#else
+        false
+#endif
+    }
+
     func body(content: Content) -> some View {
         ZStack {
             if shouldUseFloatingInspector {
@@ -59,8 +67,7 @@ struct InspectorPresentationModifier: ViewModifier {
             } else if containerHorizontalSizeClass == .compact {
                 content
                     .sheet(isPresented: $layoutState.isInspectorPresented) {
-                        inspectorContent()
-                            .disabled(shouldDisableInspectorContent)
+                        compactInspectorContent()
                     }
             } else if #available(macOS 14.0, iOS 17.0, *) {
                 content
@@ -112,6 +119,30 @@ struct InspectorPresentationModifier: ViewModifier {
             case .debug:
                 DebugPanelView()
 #endif
+        }
+    }
+
+    @ViewBuilder
+    private func compactInspectorContent() -> some View {
+        if isCompactIOS {
+            switch layoutState.activeInspectorTab {
+                case .preference, .search:
+                    CompactInspectorNavigationSheet(
+                        title: inspectorTitle,
+                        onDismiss: {
+                            layoutState.isInspectorPresented = false
+                        }
+                    ) {
+                        inspectorContent()
+                            .disabled(shouldDisableInspectorContent)
+                    }
+                default:
+                    inspectorContent()
+                        .disabled(shouldDisableInspectorContent)
+            }
+        } else {
+            inspectorContent()
+                .disabled(shouldDisableInspectorContent)
         }
     }
 
@@ -187,6 +218,42 @@ struct InspectorPresentationModifier: ViewModifier {
             }
         }
         .animation(.easeOut, value: shouldShowInspectorPresentation)
+    }
+}
+
+private struct CompactInspectorNavigationSheet<Content: View>: View {
+    let title: String
+    let onDismiss: () -> Void
+    private let content: Content
+
+    init(
+        title: String,
+        onDismiss: @escaping () -> Void,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.title = title
+        self.onDismiss = onDismiss
+        self.content = content()
+    }
+
+    var body: some View {
+        NavigationStack {
+            content
+                .navigationTitle(title)
+#if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+#endif
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(action: onDismiss) {
+                            Label(.localizable(.generalButtonDone), systemSymbol: .checkmark)
+                                .labelStyle(.iconOnly)
+                        }
+                        .accessibilityLabel(Text(localizable: .generalButtonDone))
+                    }
+                }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }
 
