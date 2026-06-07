@@ -11,9 +11,9 @@ import ChocofordUI
 import SFSafeSymbols
 
 extension PromptInputView {
-    private var iOSIslandCircleControlLength: CGFloat { 40 }
+    private var iOSIslandCircleControlLength: CGFloat { 44 }
     private var iOSIslandInlineControlLength: CGFloat { 34 }
-    private var iOSIslandPrimaryActionLength: CGFloat { 36 }
+    private var iOSIslandPrimaryActionLength: CGFloat { 40 }
     private var iOSIslandPrimaryActionIconLength: CGFloat { 16 }
     private var iOSIslandExpandedInputMinHeight: CGFloat { 44 }
     private var iOSIslandInputMaxHeight: CGFloat { 168 }
@@ -46,52 +46,12 @@ extension PromptInputView {
     }
 
     var iOSIslandInputIsExpanded: Bool {
-        let hasWrappedText = draftHasContent && iOSIslandDraftFieldHeight > 48
+        let hasWrappedText = draftHasContent &&
+            (!iOSIslandTextAreaIsSingleLine || iOSIslandDraftFieldHeight > 48)
 
         return draftHasImages
             || promptDraftState.text.contains("\n")
             || hasWrappedText
-    }
-
-    @ViewBuilder
-    var iOSToolbarTextInputContent: some View {
-        let isExpanded = iOSIslandInputIsExpanded
-
-        iOSToolbarTextInputSurface(isExpanded: isExpanded)
-        .frame(alignment: .bottom)
-        .animation(.smooth(duration: 0.2), value: isExpanded)
-    }
-
-    @ViewBuilder
-    private func iOSToolbarTextInputSurface(isExpanded: Bool) -> some View {
-        PromptDraftInputField(
-            draftKey: promptDraftKey,
-            draftState: promptDraftState,
-            showsAttachments: true,
-            sendRequestToken: draftSendRequestToken,
-            focus: $isInputFocused,
-            onSubmit: { text, images in
-                submitDraft(prompt: text, pastedImages: images)
-            },
-            onPaste: handlePastedItem,
-            onSummaryChange: { hasContent, hasImages in
-                updateDraftSummary(hasContent: hasContent, hasImages: hasImages)
-            }
-        )
-        .id(ObjectIdentifier(promptDraftState))
-        .readHeight($iOSIslandDraftFieldHeight)
-        .padding(.leading, 2)
-        .padding(.trailing, 42)
-        .padding(.vertical, isExpanded ? 6 : 0)
-        .frame(
-            minHeight: isExpanded ? iOSIslandExpandedInputMinHeight : iOSIslandCircleControlLength,
-            maxHeight: isExpanded ? iOSIslandInputMaxHeight : iOSIslandCircleControlLength,
-            alignment: isExpanded ? .bottom : .center
-        )
-        .overlay(alignment: isExpanded ? .bottomTrailing : .trailing) {
-            iOSToolbarPrimaryActionButton
-                .padding(.trailing, 0)
-        }
     }
 
     @ViewBuilder
@@ -101,6 +61,10 @@ extension PromptInputView {
             draftState: promptDraftState,
             showsAttachments: true,
             sendRequestToken: draftSendRequestToken,
+            maxTextAreaHeight: iOSIslandTextAreaMaxHeight(isExpanded: isExpanded),
+            onTextAreaSingleLineChanged: { isSingleLine in
+                iOSIslandTextAreaIsSingleLine = isSingleLine
+            },
             focus: $isInputFocused,
             onSubmit: { text, images in
                 submitDraft(prompt: text, pastedImages: images)
@@ -125,16 +89,17 @@ extension PromptInputView {
             iOSIslandTextInputBackground(isExpanded: isExpanded)
         }
         .clipShape(iOSIslandTextInputShape(isExpanded: isExpanded))
-        .overlay {
-            iOSIslandTextInputShape(isExpanded: isExpanded)
-                .stroke(.separator.opacity(0.55), lineWidth: 0.7)
-        }
         .overlay(alignment: isExpanded ? .bottomTrailing : .trailing) {
             iOSIslandPrimaryActionButton
                 .padding(.trailing, 2)
                 .padding(.bottom, isExpanded ? 2 : 0)
         }
         .contentShape(iOSIslandTextInputShape(isExpanded: isExpanded))
+    }
+
+    private func iOSIslandTextAreaMaxHeight(isExpanded: Bool) -> CGFloat {
+        let verticalPadding: CGFloat = isExpanded ? 16 : 4
+        return (isExpanded ? iOSIslandInputMaxHeight : iOSIslandCircleControlLength) - verticalPadding
     }
 
     @ViewBuilder
@@ -238,45 +203,6 @@ extension PromptInputView {
     }
 
     @ViewBuilder
-    var iOSToolbarPrimaryActionButton: some View {
-        Button {
-            if primaryActionIsStop {
-                cancelCurrentGeneration()
-            } else {
-                draftSendRequestToken += 1
-            }
-        } label: {
-            if #available(iOS 17.0, *) {
-                Image(systemSymbol: primaryActionIsStop ? .stopFill : .arrowUp)
-                    .font(.system(size: 14, weight: .semibold))
-                    .frame(width: 28, height: 28)
-                    .contentTransition(.symbolEffect(.replace))
-            } else {
-                Image(systemSymbol: primaryActionIsStop ? .stopFill : .arrowUp)
-                    .font(.system(size: 14, weight: .semibold))
-                    .frame(width: 28, height: 28)
-            }
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(
-            primaryActionIsStop || hasInputText
-            ? AnyShapeStyle(Color.white)
-            : AnyShapeStyle(Color.secondary)
-        )
-        .background {
-            Circle()
-                .fill(
-                    primaryActionIsStop || hasInputText
-                    ? AnyShapeStyle(Color.accentColor)
-                    : AnyShapeStyle(.regularMaterial)
-                )
-        }
-        .clipShape(Circle())
-        .contentShape(Circle())
-        .disabled(!primaryActionIsStop && !hasInputText)
-    }
-
-    @ViewBuilder
     var iOSIslandFileAccessButton: some View {
         Button {
             toggleAIFileAccess()
@@ -339,10 +265,6 @@ extension PromptInputView {
             )
             .background {
                 iOSIslandCircleBackground
-            }
-            .overlay {
-                Circle()
-                    .stroke(.separator.opacity(0.55), lineWidth: 0.7)
             }
             .clipShape(Circle())
             .contentShape(Circle())

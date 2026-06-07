@@ -78,6 +78,8 @@ extension PromptInputView {
             draftState: promptDraftState,
             showsAttachments: false,
             sendRequestToken: draftSendRequestToken,
+            maxTextAreaHeight: nil,
+            onTextAreaSingleLineChanged: nil,
             focus: $isInputFocused,
             onSubmit: { text, images in
                 submitDraft(prompt: text, pastedImages: images)
@@ -104,6 +106,8 @@ extension PromptInputView {
                 draftState: promptDraftState,
                 showsAttachments: true,
                 sendRequestToken: draftSendRequestToken,
+                maxTextAreaHeight: nil,
+                onTextAreaSingleLineChanged: nil,
                 focus: $isInputFocused,
                 onSubmit: { text, images in
                     submitDraft(prompt: text, pastedImages: images)
@@ -185,6 +189,8 @@ struct PromptDraftInputField: View {
 
     let showsAttachments: Bool
     let sendRequestToken: Int
+    let maxTextAreaHeight: CGFloat?
+    let onTextAreaSingleLineChanged: ((Bool) -> Void)?
     let focus: FocusState<Bool>.Binding
     let onSubmit: (String, [PendingPastedImage]) -> Bool
     let onPaste: (TextAreaPasteItem) -> PromptImagePasteResult
@@ -214,6 +220,8 @@ struct PromptDraftInputField: View {
 
             PromptDraftTextArea(
                 text: textBinding,
+                maxHeight: maxTextAreaHeight,
+                onSingleLineChanged: onTextAreaSingleLineChanged,
                 focus: focus,
                 onSubmit: submit,
                 onPaste: handlePaste
@@ -320,14 +328,22 @@ struct PromptDraftInputField: View {
     }
 }
 
+@MainActor
 private struct PromptDraftTextArea: View {
     let text: Binding<String>
+    let maxHeight: CGFloat?
+    let onSingleLineChanged: ((Bool) -> Void)?
     let focus: FocusState<Bool>.Binding
     let onSubmit: () -> Void
     let onPaste: (TextAreaPasteItem) -> TextAreaInsertion?
 
     var body: some View {
-        TextArea(
+        configuredTextArea
+            .focused(focus)
+    }
+
+    private var configuredTextArea: TextArea {
+        var textArea = TextArea(
             text: text,
             placeholder: Text(localizable: .aiChatInputPlaceholder)
         )
@@ -335,7 +351,14 @@ private struct PromptDraftTextArea: View {
             onPaste(item)
         }
         .promptInputSubmitOnReturn(onSubmit)
-        .focused(focus)
+
+        if let maxHeight {
+            textArea = textArea.maxHeight(maxHeight)
+        }
+        if let onSingleLineChanged {
+            textArea = textArea.onSingleLineChanged(onSingleLineChanged)
+        }
+        return textArea
     }
 }
 

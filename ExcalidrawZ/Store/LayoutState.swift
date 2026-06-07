@@ -66,13 +66,18 @@ final class LayoutState: ObservableObject {
     /// island even though it reuses the compact input styling.
     @Published var isCompactAIChatToolbarPresented: Bool = false {
         didSet {
-            guard isCompactAIChatToolbarPresented else { return }
+            guard isCompactAIChatToolbarPresented else {
+                isCompactAIChatInputEditing = false
+                return
+            }
             if isInspectorPresented && activeInspectorTab == .aiChat {
                 isInspectorPresented = false
             }
             isAIChatIslandMode = false
         }
     }
+
+    @Published var isCompactAIChatInputEditing: Bool = false
 
     /// Persistent drag offset of the island (relative to its default top-right
     /// anchor). Lives here — not in the island view's @State — so the position
@@ -82,6 +87,7 @@ final class LayoutState: ObservableObject {
     /// Open the island; close the inspector if it was showing aiChat.
     func enterAIChatIsland() {
         isCompactAIChatToolbarPresented = false
+        isCompactAIChatInputEditing = false
         if isInspectorPresented && activeInspectorTab == .aiChat {
             isInspectorPresented = false
         }
@@ -92,6 +98,7 @@ final class LayoutState: ObservableObject {
     func exitAIChatIsland() {
         isAIChatIslandMode = false
         isCompactAIChatToolbarPresented = false
+        isCompactAIChatInputEditing = false
         activeInspectorTab = .aiChat
         isInspectorPresented = true
     }
@@ -103,12 +110,29 @@ final class LayoutState: ObservableObject {
             }
             isAIChatIslandMode = false
             isCompactAIChatToolbarPresented = true
+            isCompactAIChatInputEditing = false
+        }
+    }
+
+    func enterCompactAIChatInputEditing() {
+        withAnimation(.smooth) {
+            if !isCompactAIChatToolbarPresented {
+                enterCompactAIChatToolbar()
+            }
+            isCompactAIChatInputEditing = true
+        }
+    }
+
+    func exitCompactAIChatInputEditing() {
+        withAnimation(.smooth) {
+            isCompactAIChatInputEditing = false
         }
     }
 
     func exitCompactAIChatToolbar() {
         withAnimation(.smooth) {
             isCompactAIChatToolbarPresented = false
+            isCompactAIChatInputEditing = false
         }
     }
 
@@ -144,6 +168,7 @@ final class LayoutState: ObservableObject {
         if isInspectorPresented, activeInspectorTab == .aiChat {
             isAIChatIslandMode = false
             isCompactAIChatToolbarPresented = false
+            isCompactAIChatInputEditing = false
         }
     }
 }

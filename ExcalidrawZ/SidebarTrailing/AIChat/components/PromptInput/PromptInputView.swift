@@ -181,17 +181,20 @@ struct PromptInputView<Background: View, Header: View>: View {
     /// finishes, and clears here on stop.
     @Binding var pendingQueue: [PendingQueueMessage]
     let style: PromptInputStyle<Background>
+    let focusOnAppear: Bool
     let header: Header
 
     init(
         conversationID: Binding<String?>,
         pendingQueue: Binding<[PendingQueueMessage]>,
         style: PromptInputStyle<Background>,
+        focusOnAppear: Bool = false,
         @ViewBuilder header: () -> Header
     ) {
         self._conversationID = conversationID
         self._pendingQueue = pendingQueue
         self.style = style
+        self.focusOnAppear = focusOnAppear
         self.header = header()
     }
 
@@ -222,6 +225,7 @@ struct PromptInputView<Background: View, Header: View>: View {
     @State var draftHasImages: Bool = false
     @State var draftSendRequestToken: Int = 0
     @State var iOSIslandDraftFieldHeight: CGFloat = 0
+    @State var iOSIslandTextAreaIsSingleLine: Bool = true
 #if DEBUG
     @State var debugContextText: String = ""
     @State var debugContextError: String = ""
@@ -455,19 +459,17 @@ struct PromptInputView<Background: View, Header: View>: View {
 #endif
     }
 
-    var usesCompactIOSToolbarText: Bool {
-#if os(iOS)
-        style.surface == .compactIOSToolbarText
-#else
-        false
-#endif
-    }
-
     var body: some View {
         let _ = AIChatRenderDebug.hit("PromptInputView.body")
 
         bodyContent
         .task {
+            if focusOnAppear {
+                await Task.yield()
+                await MainActor.run {
+                    isInputFocused = true
+                }
+            }
             await loadAgentConfigIfNeeded()
         }
         .watch(value: prefs.isAIEnabled) { isEnabled in
@@ -484,9 +486,7 @@ struct PromptInputView<Background: View, Header: View>: View {
     @ViewBuilder
     private var bodyContent: some View {
 #if os(iOS)
-        if usesCompactIOSToolbarText {
-            iOSToolbarTextInputContent
-        } else if usesCompactIOSIslandInput {
+        if usesCompactIOSIslandInput {
             iOSIslandInputContent
         } else {
             regularBodyContent
@@ -571,12 +571,14 @@ extension PromptInputView where Header == EmptyView {
     init(
         conversationID: Binding<String?>,
         pendingQueue: Binding<[PendingQueueMessage]>,
-        style: PromptInputStyle<Background>
+        style: PromptInputStyle<Background>,
+        focusOnAppear: Bool = false
     ) {
         self.init(
             conversationID: conversationID,
             pendingQueue: pendingQueue,
             style: style,
+            focusOnAppear: focusOnAppear,
             header: { EmptyView() }
         )
     }
@@ -610,6 +612,7 @@ extension PromptInputView where Background == PlatformDefaultPromptBackground {
             conversationID: conversationID,
             pendingQueue: pendingQueue,
             style: .inspector,
+            focusOnAppear: false,
             header: header
         )
     }

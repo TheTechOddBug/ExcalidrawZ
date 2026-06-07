@@ -147,8 +147,13 @@ struct ExcalidrawEditor: View {
         .readSize($editorContentSize)
         .overlay(alignment: .bottom) {
             AIChatIslandOverlay(canvasSize: editorContentSize)
+#if os(iOS)
+            CompactAIChatInputOverlay()
+#endif
         }
         .animation(.smooth(duration: 0.3), value: layoutState.isAIChatIslandMode)
+        .animation(.smooth(duration: 0.3), value: layoutState.isCompactAIChatToolbarPresented)
+        .animation(.smooth(duration: 0.3), value: layoutState.isCompactAIChatInputEditing)
         .modifier(
             LockedFileUnlockOverlayModifier(
                 activeFile: activeFile,

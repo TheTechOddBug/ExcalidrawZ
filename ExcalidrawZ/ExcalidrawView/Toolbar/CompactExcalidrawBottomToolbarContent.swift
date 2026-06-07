@@ -19,7 +19,6 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
     @EnvironmentObject private var fileState: FileState
     @EnvironmentObject private var toolState: ToolState
     @EnvironmentObject private var layoutState: LayoutState
-    @EnvironmentObject private var aiChatState: AIChatState
     @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
 
     private var activeCoordinator: ExcalidrawCanvasView.Coordinator? {
@@ -38,9 +37,10 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
                     if layoutState.isCompactAIChatToolbarPresented,
                        canPresentCompactAIChatToolbarInput {
                         // AI Chat
-                        CompactAIChatToolbarAttachmentMenu()
+                        compactAIChatToolbarAttachmentMenu
                         Spacer(minLength: 0)
-                        compactAIChatToolbarInput
+                        compactAIChatToolbarPlaceholder
+                            .frame(maxWidth: .infinity)
                         Spacer(minLength: 0)
                         compactAIChatToolbarCloseButton
                     } else {
@@ -201,21 +201,26 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
         }
     }
 
-    private var compactAIChatConversationIDBinding: Binding<String?> {
-        Binding(
-            get: { fileState.aiChatConversationID },
-            set: { fileState.aiChatConversationID = $0 }
-        )
+    @ViewBuilder
+    private var compactAIChatToolbarAttachmentMenu: some View {
+        CompactAIChatToolbarAttachmentMenu {
+            layoutState.enterCompactAIChatInputEditing()
+        }
     }
 
     @ViewBuilder
-    private var compactAIChatToolbarInput: some View {
-        PromptInputView(
-            conversationID: compactAIChatConversationIDBinding,
-            pendingQueue: $aiChatState.pendingQueue,
-            style: .compactIOSToolbarText
-        )
-        .disabled(fileState.isAIChatConversationLoading || fileState.currentActiveFileIsInTrash)
+    private var compactAIChatToolbarPlaceholder: some View {
+        Button {
+            layoutState.enterCompactAIChatInputEditing()
+        } label: {
+            Label(.localizable(.aiChatInputPlaceholder), systemSymbol: .sparkles)
+                .labelStyle(.titleAndIcon)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+        .help("AI Chat")
     }
 
     @ViewBuilder
@@ -518,6 +523,8 @@ private struct CompactAIChatToolbarAttachmentMenu: View {
 
     @State private var isImagePickerPresented = false
 
+    let onAttachImages: () -> Void
+
     private var promptDraftKey: String {
         aiChatState.promptDraftKey(
             conversationID: fileState.aiChatConversationID,
@@ -555,7 +562,9 @@ private struct CompactAIChatToolbarAttachmentMenu: View {
     private func handleImagePickerResult(_ result: Result<[URL], Error>) {
         guard case .success(let urls) = result else { return }
         let images = urls.compactMap { pendingImage(from: $0) }
+        guard !images.isEmpty else { return }
         aiChatState.requestAppendDraftImages(images, draftKey: promptDraftKey)
+        onAttachImages()
     }
 
     private func pendingImage(from url: URL) -> PendingPastedImage? {

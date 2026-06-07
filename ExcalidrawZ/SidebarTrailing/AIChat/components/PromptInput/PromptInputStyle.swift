@@ -21,7 +21,6 @@ enum PromptInputSurface {
     case inspector
     case island
     case compactIOSIsland
-    case compactIOSToolbarText
 }
 
 /// Visual knobs for `PromptInputView`. Lets callers tune the prompt block to
@@ -162,16 +161,6 @@ extension PromptInputStyle where Background == PlatformDefaultPromptBackground {
          )
     }
 
-    static var compactIOSToolbarText: PromptInputStyle<PlatformDefaultPromptBackground> {
-         PromptInputStyle(
-             surface: .compactIOSToolbarText,
-             showsLowCreditsBanner: false,
-             cornerRadius: 24,
-             shadow: nil,
-             border: nil,
-             showsGeneratingEffect: false
-         )
-    }
 }
 
 /// Glass on macOS 26+ / iOS 26+, `regularMaterial` below. Materialized as a
