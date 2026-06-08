@@ -13,61 +13,105 @@ import SFSafeSymbols
 extension PromptInputView {
     private var iOSIslandCircleControlLength: CGFloat { 44 }
     private var iOSIslandInlineControlLength: CGFloat { 34 }
-    private var iOSIslandPrimaryActionLength: CGFloat { 40 }
-    private var iOSIslandPrimaryActionIconLength: CGFloat { 16 }
+    private var iOSIslandPrimaryActionLength: CGFloat { 42 }
+    private var iOSIslandPrimaryActionIconLength: CGFloat { 18 }
     private var iOSIslandExpandedInputMinHeight: CGFloat { 44 }
     private var iOSIslandInputMaxHeight: CGFloat { 168 }
+    private var iOSIslandFullscreenInputMinHeight: CGFloat { 220 }
+    private var iOSIslandFullscreenInputMaxHeight: CGFloat { 520 }
 
     @ViewBuilder
     var iOSIslandInputContent: some View {
         let isExpanded = iOSIslandInputIsExpanded
+        let isFullscreen = isIOSIslandFullscreenInputPresented
+        let inputIsExpanded = isExpanded || isFullscreen
 
         VStack(alignment: .trailing, spacing: 5) {
-            if !isExpanded {
+            if !isFullscreen, !isExpanded {
                 iOSIslandInlineSettings
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
             HStack(alignment: .bottom, spacing: 7) {
-                VStack(spacing: 7) {
-                    if isExpanded {
-                        iOSIslandSettingsMenu
-                            .transition(.opacity.combined(with: .scale))
-                    }
+                if !isFullscreen {
+                    VStack(spacing: 7) {
+                        if isExpanded {
+                            iOSIslandSettingsMenu
+                                .transition(.opacity.combined(with: .scale))
+                        }
 
-                    iOSIslandAttachmentMenu
+                        iOSIslandAttachmentMenu
+                    }
+                    .transition(.opacity.combined(with: .scale))
                 }
 
-                iOSIslandTextInputSurface(isExpanded: isExpanded)
+                iOSIslandTextInputSurface(
+                    isExpanded: inputIsExpanded,
+                    minHeight: iOSIslandInputMinHeight(
+                        isExpanded: isExpanded,
+                        isFullscreen: isFullscreen
+                    ),
+                    maxTextAreaHeight: iOSIslandTextAreaMaxHeight(
+                        isExpanded: inputIsExpanded,
+                        isFullscreen: isFullscreen
+                    ),
+                    showsExpandButton: isExpanded && iOSIslandTextAreaIsOverflowing,
+                    showsCollapseButton: isFullscreen,
+                    tracksInlineHeight: !isFullscreen
+                )
             }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .animation(.smooth(duration: 0.2), value: isExpanded)
+        .animation(.smooth(duration: 0.25), value: isIOSIslandFullscreenInputPresented)
+        .if(showsCompactIOSFullChatButton) { content in
+            content
+                .navigationDestination(isPresented: $isIOSIslandFullChatPresented) {
+                    AIChatView()
+                        .background(.background)
+                        .navigationTitle(String(localizable: .aiChatTitle))
+                        .navigationBarTitleDisplayMode(.inline)
+                }
+        }
     }
 
     var iOSIslandInputIsExpanded: Bool {
-        let hasWrappedText = draftHasContent &&
-            (!iOSIslandTextAreaIsSingleLine || iOSIslandDraftFieldHeight > 48)
-
         return draftHasImages
-            || promptDraftState.text.contains("\n")
-            || hasWrappedText
+            || (draftHasContent && !iOSIslandTextAreaIsSingleLine)
     }
 
     @ViewBuilder
-    private func iOSIslandTextInputSurface(isExpanded: Bool) -> some View {
+    private func iOSIslandTextInputSurface(
+        isExpanded: Bool,
+        minHeight: CGFloat,
+        maxTextAreaHeight: CGFloat,
+        showsExpandButton: Bool,
+        showsCollapseButton: Bool,
+        tracksInlineHeight: Bool
+    ) -> some View {
+        let chromeHeight = iOSIslandInputChromeHeight(
+            isExpanded: isExpanded,
+            minHeight: minHeight,
+            tracksInlineHeight: tracksInlineHeight
+        )
+
         PromptDraftInputField(
             draftKey: promptDraftKey,
             draftState: promptDraftState,
             showsAttachments: true,
             sendRequestToken: draftSendRequestToken,
-            maxTextAreaHeight: iOSIslandTextAreaMaxHeight(isExpanded: isExpanded),
+            maxTextAreaHeight: maxTextAreaHeight,
+            textInsets: iOSIslandTextInsets(isExpanded: isExpanded),
+            linesOverflow: $iOSIslandTextAreaIsOverflowing,
             onTextAreaSingleLineChanged: { isSingleLine in
                 iOSIslandTextAreaIsSingleLine = isSingleLine
+                if isSingleLine {
+                    iOSIslandDraftFieldHeight = 0
+                    iOSIslandTextAreaIsOverflowing = false
+                }
             },
             focus: $isInputFocused,
             onSubmit: { text, images in
-                submitDraft(prompt: text, pastedImages: images)
+                submitCompactIOSIslandDraft(prompt: text, pastedImages: images)
             },
             onPaste: handlePastedItem,
             onSummaryChange: { hasContent, hasImages in
@@ -75,31 +119,140 @@ extension PromptInputView {
             }
         )
         .id(ObjectIdentifier(promptDraftState))
-        .readHeight($iOSIslandDraftFieldHeight)
-        .padding(.leading, 12)
-        .padding(.trailing, 44)
-        .padding(.vertical, isExpanded ? 8 : 2)
+        .transaction { transaction in
+            transaction.animation = nil
+        }
+        .modifier(IOSIslandDraftHeightReader(
+            isEnabled: tracksInlineHeight,
+            height: $iOSIslandDraftFieldHeight
+        ))
         .frame(
-            minHeight: isExpanded ? iOSIslandExpandedInputMinHeight : iOSIslandCircleControlLength,
-            maxHeight: isExpanded ? iOSIslandInputMaxHeight : iOSIslandCircleControlLength,
+            minHeight: minHeight,
             alignment: isExpanded ? .bottom : .center
         )
+        .frame(maxHeight: chromeHeight, alignment: isExpanded ? .bottom : .center)
         .frame(maxWidth: .infinity, alignment: .bottom)
-        .background {
+        .background(alignment: .bottom) {
             iOSIslandTextInputBackground(isExpanded: isExpanded)
+                .frame(height: chromeHeight)
+                .animation(.smooth(duration: 0.18), value: chromeHeight)
         }
         .clipShape(iOSIslandTextInputShape(isExpanded: isExpanded))
         .overlay(alignment: isExpanded ? .bottomTrailing : .trailing) {
             iOSIslandPrimaryActionButton
                 .padding(.trailing, 2)
-                .padding(.bottom, isExpanded ? 2 : 0)
+                .padding(.bottom, isExpanded ? 8 : 0)
+        }
+        .overlay(alignment: .topTrailing) {
+            if showsCollapseButton {
+                iOSIslandCollapseFullscreenButton
+                    .padding(.top, 6)
+                    .padding(.trailing, 6)
+                    .transition(.opacity.combined(with: .scale))
+            } else if showsExpandButton {
+                iOSIslandExpandFullscreenButton
+                    .padding(.top, 6)
+                    .padding(.trailing, 6)
+                    .transition(.opacity.combined(with: .scale))
+            }
         }
         .contentShape(iOSIslandTextInputShape(isExpanded: isExpanded))
+        .matchedGeometryEffect(id: "iOSIslandTextInputSurface", in: iOSIslandInputNamespace)
     }
 
-    private func iOSIslandTextAreaMaxHeight(isExpanded: Bool) -> CGFloat {
-        let verticalPadding: CGFloat = isExpanded ? 16 : 4
-        return (isExpanded ? iOSIslandInputMaxHeight : iOSIslandCircleControlLength) - verticalPadding
+    private func iOSIslandInputMinHeight(isExpanded: Bool, isFullscreen: Bool) -> CGFloat {
+        if isFullscreen {
+            return iOSIslandFullscreenInputMinHeight
+        }
+
+        return isExpanded ? iOSIslandExpandedInputMinHeight : iOSIslandCircleControlLength
+    }
+
+    private func iOSIslandInputChromeHeight(
+        isExpanded: Bool,
+        minHeight: CGFloat,
+        tracksInlineHeight: Bool
+    ) -> CGFloat {
+        guard tracksInlineHeight, iOSIslandDraftFieldHeight > 0 else {
+            return minHeight
+        }
+
+        return max(minHeight, iOSIslandDraftFieldHeight)
+    }
+
+    private func iOSIslandTextAreaMaxHeight(isExpanded: Bool, isFullscreen: Bool = false) -> CGFloat {
+        if isFullscreen {
+            return iOSIslandFullscreenInputMaxHeight
+        }
+
+        return isExpanded ? iOSIslandInputMaxHeight : iOSIslandCircleControlLength
+    }
+
+    private func iOSIslandTextInsets(isExpanded: Bool) -> EdgeInsets {
+        EdgeInsets(
+            top: isExpanded ? 16 : 10,
+            leading: 24,
+            bottom: isExpanded ? 16 : 10,
+            trailing: iOSIslandPrimaryActionLength + 14
+        )
+    }
+
+    @ViewBuilder
+    private var iOSIslandExpandFullscreenButton: some View {
+        Button {
+            withAnimation(.smooth(duration: 0.25)) {
+                isIOSIslandFullscreenInputPresented = true
+            }
+            refocusIOSIslandInput()
+        } label: {
+            iOSIslandCircleLabel(length: 32) {
+                Image(systemSymbol: .arrowUpLeftAndArrowDownRight)
+                    .font(.system(size: 12, weight: .semibold))
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var iOSIslandCollapseFullscreenButton: some View {
+        Button {
+            withAnimation(.smooth(duration: 0.25)) {
+                if iOSIslandTextAreaIsSingleLine {
+                    iOSIslandDraftFieldHeight = 0
+                }
+                isIOSIslandFullscreenInputPresented = false
+            }
+            refocusIOSIslandInput()
+        } label: {
+            iOSIslandCircleLabel(length: iOSIslandInlineControlLength) {
+                Image(systemSymbol: .arrowDownRightAndArrowUpLeft)
+                    .font(.system(size: 13, weight: .semibold))
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func refocusIOSIslandInput() {
+        isInputFocused = true
+        Task { @MainActor in
+            await Task.yield()
+            isInputFocused = true
+        }
+    }
+
+    @MainActor
+    private func submitCompactIOSIslandDraft(
+        prompt: String,
+        pastedImages: [PendingPastedImage]
+    ) -> Bool {
+        let didSubmit = submitDraft(prompt: prompt, pastedImages: pastedImages)
+        if didSubmit {
+            onSuccessfulSubmit?()
+            if dismissKeyboardOnSuccessfulSubmit {
+                isInputFocused = false
+            }
+        }
+        return didSubmit
     }
 
     @ViewBuilder
@@ -158,6 +311,10 @@ extension PromptInputView {
 
             iOSIslandModelPicker
 
+            if showsCompactIOSFullChatButton {
+                iOSIslandFullChatButton
+            }
+
             if isInputFocused {
                 iOSIslandDismissKeyboardButton
                     .transition(.opacity.combined(with: .scale))
@@ -177,7 +334,7 @@ extension PromptInputView {
         } label: {
             if #available(iOS 17.0, *) {
                 Image(systemSymbol: primaryActionIsStop ? .stopFill : .arrowUp)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .frame(
                         width: iOSIslandPrimaryActionIconLength,
                         height: iOSIslandPrimaryActionIconLength
@@ -185,14 +342,14 @@ extension PromptInputView {
                     .contentTransition(.symbolEffect(.replace))
             } else {
                 Image(systemSymbol: primaryActionIsStop ? .stopFill : .arrowUp)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .frame(
                         width: iOSIslandPrimaryActionIconLength,
                         height: iOSIslandPrimaryActionIconLength
                     )
             }
         }
-        .modernButtonStyle(style: .glassProminent, size: .small, shape: .circle)
+        .modernButtonStyle(style: .glassProminent, size: .regular, shape: .circle)
         .frame(
             width: iOSIslandPrimaryActionLength,
             height: iOSIslandPrimaryActionLength
@@ -239,6 +396,21 @@ extension PromptInputView {
     }
 
     @ViewBuilder
+    var iOSIslandFullChatButton: some View {
+        Button {
+            enterIOSIslandFullChat()
+        } label: {
+            iOSIslandCircleLabel(length: iOSIslandInlineControlLength) {
+                Image(systemSymbol: .rectangleExpandVertical)
+                    .font(.system(size: 13, weight: .semibold))
+            }
+        }
+        .buttonStyle(.plain)
+        .help(String(localizable: .aiChatTitle))
+        .accessibilityLabel(Text(localizable: .aiChatTitle))
+    }
+
+    @ViewBuilder
     var iOSIslandDismissKeyboardButton: some View {
         Button {
             isInputFocused = false
@@ -249,6 +421,12 @@ extension PromptInputView {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private func enterIOSIslandFullChat() {
+        isInputFocused = false
+        isIOSIslandFullscreenInputPresented = false
+        isIOSIslandFullChatPresented = true
     }
 
     @ViewBuilder
@@ -312,6 +490,14 @@ extension PromptInputView {
                 Text(activeModel.excalidrawTierName)
             }
 
+            if showsCompactIOSFullChatButton {
+                Button {
+                    enterIOSIslandFullChat()
+                } label: {
+                    Label(.localizable(.aiChatTitle), systemSymbol: .rectangleExpandVertical)
+                }
+            }
+
 #if DEBUG
             Button {
                 generateDebugChatContext()
@@ -328,6 +514,20 @@ extension PromptInputView {
         .labelStyle(.iconOnly)
         .menuIndicator(.hidden)
         .buttonStyle(.plain)
+    }
+}
+
+private struct IOSIslandDraftHeightReader: ViewModifier {
+    let isEnabled: Bool
+    @Binding var height: CGFloat
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if isEnabled {
+            content.readHeight($height)
+        } else {
+            content
+        }
     }
 }
 

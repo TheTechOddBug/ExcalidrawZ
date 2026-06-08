@@ -10,25 +10,23 @@ import StoreKit
 
 import ChocofordUI
 import LLMKit
-import Shimmer
-import SmoothGradient
 import SFSafeSymbols
 
 struct Paywall: View {
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @Environment(\.alertToast) private var alertToast
+    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.alertToast) var alertToast
     @Environment(\.alert) private var alert
     
-    @EnvironmentObject private var store: Store
-    @EnvironmentObject private var llmState: LLMStateObject
-    @ObservedObject private var paywallPresentation = PaywallPresentationState.shared
+    @EnvironmentObject var store: Store
+    @EnvironmentObject var llmState: LLMStateObject
+    @ObservedObject var paywallPresentation = PaywallPresentationState.shared
     
-    @State private var selectedSubscriptionItem: SubscriptionItem?
-    @State private var isPresented = false
-    @State private var billingPeriod: BillingPeriod = .monthly
-    @State private var maxCreditTier: MaxCreditTier = .standard
+    @State var selectedSubscriptionItem: SubscriptionItem?
+    @State var isPresented = false
+    @State var billingPeriod: BillingPeriod = .monthly
+    @State var maxCreditTier: MaxCreditTier = .standard
     
     enum Route: Hashable {
         case plans, donation
@@ -48,14 +46,14 @@ struct Paywall: View {
         }
     }
     
-    @State private var route: Route = .plans
-    @State private var isDonationHistoryPresented = false
+    @State var route: Route = .plans
+    @State var isDonationHistoryPresented = false
     
     var displayedPlans: [SubscriptionItem] {
         store.plans
     }
     
-    private var displayedPlanCards: [SubscriptionItem] {
+    var displayedPlanCards: [SubscriptionItem] {
         var plans = displayedPlans.filter { $0.id != SubscriptionItem.max10x.id }
         if displayedPlans.contains(SubscriptionItem.max10x), !plans.contains(SubscriptionItem.max) {
             plans.append(.max)
@@ -63,21 +61,21 @@ struct Paywall: View {
         return plans.sorted()
     }
     
-    private var activeSubscriptionItem: SubscriptionItem? {
+    var activeSubscriptionItem: SubscriptionItem? {
         store.activeSubscriptionItem
     }
 
-    private var currentSubscriptionItemForComparison: SubscriptionItem {
+    var currentSubscriptionItemForComparison: SubscriptionItem {
         activeSubscriptionItem ?? .free
     }
     
-    private var selectedBillingProduct: Product? {
+    var selectedBillingProduct: Product? {
         guard let selectedSubscriptionItem else { return nil }
         return product(for: selectedSubscriptionItem, billingPeriod: billingPeriod)
         ?? product(for: selectedSubscriptionItem, billingPeriod: .monthly)
     }
     
-    private var isSelectedSubscriptionPurchased: Bool {
+    var isSelectedSubscriptionPurchased: Bool {
         if let selectedSubscriptionItem, selectedSubscriptionItem == activeSubscriptionItem {
             return true
         }
@@ -85,7 +83,7 @@ struct Paywall: View {
         return store.purchasedPlans.contains { $0.id == selectedBillingProduct.id }
     }
 
-    private var isSelectedPlanIncludedInActivePlan: Bool {
+    var isSelectedPlanIncludedInActivePlan: Bool {
         guard let selectedSubscriptionItem,
               let activeSubscriptionItem,
               selectedSubscriptionItem != activeSubscriptionItem else {
@@ -94,7 +92,7 @@ struct Paywall: View {
         return selectedSubscriptionItem < activeSubscriptionItem
     }
     
-    private var baseFeatureLines: [Feature] {
+    var baseFeatureLines: [Feature] {
         [
             .completeCanvasWorkspace,
             .cloudReadyLibrary,
@@ -102,22 +100,22 @@ struct Paywall: View {
         ]
     }
     
-    private var baselinePlan: SubscriptionItem? {
+    var baselinePlan: SubscriptionItem? {
         guard let selectedSubscriptionItem else { return currentSubscriptionItemForComparison }
         return min(selectedSubscriptionItem, currentSubscriptionItemForComparison)
     }
 
-    private var baselinePlanFeatureLines: [Feature] {
+    var baselinePlanFeatureLines: [Feature] {
         guard let baselinePlan else { return [] }
         return featureLines(for: baselinePlan, maxCredits: maxCredits(for: baselinePlan))
     }
 
-    private var supplementTargetPlan: SubscriptionItem? {
+    var supplementTargetPlan: SubscriptionItem? {
         guard let selectedSubscriptionItem else { return currentSubscriptionItemForComparison }
         return max(selectedSubscriptionItem, currentSubscriptionItemForComparison)
     }
 
-    private var selectedPlanSupplementFeatures: [Feature] {
+    var selectedPlanSupplementFeatures: [Feature] {
         guard let supplementTargetPlan,
               let baselinePlan,
               supplementTargetPlan != baselinePlan else {
@@ -129,9 +127,25 @@ struct Paywall: View {
             .filter { !baselineFeatureIDs.contains($0.id) }
     }
     
-    private var selectedPlanSupplementTitle: String {
+    var selectedPlanSupplementTitle: String {
         guard let supplementTargetPlan else { return "" }
         return planDeltaTitle(for: supplementTargetPlan, maxCredits: maxCredits(for: supplementTargetPlan))
+    }
+
+    var isCompactIOSPaywall: Bool {
+#if os(iOS)
+        horizontalSizeClass == .compact
+#else
+        false
+#endif
+    }
+
+    var compactSelectedFeatureLines: [Feature] {
+        guard let selectedSubscriptionItem else { return baseFeatureLines }
+        return baseFeatureLines + featureLines(
+            for: selectedSubscriptionItem,
+            maxCredits: maxCredits(for: selectedSubscriptionItem)
+        )
     }
     
     var body: some View {
@@ -175,50 +189,11 @@ struct Paywall: View {
     
     @ViewBuilder
     private func content() -> some View {
-        ZStack {
-            lagacyView()
-                .offset(x: route == .plans ? 0 : -100)
-            
-            if route == .donation {
-#if APP_STORE
-                let isAppStore = true
-#else
-                let isAppStore = false
-#endif
-                SupportChocofordView(isAppStore: isAppStore)
-                    .contentPadding(40)
-                    .bindingSupportHistoryPresentedValue($isDonationHistoryPresented)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.top, horizontalSizeClass == .compact ? 30 : 0)
-                    .overlay(alignment: .topLeading) {
-                        if !isDonationHistoryPresented {
-                            Button {
-                                route = .plans
-                            } label: {
-                                Label(
-                                    .localizable(.navigationButtonBack),
-                                    systemSymbol: .chevronLeft
-                                )
-                            }
-                            .buttonStyle(.text)
-                            .padding(40)
-                        }
-                    }
-                    .animation(.default, value: isDonationHistoryPresented)
-                    .background {
-                        Color.windowBackgroundColor
-                            .ignoresSafeArea()
-                    }
-                    .compositingGroup()
-                    .transition(.move(edge: .trailing))
-                    .zIndex(1)
-                
-            }
+        if isCompactIOSPaywall {
+            compactIOSContent()
+        } else {
+            regularContent()
         }
-        .animation(.easeOut(duration: 0.3), value: route)
-#if os(macOS)
-        .frame(width: horizontalSizeClass == .compact ? 630 : 1040)
-#endif
     }
     
     @available(macOS 14.0, iOS 17.0, *)
@@ -228,185 +203,7 @@ struct Paywall: View {
     }
     
     @ViewBuilder
-    private func lagacyView() -> some View {
-        ZStack {
-            if horizontalSizeClass == .compact {
-                compactLayout()
-            } else {
-                regularLayout()
-            }
-        }
-        .padding(50)
-        .background {
-            if #available(iOS 26.0, macOS 26.0, *) {
-                PaywallAuroraBackground(colorScheme: colorScheme)
-                    .ignoresSafeArea()
-            } else {
-                ZStack {
-                    LinearGradient(
-                        stops: [
-                            .init(color: .accent, location: 0),
-                        ] + [{
-                            if horizontalSizeClass == .compact {
-                                .init(color: colorScheme == .dark ? .black : Color(red: 242/255.0, green: 242/255.0, blue: 242/255.0), location: 0.4)
-                            } else {
-                                .init(color: colorScheme == .dark ? .black : .white, location: 0.4)
-                            }
-                        }()],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                }
-                .ignoresSafeArea()
-                .scaleEffect(1.1)
-            }
-        }
-        .onAppear {
-            isPresented = true
-        }
-        .task {
-            guard AIChatPreferences.shared.isAIEnabled else { return }
-            await LLMCreditsRefreshCoordinator.shared.refreshCredits(reason: .paywallAppear)
-        }
-        .onDisappear {
-            isPresented = false
-        }
-    }
-    
-    @ViewBuilder
-    private func regularLayout() -> some View {
-        ZStack(alignment: .top) {
-            // toolbar()
-            
-            HStack(alignment: .center, spacing: 52) {
-                leftFeatureShowcase()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                VStack(spacing: 16) {
-                    billingToggle()
-                    
-                    Spacer(minLength: 0)
-                    RegularPlansView(
-                        selection: $selectedSubscriptionItem,
-                        maxCreditTier: $maxCreditTier,
-                        billingPeriod: billingPeriod,
-                        plans: displayedPlanCards,
-                        activePlan: activeSubscriptionItem,
-                        productProvider: { plan in
-                            product(for: plan, billingPeriod: billingPeriod)
-                            ?? product(for: plan, billingPeriod: .monthly)
-                        },
-                        maxCreditTierChangeHandler: { tier in
-                            selectMaxPlan(creditTier: tier)
-                        }
-                    )
-                    Spacer(minLength: 0)
-
-                    HStack(spacing: 4) {
-                        // Keep center
-                        Button {
-                            dismiss()
-                        } label: {
-                            Label(.localizable(.generalButtonClose), systemSymbol: .xmark)
-                                .labelStyle(.iconOnly)
-                        }
-                        .modernButtonStyle(
-                            style: .glass,
-                            size: .extraLarge,
-                            shape: .circle
-                        )
-                        .opacity(0)
-                        
-                        purchaseButton()
-                        
-                        Button {
-                            dismiss()
-                        } label: {
-                            Label(.localizable(.generalButtonClose), systemSymbol: .xmark)
-                                .labelStyle(.iconOnly)
-                        }
-                        .modernButtonStyle(
-                            style: .glass,
-                            size: .extraLarge,
-                            shape: .circle
-                        )
-                        .keyboardShortcut(.cancelAction)
-                    }
-
-                    VStack(alignment: .trailing, spacing: 4) {
-                        HStack {
-                            Spacer()
-#if APP_STORE
-                            restorePurchasesButton()
-#endif
-                            privacyPolicyButton()
-
-                            Button {
-                                route = .donation
-                            } label: {
-                                HStack {
-                                    Text(.localizable(.paywallButtonDonation))
-                                    Image(systemSymbol: .chevronRight2)
-                                }
-                                .foregroundStyle(.primary)
-                                .shimmering(
-                                    animation: Animation.linear(duration: 1).delay(2).repeatForever(autoreverses: false),
-                                    gradient: Gradient(colors: [.white, .white.opacity(0.3), .white])
-                                )
-                            }
-                            .buttonStyle(.borderless)
-                        }
-                        .font(.footnote)
-
-                        Text(localizable: .paywallAICloudDisclosure)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .font(.footnote)
-                    }
-                }
-                .frame(width: 390)
-            }
-        }
-        .frame(height: 550)
-    }
-    
-    @ViewBuilder
-    private func compactLayout() -> some View {
-        VStack(spacing: 20) {
-            VStack(spacing: 10) {
-                toolbar()
-                Spacer()
-                HStack {
-                    Text(.localizable(.paywallTitle))
-                        .font(.largeTitle)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            
-            reasonBadge()
-                .frame(height: 80)
-            
-            CompactPlansView(selection: $selectedSubscriptionItem, plans: displayedPlans)
-            
-            VStack {
-                purchaseButton()
-                HStack {
-                    aiUsageSettingsButton()
-                    privacyPolicyButton()
-                    Spacer()
-#if APP_STORE
-                    restorePurchasesButton()
-#endif
-                }
-                .font(.footnote)
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private func billingToggle() -> some View {
+    func billingToggle() -> some View {
         HStack(spacing: 6) {
             ForEach(BillingPeriod.allCases) { period in
                 Button {
@@ -450,129 +247,7 @@ struct Paywall: View {
     }
     
     @ViewBuilder
-    private func leftFeatureShowcase() -> some View {
-        VStack(alignment: .leading, spacing: 26) {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(.localizable(.paywallTitle))
-                    .font(.system(size: 44, weight: .semibold, design: .rounded))
-                    .tracking(-1.0)
-                    .foregroundStyle(.primary)
-                
-                Text(localizable: .paywallSubtitle)
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            
-            // reasonBadge()
-            
-            VStack(alignment: .leading, spacing: 14) {
-                ForEach(baseFeatureLines) { feature in
-                    featureLine(feature)
-                }
-                
-                ForEach(baselinePlanFeatureLines) { feature in
-                    featureLine(feature)
-                }
-            }
-            selectedPlanDeltaSections()
-
-            Spacer(minLength: 0)
-
-            HStack {
-                aiUsageSettingsButton()
-
-                Spacer()
-                    .overlay(alignment: .leading) {
-#if DEBUG && !APP_STORE
-                        debugMockPlanControl()
-#endif
-                    }
-            }
-        }
-    }
-
-#if DEBUG && !APP_STORE
-    @ViewBuilder
-    private func debugMockPlanControl() -> some View {
-        HStack(spacing: 8) {
-            Text("Debug current plan")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
-
-            Picker("Debug current plan", selection: debugActivePlanBinding) {
-                Text("None").tag(Optional<SubscriptionItem>.none)
-                Text(SubscriptionItem.starter.title).tag(Optional.some(SubscriptionItem.starter))
-                Text(SubscriptionItem.pro.title).tag(Optional.some(SubscriptionItem.pro))
-                Text(SubscriptionItem.max.title).tag(Optional.some(SubscriptionItem.max))
-                Text(SubscriptionItem.max10x.title).tag(Optional.some(SubscriptionItem.max10x))
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .frame(width: 140)
-        }
-    }
-
-    private var debugActivePlanBinding: Binding<SubscriptionItem?> {
-        Binding {
-            store.debugActiveSubscriptionItem
-        } set: { newValue in
-            store.debugActiveSubscriptionItem = newValue
-            selectedSubscriptionItem = newValue ?? recommendedSubscriptionItem()
-        }
-    }
-#endif
-    
-    @ViewBuilder
-    private func selectedPlanDeltaSections() -> some View {
-        VStack(alignment: .leading, spacing: 18) {
-            if !selectedPlanSupplementFeatures.isEmpty {
-                planDeltaSection(
-                    title: "With \(selectedPlanSupplementTitle)",
-                    features: selectedPlanSupplementFeatures
-                )
-            }
-        }
-        .id("\(selectedSubscriptionItem?.id ?? "none")-\(activeSubscriptionItem?.id ?? "none")-\(maxCreditTier.rawValue)")
-        .animation(.smooth(duration: 0.22), value: selectedSubscriptionItem?.id)
-        .animation(.smooth(duration: 0.22), value: activeSubscriptionItem?.id)
-        .animation(.smooth(duration: 0.22), value: maxCreditTier)
-    }
-
-    @ViewBuilder
-    private func planDeltaSection(title: String, features: [Feature]) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.clear, Color.secondary.opacity(0.24)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(width: 54, height: 1)
-
-                Text(title)
-                    .font(.caption.weight(.semibold))
-                    .textCase(.uppercase)
-                    .tracking(1.2)
-                    .foregroundStyle(.secondary)
-            }
-
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(features) { feature in
-                    featureLine(feature)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-            }
-        }
-    }
-    
-    
-    @ViewBuilder
-    private func reasonBadge() -> some View {
+    func reasonBadge() -> some View {
         if let reason = paywallPresentation.reachReason {
             ZStack {
                 if isPresented {
@@ -596,7 +271,7 @@ struct Paywall: View {
     }
     
     @ViewBuilder
-    private func featureLine(_ feature: Feature) -> some View {
+    func featureLine(_ feature: Feature) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemSymbol: feature.symbol)
                 .font(.system(size: 15, weight: .semibold))
@@ -629,39 +304,9 @@ struct Paywall: View {
         }
     }
     
-    @ViewBuilder
-    private func toolbar() -> some View {
-        HStack {
-            Button {
-                dismiss()
-            } label: {
-                Label(.localizable(.generalButtonClose), systemSymbol: .xmark)
-                    .labelStyle(.iconOnly)
-            }
-            .buttonStyle(.text(square: true))
-            
-            Spacer()
-            
-            Button {
-                route = .donation
-            } label: {
-                HStack {
-                    Text(.localizable(.paywallButtonDonation))
-                    Image(systemSymbol: .chevronRight2)
-                }
-                .foregroundStyle(.primary)
-                .shimmering(
-                    animation: Animation.linear(duration: 1).delay(2).repeatForever(autoreverses: false),
-                    gradient: Gradient(colors: [.white, .white.opacity(0.3), .white])
-                )
-            }
-            .buttonStyle(.borderless)
-        }
-    }
-    
 #if APP_STORE
     @ViewBuilder
-    private func purchaseButton() -> some View {
+    func purchaseButton() -> some View {
         AsyncButton {
             try await purchaseSelectedPlan()
         } label: {
@@ -673,7 +318,7 @@ struct Paywall: View {
                 } else if let selectedBillingProduct {
                     let planName: String = selectedSubscriptionItem?.title ?? selectedBillingProduct.displayName
                     let period: String = selectedBillingProduct.subscription?.subscriptionPeriod.formatted(selectedBillingProduct.subscriptionPeriodFormatStyle) ?? ""
-                    if horizontalSizeClass == .compact {
+                    if isCompactIOSPaywall {
                         Text(.localizable(.paywallButtonSubscribe(planName)))
                     } else {
                         Text(.localizable(.paywallButtonSubscribe(planName))) +
@@ -682,7 +327,7 @@ struct Paywall: View {
                 }
             }
             .padding(.horizontal)
-            .frame(maxWidth: horizontalSizeClass == .compact ? .infinity : nil)
+            .frame(maxWidth: isCompactIOSPaywall ? .infinity : nil)
         }
         .controlSize({
             if #available(macOS 14.0, iOS 17.0, *) {
@@ -696,7 +341,7 @@ struct Paywall: View {
     }
     
     @ViewBuilder
-    private func restorePurchasesButton() -> some View {
+    func restorePurchasesButton() -> some View {
         AsyncButton {
             await store.refreshEntitlements(reason: .restorePurchases, force: true)
             alertToast(.init(displayMode: .hud, type: .complete(.green), title: String(localizable: .paywallRestorePurchasesDoneAlertTitle)))
@@ -707,7 +352,7 @@ struct Paywall: View {
     }
     
     @MainActor
-    private func purchaseSelectedPlan() async throws {
+    func purchaseSelectedPlan() async throws {
         if let product = selectedBillingProduct {
             if let _ = try await store.purchase(product, handleVerifiedPurchase: { verificationResult in
                 try await llmState.handlePurchase(verificationResult: verificationResult)
@@ -720,7 +365,7 @@ struct Paywall: View {
     @State private var isSwitchToAppStoreSheetPresented = false
     
     @ViewBuilder
-    private func purchaseButton() -> some View {
+    func purchaseButton() -> some View {
         Button {
             isSwitchToAppStoreSheetPresented.toggle()
         } label: {
@@ -732,7 +377,7 @@ struct Paywall: View {
 #endif
     
     @ViewBuilder
-    private func privacyPolicyButton() -> some View {
+    func privacyPolicyButton() -> some View {
         VStack(spacing: 3) {
             HStack {
                 if let privacyPolicy = URL(string: "https://excalidrawz.chocoford.com/privacy/") {
@@ -749,7 +394,7 @@ struct Paywall: View {
     }
     
     @ViewBuilder
-    private func aiUsageSettingsButton() -> some View {
+    func aiUsageSettingsButton() -> some View {
 #if os(macOS)
         if #available(macOS 14.0, *) {
             OpenAIUsageSettingsButton {
@@ -764,7 +409,7 @@ struct Paywall: View {
     }
 
     @MainActor
-    private var fallbackAIUsageSettingsButton: some View {
+    var fallbackAIUsageSettingsButton: some View {
         Button {
             dismiss()
             SettingsRouter.shared.requestOpenAIUsage()
@@ -775,7 +420,7 @@ struct Paywall: View {
         .buttonStyle(.borderless)
     }
     
-    private func product(for item: SubscriptionItem, billingPeriod: BillingPeriod) -> Product? {
+    func product(for item: SubscriptionItem, billingPeriod: BillingPeriod) -> Product? {
         let productID: String? = {
             if item.id == SubscriptionItem.max.id {
                 return maxProductID(forCreditTier: maxCreditTier, billingPeriod: billingPeriod)
@@ -792,18 +437,18 @@ struct Paywall: View {
         return store.subscriptions.first { $0.id == productID }
     }
     
-    private func recommendedSubscriptionItem() -> SubscriptionItem? {
+    func recommendedSubscriptionItem() -> SubscriptionItem? {
         if displayedPlanCards.contains(.pro) {
             return .pro
         }
         return displayedPlanCards.first
     }
 
-    private func defaultSubscriptionItem() -> SubscriptionItem? {
+    func defaultSubscriptionItem() -> SubscriptionItem? {
         activeSubscriptionItem ?? recommendedSubscriptionItem()
     }
 
-    private func planDeltaTitle(for plan: SubscriptionItem, maxCredits: Int) -> String {
+    func planDeltaTitle(for plan: SubscriptionItem, maxCredits: Int) -> String {
         if plan.id == SubscriptionItem.max10x.id {
             return "Max \(MaxCreditTier.triple.title)"
         }
@@ -814,7 +459,7 @@ struct Paywall: View {
         return plan.title
     }
     
-    private func maxProductID(forCreditTier creditTier: MaxCreditTier, billingPeriod: BillingPeriod) -> String {
+    func maxProductID(forCreditTier creditTier: MaxCreditTier, billingPeriod: BillingPeriod) -> String {
         switch (billingPeriod, creditTier) {
             case (.monthly, .standard):
                 "plan.max_3x"
@@ -827,32 +472,32 @@ struct Paywall: View {
         }
     }
     
-    private func selectMaxPlan(creditTier: MaxCreditTier) {
+    func selectMaxPlan(creditTier: MaxCreditTier) {
         selectedSubscriptionItem = creditTier == .triple ? .max10x : .max
     }
     
-    private var selectedMaxCredits: Int {
+    var selectedMaxCredits: Int {
         if selectedSubscriptionItem?.id == SubscriptionItem.max10x.id {
             return MaxCreditTier.triple.credits
         }
         return maxCreditTier.credits
     }
     
-    private func activeMaxCredits(for plan: SubscriptionItem) -> Int {
+    func activeMaxCredits(for plan: SubscriptionItem) -> Int {
         if plan.id == SubscriptionItem.max10x.id {
             return MaxCreditTier.triple.credits
         }
         return MaxCreditTier.standard.credits
     }
 
-    private func maxCredits(for plan: SubscriptionItem) -> Int {
+    func maxCredits(for plan: SubscriptionItem) -> Int {
         if plan == selectedSubscriptionItem {
             return selectedMaxCredits
         }
         return activeMaxCredits(for: plan)
     }
     
-    private func featureLines(for plan: SubscriptionItem, maxCredits: Int? = nil) -> [Feature] {
+    func featureLines(for plan: SubscriptionItem, maxCredits: Int? = nil) -> [Feature] {
         switch plan.id {
             case SubscriptionItem.free.id:
                 []
@@ -869,19 +514,19 @@ struct Paywall: View {
         }
     }
     
-    private var starterFeatureLines: [Feature] {
+    var starterFeatureLines: [Feature] {
         [
             .unlimitedCollaborationTools
         ]
     }
     
-    private var proFeatureLines: [Feature] {
+    var proFeatureLines: [Feature] {
         [
             .proAICredits
         ]
     }
     
-    private func maxFeatureLines(credits: Int) -> [Feature] {
+    func maxFeatureLines(credits: Int) -> [Feature] {
         [
             .maxAICredits(credits),
             .extraHighModelCapability
@@ -889,7 +534,7 @@ struct Paywall: View {
     }
 }
 
-private struct PaywallAuroraBackground: View {
+struct PaywallAuroraBackground: View {
     let colorScheme: ColorScheme
     
     var body: some View {

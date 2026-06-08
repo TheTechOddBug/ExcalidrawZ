@@ -1,5 +1,5 @@
 {
-  "originHash" : "15a6184b2b4ee2dfee2534d7fa65b2d369b4a1a19f72473c915a1311ae390dc1",
+  "originHash" : "6fb53d7a60c76a58721520a172eff999048826309833b224dbf1802e017d24c5",
   "pins" : [
     {
       "identity" : "alerttoast",
@@ -17,15 +17,6 @@
       "state" : {
         "revision" : "862808b2070cd908cb04f9aafe7de83d35f81b05",
         "version" : "0.6.7"
-      }
-    },
-    {
-      "identity" : "chocofordkit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/chocoford/ChocofordKit.git",
-      "state" : {
-        "branch" : "main",
-        "revision" : "427904748863a8740071b4d967fef707082b576a"
       }
     },
     {
@@ -70,7 +61,7 @@
       "location" : "https://github.com/chocoford/LLMKit.git",
       "state" : {
         "branch" : "dev",
-        "revision" : "a4daf523d50a9ff34057a5e930b30e7dc30a341d"
+        "revision" : "ab067a199929f73ab6e8ae167ade53b29d080b09"
       }
     },
     {
@@ -97,7 +88,7 @@
       "location" : "https://github.com/MacPaw/OpenAI.git",
       "state" : {
         "branch" : "main",
-        "revision" : "c9342438e70e6c9a93d09220a8855459deaba00a"
+        "revision" : "40406cf4ef6caeed49ec88071bc6e37f0f04b8d3"
       }
     },
     {
@@ -132,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sparkle-project/Sparkle.git",
       "state" : {
-        "revision" : "6276ba2b404829d139c45ff98427cf90e2efc59b",
-        "version" : "2.9.2"
+        "revision" : "d46d456107feacc80711b21847b82b07bd9fb46e",
+        "version" : "2.9.3"
       }
     },
     {
@@ -159,8 +150,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-http-types",
       "state" : {
-        "revision" : "45eb0224913ea070ec4fba17291b9e7ecf4749ca",
-        "version" : "1.5.1"
+        "revision" : "db774a277f60063a32d854f2980299caf06da041",
+        "version" : "1.6.0"
       }
     },
     {

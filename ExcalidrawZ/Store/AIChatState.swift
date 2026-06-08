@@ -410,6 +410,14 @@ extension AIChatState {
     ) async {
         let activeFile = fileState.currentActiveFile
         let activeFileScope = activeFile?.aiConversationFileScope
+        guard activeFileScope != nil else {
+            await MainActor.run {
+                guard fileState.currentActiveFile == nil else { return }
+                fileState.aiChatConversationID = nil
+                fileState.isAIChatConversationLoading = false
+            }
+            return
+        }
 
         // Always refresh first: the global cache also drives
         // AIChatView's rendering of the conversation we're about to

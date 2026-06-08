@@ -182,6 +182,9 @@ struct PromptInputView<Background: View, Header: View>: View {
     @Binding var pendingQueue: [PendingQueueMessage]
     let style: PromptInputStyle<Background>
     let focusOnAppear: Bool
+    let showsCompactIOSFullChatButton: Bool
+    let dismissKeyboardOnSuccessfulSubmit: Bool
+    let onSuccessfulSubmit: (() -> Void)?
     let header: Header
 
     init(
@@ -189,12 +192,18 @@ struct PromptInputView<Background: View, Header: View>: View {
         pendingQueue: Binding<[PendingQueueMessage]>,
         style: PromptInputStyle<Background>,
         focusOnAppear: Bool = false,
+        showsCompactIOSFullChatButton: Bool = true,
+        dismissKeyboardOnSuccessfulSubmit: Bool = false,
+        onSuccessfulSubmit: (() -> Void)? = nil,
         @ViewBuilder header: () -> Header
     ) {
         self._conversationID = conversationID
         self._pendingQueue = pendingQueue
         self.style = style
         self.focusOnAppear = focusOnAppear
+        self.showsCompactIOSFullChatButton = showsCompactIOSFullChatButton
+        self.dismissKeyboardOnSuccessfulSubmit = dismissKeyboardOnSuccessfulSubmit
+        self.onSuccessfulSubmit = onSuccessfulSubmit
         self.header = header()
     }
 
@@ -226,6 +235,10 @@ struct PromptInputView<Background: View, Header: View>: View {
     @State var draftSendRequestToken: Int = 0
     @State var iOSIslandDraftFieldHeight: CGFloat = 0
     @State var iOSIslandTextAreaIsSingleLine: Bool = true
+    @State var iOSIslandTextAreaIsOverflowing: Bool = false
+    @State var isIOSIslandFullscreenInputPresented: Bool = false
+    @State var isIOSIslandFullChatPresented: Bool = false
+    @Namespace var iOSIslandInputNamespace
 #if DEBUG
     @State var debugContextText: String = ""
     @State var debugContextError: String = ""
@@ -572,13 +585,19 @@ extension PromptInputView where Header == EmptyView {
         conversationID: Binding<String?>,
         pendingQueue: Binding<[PendingQueueMessage]>,
         style: PromptInputStyle<Background>,
-        focusOnAppear: Bool = false
+        focusOnAppear: Bool = false,
+        showsCompactIOSFullChatButton: Bool = true,
+        dismissKeyboardOnSuccessfulSubmit: Bool = false,
+        onSuccessfulSubmit: (() -> Void)? = nil
     ) {
         self.init(
             conversationID: conversationID,
             pendingQueue: pendingQueue,
             style: style,
             focusOnAppear: focusOnAppear,
+            showsCompactIOSFullChatButton: showsCompactIOSFullChatButton,
+            dismissKeyboardOnSuccessfulSubmit: dismissKeyboardOnSuccessfulSubmit,
+            onSuccessfulSubmit: onSuccessfulSubmit,
             header: { EmptyView() }
         )
     }
@@ -606,13 +625,18 @@ extension PromptInputView where Background == PlatformDefaultPromptBackground {
     init(
         conversationID: Binding<String?>,
         pendingQueue: Binding<[PendingQueueMessage]>,
+        style: PromptInputStyle<PlatformDefaultPromptBackground> = .inspector,
+        showsCompactIOSFullChatButton: Bool = true,
+        onSuccessfulSubmit: (() -> Void)? = nil,
         @ViewBuilder header: () -> Header
     ) {
         self.init(
             conversationID: conversationID,
             pendingQueue: pendingQueue,
-            style: .inspector,
+            style: style,
             focusOnAppear: false,
+            showsCompactIOSFullChatButton: showsCompactIOSFullChatButton,
+            onSuccessfulSubmit: onSuccessfulSubmit,
             header: header
         )
     }

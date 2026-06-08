@@ -30,34 +30,89 @@ extension AISettingsView {
 
     @ViewBuilder
     var aiAccountRows: some View {
-        HStack {
-            Text(localizable: .settingsAIAccountProviderLabel)
-            Spacer(minLength: 16)
-
-            if let provider = aiUserInfo?.identity.provider {
-                Text(aiIdentityProviderDisplayName(provider))
-                    .foregroundStyle(.secondary)
-            } else if isLoadingAIUserInfo {
-                Text(localizable: .generalLoading)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text(localizable: .settingsAIAccountLoadFailed)
-                    .foregroundStyle(.secondary)
-            }
+        if usesCompactSettingsLayout {
+            compactAIAccountProviderRow
+            compactAIAccountIDRow
+        } else {
+            regularAIAccountProviderRow
+            regularAIAccountIDRow
         }
+    }
 
+    @ViewBuilder
+    var regularAIAccountProviderRow: some View {
+        HStack {
+            aiAccountProviderLabel
+            Spacer(minLength: 16)
+
+            aiAccountProviderValue
+        }
+    }
+
+    @ViewBuilder
+    var regularAIAccountIDRow: some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Text(localizable: .settingsAIAccountIDLabel)
+            aiAccountIDLabel
 
             Spacer(minLength: 16)
 
-            if let aiAccountID {
+            aiAccountIDValue
+        }
+    }
+
+    @ViewBuilder
+    var compactAIAccountProviderRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            aiAccountProviderLabel
+            aiAccountProviderValue
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    var compactAIAccountIDRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            aiAccountIDLabel
+            aiAccountIDValue
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    var aiAccountProviderLabel: some View {
+        Text(localizable: .settingsAIAccountProviderLabel)
+    }
+
+    @ViewBuilder
+    var aiAccountProviderValue: some View {
+        if let provider = aiUserInfo?.identity.provider {
+            Text(aiIdentityProviderDisplayName(provider))
+                .foregroundStyle(.secondary)
+        } else if isLoadingAIUserInfo {
+            Text(localizable: .generalLoading)
+                .foregroundStyle(.secondary)
+        } else {
+            Text(localizable: .settingsAIAccountLoadFailed)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    var aiAccountIDLabel: some View {
+        Text(localizable: .settingsAIAccountIDLabel)
+    }
+
+    @ViewBuilder
+    var aiAccountIDValue: some View {
+        if let aiAccountID {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text(aiAccountID)
                     .font(.system(.caption, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                     .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 Button {
                     copyAIAccountID(aiAccountID)
@@ -65,21 +120,21 @@ extension AISettingsView {
                     Text(didCopyAIAccountID ? String(localizable: .exportActionCopied) : String(localizable: .generalButtonCopy))
                 }
                 .buttonStyle(.borderless)
-            } else {
-                HStack(spacing: 10) {
-                    Text(isLoadingAIUserInfo ? String(localizable: .generalLoading) : String(localizable: .settingsAIAccountLoadFailed))
-                        .foregroundStyle(.secondary)
+            }
+        } else {
+            HStack(spacing: 10) {
+                Text(isLoadingAIUserInfo ? String(localizable: .generalLoading) : String(localizable: .settingsAIAccountLoadFailed))
+                    .foregroundStyle(.secondary)
 
-                    if aiUserInfoLoadError != nil {
-                        Button {
-                            Task {
-                                await reloadAIAccountInfo()
-                            }
-                        } label: {
-                            Text(localizable: .generalButtonRetry)
+                if aiUserInfoLoadError != nil {
+                    Button {
+                        Task {
+                            await reloadAIAccountInfo()
                         }
-                        .buttonStyle(.borderless)
+                    } label: {
+                        Text(localizable: .generalButtonRetry)
                     }
+                    .buttonStyle(.borderless)
                 }
             }
         }

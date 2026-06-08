@@ -13,19 +13,30 @@ extension AISettingsView {
         @ViewBuilder leading: () -> Leading,
         @ViewBuilder accessory: () -> Accessory
     ) -> some View {
-        HStack(alignment: .top, spacing: 22) {
-            leading()
+        if usesCompactSettingsLayout {
+            VStack(alignment: .leading, spacing: 12) {
+                leading()
 
-            Spacer(minLength: 0)
-
-            if prefs.isAIEnabled {
-                VStack(alignment: .trailing, spacing: 12) {
-                    tabPicker
+                if prefs.isAIEnabled {
                     accessory()
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+            HStack(alignment: .top, spacing: 22) {
+                leading()
+
+                Spacer(minLength: 0)
+
+                if prefs.isAIEnabled {
+                    VStack(alignment: .trailing, spacing: 12) {
+                        tabPicker
+                        accessory()
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -36,6 +47,25 @@ extension AISettingsView {
             EmptyView()
         }
     }
+
+#if os(iOS)
+    @ViewBuilder
+    var bottomTabBar: some View {
+        ForEach(SettingsTab.allCases) { tab in
+            Button {
+                withAnimation(.easeInOut(duration: 0.18)) {
+                    selectedTab = tab
+                }
+            } label: {
+                Label(tab.title, systemSymbol: tab.iconSymbol)
+            }
+            .labelStyle(.iconOnly)
+            .foregroundStyle(selectedTab == tab ? Color.accentColor : Color.primary)
+            .tint(selectedTab == tab ? Color.accentColor : Color.primary)
+            .help(tab.title)
+        }
+    }
+#endif
 
     @ViewBuilder
     var tabPicker: some View {
@@ -76,6 +106,7 @@ extension AISettingsView {
                 .buttonStyle(.plain)
             }
         }
+        .fixedSize(horizontal: true, vertical: false)
         .padding(3)
         .background {
             Capsule()

@@ -18,6 +18,7 @@ import Logging
 struct ExcalidrawEditor: View {
     @Environment(\.managedObjectContext) var viewContext
     @Environment(\.alertToast) var alertToast
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
 
     @EnvironmentObject var appPreference: AppPreference
     @EnvironmentObject var fileState: FileState
@@ -96,6 +97,14 @@ struct ExcalidrawEditor: View {
             return false
         }
     }
+
+    private var usesCompactIOSAIChatSurfaces: Bool {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact
+#else
+        false
+#endif
+    }
     
     
     @State private var canvasLoadingState: ExcalidrawCanvasView.LoadingState = .loading
@@ -146,11 +155,22 @@ struct ExcalidrawEditor: View {
         }
         .readSize($editorContentSize)
         .overlay(alignment: .bottom) {
-            AIChatIslandOverlay(canvasSize: editorContentSize)
 #if os(iOS)
-            CompactAIChatInputOverlay()
+            if !usesCompactIOSAIChatSurfaces {
+                AIChatIslandOverlay(canvasSize: editorContentSize)
+            }
+#else
+            AIChatIslandOverlay(canvasSize: editorContentSize)
 #endif
         }
+#if os(iOS)
+        .overlay(alignment: .bottom) {
+            CompactAIChatInputOverlay()
+        }
+        .overlay(alignment: .bottom) {
+            CompactAIChatGeneratingOverlay()
+        }
+#endif
         .animation(.smooth(duration: 0.3), value: layoutState.isAIChatIslandMode)
         .animation(.smooth(duration: 0.3), value: layoutState.isCompactAIChatToolbarPresented)
         .animation(.smooth(duration: 0.3), value: layoutState.isCompactAIChatInputEditing)

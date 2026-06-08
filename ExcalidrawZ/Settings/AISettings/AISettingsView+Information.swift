@@ -125,20 +125,32 @@ extension AISettingsView {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                HStack(spacing: 14) {
-                    Link(
-                        .localizable(.generalButtonPrivacyPolicy),
-                        destination: URL(string: "https://excalidrawz.chocoford.com/privacy/")!
-                    )
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 14) {
+                        aiInformationPolicyLinks
+                    }
 
-                    Link(
-                        .localizable(.generalButtonTermsOfUse),
-                        destination: URL(string: "https://excalidrawz.chocoford.com/terms/")!
-                    )
+                    VStack(alignment: .leading, spacing: 8) {
+                        aiInformationPolicyLinks
+                    }
                 }
                 .font(.callout.weight(.semibold))
             }
         }
         .padding(.vertical, 3)
+    }
+
+    @MainActor
+    @ViewBuilder
+    private var aiInformationPolicyLinks: some View {
+        Link(
+            .localizable(.generalButtonPrivacyPolicy),
+            destination: URL(string: "https://excalidrawz.chocoford.com/privacy/")!
+        )
+
+        Link(
+            .localizable(.generalButtonTermsOfUse),
+            destination: URL(string: "https://excalidrawz.chocoford.com/terms/")!
+        )
     }
 }

@@ -10,6 +10,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 import ChocofordUI
+import LLMKit
 import SFSafeSymbols
 import UIKit
 
@@ -19,6 +20,8 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
     @EnvironmentObject private var fileState: FileState
     @EnvironmentObject private var toolState: ToolState
     @EnvironmentObject private var layoutState: LayoutState
+    @EnvironmentObject private var aiChatState: AIChatState
+    @EnvironmentObject private var llmState: LLMStateObject
     @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
 
     private var activeCoordinator: ExcalidrawCanvasView.Coordinator? {
@@ -37,12 +40,19 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
                     if layoutState.isCompactAIChatToolbarPresented,
                        canPresentCompactAIChatToolbarInput {
                         // AI Chat
-                        compactAIChatToolbarAttachmentMenu
-                        Spacer(minLength: 0)
-                        compactAIChatToolbarPlaceholder
-                            .frame(maxWidth: .infinity)
-                        Spacer(minLength: 0)
-                        compactAIChatToolbarCloseButton
+                        if compactAIChatIsReplying {
+                            Spacer(minLength: 0)
+                        } else {
+                            compactAIChatToolbarAttachmentMenu
+                            Spacer(minLength: 0)
+                            compactAIChatToolbarPlaceholder
+                                .frame(maxWidth: .infinity)
+                            Spacer(minLength: 0)
+                        }
+                        if !compactAIChatIsReplying || compactAIChatShowsStopButton {
+                            compactAIChatToolbarCloseButton
+                                .transition(.opacity.combined(with: .scale(scale: 0.92)))
+                        }
                     } else {
                         compactDragModeControls
                     }
@@ -210,32 +220,37 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
 
     @ViewBuilder
     private var compactAIChatToolbarPlaceholder: some View {
-        Button {
+        CompactAIChatToolbarPlaceholderButton(draftState: compactAIChatDraftState) {
             layoutState.enterCompactAIChatInputEditing()
-        } label: {
-            Label(.localizable(.aiChatInputPlaceholder), systemSymbol: .sparkles)
-                .labelStyle(.titleAndIcon)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
         }
-        .buttonStyle(.plain)
-        .help("AI Chat")
     }
 
     @ViewBuilder
     private var compactAIChatToolbarCloseButton: some View {
         Button {
-            layoutState.exitCompactAIChatToolbar()
+            if compactAIChatShowsStopButton {
+                stopCompactAIChatGeneration()
+            } else {
+                layoutState.exitCompactAIChatToolbar()
+            }
         } label: {
-            Label(.localizable(.generalButtonClose), systemSymbol: .xmark)
-                .labelStyle(.iconOnly)
-                .font(.system(size: 16))
+            ZStack {
+                if compactAIChatShowsStopButton {
+                    Image(systemSymbol: .stopFill)
+                        .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                } else {
+                    Image(systemSymbol: .xmark)
+                        .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                }
+            }
+                .font(.system(size: 16, weight: .medium))
                 .frame(width: 28, height: 28)
                 .contentShape(Rectangle())
         }
+        .foregroundStyle(compactAIChatShowsStopButton ? Color.accentColor : Color.primary)
         .buttonStyle(.plain)
-        .help(String(localizable: .generalButtonClose))
+        .help(compactAIChatToolbarTrailingTitle)
+        .animation(.smooth(duration: 0.2), value: compactAIChatShowsStopButton)
     }
 
     @ViewBuilder
@@ -364,6 +379,47 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
             !fileState.currentActiveFileIsInTrash
     }
 
+    private var compactAIChatDraftState: AIChatPromptDraftState {
+        aiChatState.promptDraftState(
+            conversationID: fileState.aiChatConversationID,
+            fileScope: fileState.currentActiveFile?.aiConversationFileScope
+        )
+    }
+
+    private var compactAIChatIsGenerating: Bool {
+        guard let conversationID = fileState.aiChatConversationID else { return false }
+        return llmState.isRunning(conversationID: conversationID)
+    }
+
+    private var compactAIChatIsReplying: Bool {
+        compactAIChatIsGenerating || layoutState.isCompactAIChatReplyTickerVisible
+    }
+
+    private var compactAIChatShowsStopButton: Bool {
+        compactAIChatIsGenerating || layoutState.isCompactAIChatReplyStartPending
+    }
+
+    private var compactAIChatToolbarTrailingTitle: String {
+        compactAIChatShowsStopButton ? "Stop AI generation" : String(localizable: .generalButtonClose)
+    }
+
+    private func stopCompactAIChatGeneration() {
+        let wasGenerating = compactAIChatIsGenerating
+        layoutState.isCompactAIChatReplyStartPending = false
+        guard let conversationID = fileState.aiChatConversationID else {
+            layoutState.isCompactAIChatReplyTickerVisible = false
+            return
+        }
+        llmState.cancelGeneration(conversationID: conversationID)
+        aiChatState.markGenerationCancelled(conversationID: conversationID)
+        if !wasGenerating {
+            layoutState.isCompactAIChatReplyTickerVisible = false
+        }
+        withAnimation(.easeInOut(duration: 0.2)) {
+            aiChatState.pendingQueue.removeAll()
+        }
+    }
+
     private func toggleCompactAIChatPresentation() {
         if layoutState.isCompactAIChatToolbarPresented {
             layoutState.exitCompactAIChatToolbar()
@@ -371,7 +427,7 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
             if !toolState.inDragMode {
                 toolState.setActivedTool(.hand)
             }
-            layoutState.enterCompactAIChatToolbar()
+            layoutState.enterCompactAIChatInputEditing()
         } else if layoutState.isAIChatIslandMode {
             layoutState.isAIChatIslandMode = false
         } else {
@@ -469,8 +525,43 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
     }
 }
 
+private struct CompactAIChatToolbarPlaceholderButton: View {
+    @ObservedObject var draftState: AIChatPromptDraftState
+
+    let onBeginEditing: () -> Void
+
+    private var displayText: String {
+        let text = draftState.text
+            .components(separatedBy: .newlines)
+            .joined(separator: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.isEmpty ? String(localizable: .aiChatInputPlaceholder) : text
+    }
+
+    var body: some View {
+        Button {
+            onBeginEditing()
+        } label: {
+            Label {
+                Text(displayText)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            } icon: {
+                Image(systemSymbol: .sparkles)
+            }
+            .labelStyle(.titleAndIcon)
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+        .help("AI Chat")
+    }
+}
+
 struct CompactExcalidrawBottomToolbarStateModifier: ViewModifier {
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
+    @Environment(\.alertToast) private var alertToast
 
     @EnvironmentObject private var fileState: FileState
     @EnvironmentObject private var toolState: ToolState
@@ -489,6 +580,10 @@ struct CompactExcalidrawBottomToolbarStateModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .onChange(of: toolState.activatedTool, debounce: 0.05) { newValue in
+                guard containerHorizontalSizeClass == .compact else { return }
+                syncActiveTool(newValue)
+            }
             .watch(value: toolState.inDragMode) { inDragMode in
                 guard !inDragMode else { return }
                 layoutState.exitCompactAIChatToolbar()
@@ -514,6 +609,24 @@ struct CompactExcalidrawBottomToolbarStateModifier: ViewModifier {
                     toolState.setActivedTool(.hand)
                 }
             }
+    }
+
+    private func syncActiveTool(_ newValue: ExcalidrawTool?) {
+        if newValue == nil {
+            toolState.setActivedTool(.cursor)
+        }
+
+        guard let tool = newValue else { return }
+        let webCoordinator = toolState.excalidrawWebCoordinator
+
+        guard tool != webCoordinator?.lastTool else { return }
+        Task {
+            do {
+                try await toolState.toggleTool(tool)
+            } catch {
+                alertToast(error)
+            }
+        }
     }
 }
 

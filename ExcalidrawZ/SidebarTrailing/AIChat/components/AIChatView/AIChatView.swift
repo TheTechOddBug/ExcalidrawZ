@@ -52,6 +52,7 @@ struct AIChatView: View {
     /// Confirmation dialog for the "Clear chat" toolbar action — destructive,
     /// so we route through a confirmationDialog rather than firing on tap.
     @State var isConfirmingClear: Bool = false
+    @State var isAISettingsSheetPresented: Bool = false
 
     /// Tapped Get Started on the first-run welcome cover. We only fall back
     /// on the `conversations` count for "first-time visitor" detection;
@@ -125,6 +126,15 @@ struct AIChatView: View {
 #endif
     }
 
+    var promptInputStyle: PromptInputStyle<PlatformDefaultPromptBackground> {
+#if os(iOS)
+        if isCompactIOS {
+            return .compactIOSIsland
+        }
+#endif
+        return .inspector
+    }
+
     @MainActor
     func activeFileAllowsAIContext() async -> Bool {
         guard let activeFile = fileState.currentActiveFile else { return false }
@@ -196,6 +206,11 @@ struct AIChatView: View {
         } message: {
             Text(localizable: .aiChatClearChatConfimationDialogMessage)
         }
+#if os(iOS)
+        .sheet(isPresented: $isAISettingsSheetPresented) {
+            aiSettingsSheet
+        }
+#endif
         .background {
             debugPublishProbe
         }
@@ -208,6 +223,20 @@ struct AIChatView: View {
             cancelAIWorkForDisabledAI()
         }
     }
+
+#if os(iOS)
+    @ViewBuilder
+    private var aiSettingsSheet: some View {
+        if #available(iOS 16.4, *) {
+            SettingsView()
+                .presentationContentInteraction(.scrolls)
+                .swiftyAlert()
+        } else {
+            SettingsView()
+                .swiftyAlert()
+        }
+    }
+#endif
 
     @ViewBuilder
     private var debugPublishProbe: some View {
@@ -278,7 +307,9 @@ struct AIChatView: View {
                 ZStack(alignment: .top) {
                     PromptInputView(
                         conversationID: conversationID,
-                        pendingQueue: $aiChatState.pendingQueue
+                        pendingQueue: $aiChatState.pendingQueue,
+                        style: promptInputStyle,
+                        showsCompactIOSFullChatButton: false
                     ) {
                         if let editSession = activeEditSession {
                             EditSessionBanner(

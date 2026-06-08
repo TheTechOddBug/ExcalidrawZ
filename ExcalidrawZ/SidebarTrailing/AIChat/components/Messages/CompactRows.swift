@@ -68,7 +68,7 @@ struct CompactSummaryRow: View {
                         Color.black
                         if contentHeight > 150 {
                             ZStack {
-                                if #available(macOS 14.0, *) {
+                                if #available(macOS 14.0, iOS 17.0, *) {
                                     SmoothLinearGradient(
                                         from: .black,
                                         to: .clear,

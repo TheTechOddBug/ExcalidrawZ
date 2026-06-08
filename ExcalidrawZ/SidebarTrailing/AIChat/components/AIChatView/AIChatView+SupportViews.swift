@@ -16,11 +16,21 @@ import SwiftUI
 @available(macOS 14.0, *)
 struct OpenSettingsMenuItem: View {
     let deepLinkTo: SettingsView.Route
+    let aiSettingsRoute: SettingsRouter.AISettingsRoute?
     @Environment(\.openSettings) private var openSettings
+
+    init(
+        deepLinkTo: SettingsView.Route,
+        aiSettingsRoute: SettingsRouter.AISettingsRoute? = nil
+    ) {
+        self.deepLinkTo = deepLinkTo
+        self.aiSettingsRoute = aiSettingsRoute
+    }
     
     var body: some View {
         Button {
             SettingsRouter.shared.pendingRoute = deepLinkTo
+            SettingsRouter.shared.pendingAISettingsRoute = aiSettingsRoute
             openSettings()
         } label: {
             Label(.localizable(.generalButtonSettings), systemSymbol: .gearshape)

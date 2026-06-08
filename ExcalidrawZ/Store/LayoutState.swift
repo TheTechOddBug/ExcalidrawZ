@@ -68,6 +68,8 @@ final class LayoutState: ObservableObject {
         didSet {
             guard isCompactAIChatToolbarPresented else {
                 isCompactAIChatInputEditing = false
+                isCompactAIChatReplyTickerVisible = false
+                isCompactAIChatReplyStartPending = false
                 return
             }
             if isInspectorPresented && activeInspectorTab == .aiChat {
@@ -78,6 +80,17 @@ final class LayoutState: ObservableObject {
     }
 
     @Published var isCompactAIChatInputEditing: Bool = false
+
+    /// True while the compact iOS AI reply ticker is visible, including
+    /// its short post-generation linger. The bottom toolbar uses this to
+    /// avoid restoring its normal AI controls before the ticker disappears.
+    @Published var isCompactAIChatReplyTickerVisible: Bool = false
+
+    /// Compact iOS-only bridge state between a successful prompt submit and
+    /// LLMKit reporting the conversation as running. It lets the bottom
+    /// toolbar show Stop while the compact reply ticker renders its pending
+    /// state.
+    @Published var isCompactAIChatReplyStartPending: Bool = false
 
     /// Persistent drag offset of the island (relative to its default top-right
     /// anchor). Lives here — not in the island view's @State — so the position
@@ -133,6 +146,8 @@ final class LayoutState: ObservableObject {
         withAnimation(.smooth) {
             isCompactAIChatToolbarPresented = false
             isCompactAIChatInputEditing = false
+            isCompactAIChatReplyTickerVisible = false
+            isCompactAIChatReplyStartPending = false
         }
     }
 

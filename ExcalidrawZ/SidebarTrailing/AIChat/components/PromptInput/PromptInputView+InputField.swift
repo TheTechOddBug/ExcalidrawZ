@@ -79,6 +79,8 @@ extension PromptInputView {
             showsAttachments: false,
             sendRequestToken: draftSendRequestToken,
             maxTextAreaHeight: nil,
+            textInsets: nil,
+            linesOverflow: nil,
             onTextAreaSingleLineChanged: nil,
             focus: $isInputFocused,
             onSubmit: { text, images in
@@ -107,6 +109,8 @@ extension PromptInputView {
                 showsAttachments: true,
                 sendRequestToken: draftSendRequestToken,
                 maxTextAreaHeight: nil,
+                textInsets: nil,
+                linesOverflow: nil,
                 onTextAreaSingleLineChanged: nil,
                 focus: $isInputFocused,
                 onSubmit: { text, images in
@@ -190,6 +194,8 @@ struct PromptDraftInputField: View {
     let showsAttachments: Bool
     let sendRequestToken: Int
     let maxTextAreaHeight: CGFloat?
+    let textInsets: EdgeInsets?
+    let linesOverflow: Binding<Bool>?
     let onTextAreaSingleLineChanged: ((Bool) -> Void)?
     let focus: FocusState<Bool>.Binding
     let onSubmit: (String, [PendingPastedImage]) -> Bool
@@ -221,6 +227,8 @@ struct PromptDraftInputField: View {
             PromptDraftTextArea(
                 text: textBinding,
                 maxHeight: maxTextAreaHeight,
+                textInsets: textInsets,
+                linesOverflow: linesOverflow,
                 onSingleLineChanged: onTextAreaSingleLineChanged,
                 focus: focus,
                 onSubmit: submit,
@@ -332,6 +340,8 @@ struct PromptDraftInputField: View {
 private struct PromptDraftTextArea: View {
     let text: Binding<String>
     let maxHeight: CGFloat?
+    let textInsets: EdgeInsets?
+    let linesOverflow: Binding<Bool>?
     let onSingleLineChanged: ((Bool) -> Void)?
     let focus: FocusState<Bool>.Binding
     let onSubmit: () -> Void
@@ -354,6 +364,12 @@ private struct PromptDraftTextArea: View {
 
         if let maxHeight {
             textArea = textArea.maxHeight(maxHeight)
+        }
+        if let textInsets {
+            textArea = textArea.textInsets(textInsets)
+        }
+        if let linesOverflow {
+            textArea = textArea.linesOverflow(linesOverflow)
         }
         if let onSingleLineChanged {
             textArea = textArea.onSingleLineChanged(onSingleLineChanged)

@@ -49,62 +49,80 @@ extension AIChatView {
 #endif
             
             ToolbarItemGroup(placement: .automatic) {
-                Menu {
-                    Button {} label: {
-                        Label(.localizable( .aiChatButtonCreditsCount(creditsDisplayText)),
-                            systemSymbol: .sparkles
-                        )
-                    }
-                    .disabled(true)
-                    
-                    Divider()
-                    
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            isShowingWelcomeManually = true
-                        }
-                    } label: {
-                        Label(.localizable(.aiChatButtonShowWelcome), systemSymbol: .sparkles)
-                    }
-                    
-#if os(macOS)
-                    if #available(macOS 14.0, *) {
-                        OpenSettingsMenuItem(deepLinkTo: .ai)
-                    } else {
-                        // Pre-`openSettings` env fallback — NSApp.sendAction
-                        // path. Older macOS doesn't carry the macOS 26+ runtime
-                        // "Please use SettingsLink" warning.
-                        Button {
-                            SettingsRouter.shared.requestOpen(.ai)
-                        } label: {
-                            Label(.localizable(.generalButtonSettings), systemSymbol: .gearshape)
-                        }
-                    }
-#else
-                    Button {
-                        SettingsRouter.shared.requestOpen(.ai)
-                    } label: {
-                        Label(.localizable(.generalButtonSettings), systemSymbol: .gearshape)
-                    }
-#endif
-                    
-                    Divider()
-                    
-                    Button(role: .destructive) {
-                        isConfirmingClear = true
-                    } label: {
-                        Label(.localizable(.aiChatButtonClearChat), systemSymbol: .trash)
-                    }
-                    // Disable when there's no conversation to clear, so the
-                    // user doesn't get a confirmationDialog for a no-op.
-                    .disabled(fileState.aiChatConversationID == nil)
-                } label: {
-                    Label(.localizable(.generalButtonMore), systemSymbol: .ellipsis)
-                }
-                .menuIndicator(.hidden)
+                aiChatMoreMenu
             }
         }
+
+#if os(iOS)
+        if containerHorizontalSizeClass == .compact,
+           !layoutState.isInspectorPresented {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                aiChatMoreMenu
+            }
+        }
+#endif
     }
-    
-    
+
+    @ViewBuilder
+    private var aiChatMoreMenu: some View {
+        Menu {
+            Button {} label: {
+                Label(.localizable(.aiChatButtonCreditsCount(creditsDisplayText)),
+                    systemSymbol: .sparkles
+                )
+            }
+            .disabled(true)
+
+            Divider()
+
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    isShowingWelcomeManually = true
+                }
+            } label: {
+                Label(.localizable(.aiChatButtonShowWelcome), systemSymbol: .sparkles)
+            }
+
+#if os(macOS)
+            if #available(macOS 14.0, *) {
+                OpenSettingsMenuItem(deepLinkTo: .ai, aiSettingsRoute: .settings)
+            } else {
+                // Pre-`openSettings` env fallback — NSApp.sendAction path.
+                Button {
+                    presentAISettings()
+                } label: {
+                    Label(.localizable(.generalButtonSettings), systemSymbol: .gearshape)
+                }
+            }
+#else
+            Button {
+                presentAISettings()
+            } label: {
+                Label(.localizable(.generalButtonSettings), systemSymbol: .gearshape)
+            }
+#endif
+
+            Divider()
+
+            Button(role: .destructive) {
+                isConfirmingClear = true
+            } label: {
+                Label(.localizable(.aiChatButtonClearChat), systemSymbol: .trash)
+            }
+            .disabled(fileState.aiChatConversationID == nil)
+        } label: {
+            Label(.localizable(.generalButtonMore), systemSymbol: .ellipsis)
+        }
+        .menuIndicator(.hidden)
+    }
+
+    private func presentAISettings() {
+        SettingsRouter.shared.pendingRoute = .ai
+        SettingsRouter.shared.pendingAISettingsRoute = .settings
+#if os(iOS)
+        isAISettingsSheetPresented = true
+#else
+        SettingsRouter.shared.requestOpen(.ai)
+#endif
+    }
 }

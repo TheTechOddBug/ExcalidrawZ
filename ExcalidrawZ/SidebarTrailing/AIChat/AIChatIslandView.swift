@@ -42,43 +42,7 @@ struct AIChatIslandView: View {
     /// latest release fires the 1 s delayed clamp.
     @State private var snapBackTask: Task<Void, Never>?
 
-    /// Single-line reply ticker shown while a round is in progress and for
-    /// `tickerDuration` after each reply commits. Lifecycle: "Thinking…"
-    /// while the round has no committed assistant message; swapped to the
-    /// committed message text on each commit; for messages with non-final
-    /// tool calls the text further switches from content → tool-call after
-    /// `toolCallSwitchDelay`. The mask animation lives inside
-    /// `ReplyTickerView` and re-fires every time this string changes.
-    @State private var displayedReplyText: String?
-
-    /// Pending "ticker → banner" revert. Cancelled if a new round starts or
-    /// the view disappears, so a long answer landing right before unmount
-    /// doesn't leak a delayed mutation onto a torn-down state.
-    @State private var autoHideTask: Task<Void, Never>?
-
-    /// Pending "content → tool call display" swap. When a committed
-    /// message has a non-final-answer tool call alongside content, we
-    /// linger on the content for `toolCallSwitchDelay` then switch to
-    /// the tool-call frame.
-    @State private var toolCallSwitchTask: Task<Void, Never>?
-
-    /// Last assistant message id we've already pushed into the ticker.
-    /// Used to dedupe `latestAssistantMessageID` onChange firings against
-    /// re-renders for unrelated state changes.
-    @State private var lastSeenAssistantMessageID: String?
-    @State private var tickerTrackingConversationID: String?
-    @State private var hasObservedActiveGenerationInTrackedConversation = false
     @State private var renderedIslandHeaderPayload: AIChatIslandHeaderPayload?
-
-    /// How long the ticker lingers after a round finishes before the header
-    /// reverts to the credits banner. 3 s is enough to read a one-line
-    /// final answer at glance speed without making the banner-revert feel
-    /// late; shorter and the user is still parsing the text when it pops.
-    private let tickerDuration: Duration = .seconds(3)
-
-    /// How long to show a message's content before swapping to the tool-call
-    /// frame for messages that carry a non-final-answer tool call.
-    private let toolCallSwitchDelay: Duration = .seconds(1)
 
     private let previewMaxHeight: CGFloat = 200
     /// How close to the editor edge the island is allowed to settle after a
@@ -125,12 +89,6 @@ struct AIChatIslandView: View {
         )
     }
 
-    private var hasActiveGeneration: Bool {
-        guard let conversationID = fileState.aiChatConversationID else { return false }
-        return llmState.isRunning(conversationID: conversationID)
-            || activeStreamingAssistantContent != nil
-    }
-
     /// Mirror of `ApprovalPromptView`'s gate so the island's
     /// `.animation(value:)` knows to animate the layout shift when
     /// the card flips visibility.
@@ -149,23 +107,23 @@ struct AIChatIslandView: View {
         return balance < lowCreditsBannerThreshold
     }
 
-    private var shouldShowIslandHeader: Bool {
-        displayedReplyText != nil
+    private func shouldShowIslandHeader(replyText: String?) -> Bool {
+        replyText != nil
             || shouldShowLowCreditsBanner
             || !aiChatState.pendingQueue.isEmpty
     }
 
-    private var islandHeaderPayload: AIChatIslandHeaderPayload? {
-        guard shouldShowIslandHeader else { return nil }
+    private func islandHeaderPayload(replyText: String?) -> AIChatIslandHeaderPayload? {
+        guard shouldShowIslandHeader(replyText: replyText) else { return nil }
         return AIChatIslandHeaderPayload(
-            replyText: displayedReplyText,
+            replyText: replyText,
             showsLowCreditsBanner: shouldShowLowCreditsBanner,
             pendingQueue: aiChatState.pendingQueue
         )
     }
 
-    private var islandHeaderPresence: Bool? {
-        shouldShowIslandHeader ? true : nil
+    private func islandHeaderPresence(replyText: String?) -> Bool? {
+        shouldShowIslandHeader(replyText: replyText) ? true : nil
     }
 
     private var conversation: Conversation? {
@@ -177,195 +135,54 @@ struct AIChatIslandView: View {
         conversation?.messages.count ?? 0
     }
 
-    private var activeStreamingAssistantContent: ChatMessageContent? {
-        guard let conversationID = fileState.aiChatConversationID,
-              let messages = conversation?.messages else {
-            return nil
-        }
-        return messages.compactMap { message -> ChatMessageContent? in
-            guard case .content(let content) = message,
-                  content.role == .assistant,
-                  llmState.isStreaming(messageID: content.id, in: conversationID) else {
-                return nil
-            }
-            return content
-        }.last
-    }
-
-    /// The latest *committed* (not currently streaming) assistant message.
-    /// We need the full message — not just its display text — so we can
-    /// branch on whether it carries non-final-answer tool calls.
-    private var latestAssistantMessage: ChatMessage? {
-        guard let conversationID = fileState.aiChatConversationID,
-              let messages = conversation?.messages else {
-            return nil
-        }
-        return messages.last { msg in
-            guard case .content(let c) = msg,
-                  c.role == .assistant else {
-                return false
-            }
-            if llmState.isStreaming(messageID: c.id, in: conversationID) {
-                return false
-            }
-            return true
-        }
-    }
-
-    /// Stable id for `latestAssistantMessage`. Watched by `.onChange` to
-    /// detect "a new assistant message just committed".
-    private var latestAssistantMessageID: String? {
-        latestAssistantMessage?.id
-    }
-
-    private func displayText(of c: ChatMessageContent) -> String {
-        if let finalCall = c.toolCalls?.first(where: { $0.name == "final_answer" }) {
-            return parseFinalAnswerArgs(finalCall.arguments)
-        }
-        return c.content ?? ""
-    }
-
-    /// Single-line label for a tool-call frame in the ticker. Resolve the
-    /// protocol-level snake_case name to the same display name used by the
-    /// full `ToolCallCard`, so the island does not leak internal tool ids.
-    private func toolCallDisplay(_ name: String) -> String {
-        String(
-            localizable: .aiChatToolCallDisplay(ToolDisplayNameCache.displayName(for: name))
-        )
-    }
-
-    /// Name of the first non-final-answer tool call currently being emitted
-    /// in the active stream (or nil when no stream is active or only the
-    /// `final_answer` synthetic call is present). LLMKit keeps streaming
-    /// content/tool calls on `conversation.messages`.
-    private var liveToolCallName: String? {
-        activeStreamingAssistantContent?.toolCalls?
-            .first(where: { $0.name != "final_answer" })?
-            .name
-    }
-
     var body: some View {
-        CollapsibleSpacingVStack(spacing: 10) {
-            AnimatedPresence(
-                value: islandHeaderPresence,
-                contentAnimation: .easeOut(duration: 0.12),
-                contentTransition: .deferredOpacity,
-                contentTransitionDelay: .milliseconds(130),
-                removalAnimation: .linear(duration: 0.001),
-                removalDelay: .milliseconds(40)
-            ) { _ in
-                if let payload = renderedIslandHeaderPayload ?? islandHeaderPayload {
-                    islandHeader(payload)
+        AIChatReplyTickerHost { replyText in
+            let currentHeaderPayload = islandHeaderPayload(replyText: replyText)
+            CollapsibleSpacingVStack(spacing: 10) {
+                AnimatedPresence(
+                    value: islandHeaderPresence(replyText: replyText),
+                    contentAnimation: .easeOut(duration: 0.12),
+                    contentTransition: .deferredOpacity,
+                    contentTransitionDelay: .milliseconds(130),
+                    removalAnimation: .linear(duration: 0.001),
+                    removalDelay: .milliseconds(40)
+                ) { _ in
+                    if let payload = renderedIslandHeaderPayload ?? currentHeaderPayload {
+                        islandHeader(payload)
+                    }
                 }
-            }
-            
-            islandBody()
-        }
-        .modifier(AIChatIslandProposalModifier(
-            conversationID: fileState.aiChatConversationID,
-            conversation: conversation,
-            conversationMessageCount: conversationMessageCount,
-            islandWidth: islandWidth
-        ))
-        .readHeight($measuredHeight)
-        .offset(
-            x: isDraggable ? layoutState.aiChatIslandOffset.width + dragDelta.width : 0,
-            y: isDraggable ? layoutState.aiChatIslandOffset.height + dragDelta.height : 0
-        )
-        // Window resize / split changes shrink `canvasSize` and may strand
-        // the island outside the new bounds. Clamp immediately (no 1 s
-        // delay) — there's no drag in flight to wait for.
-        .onChange(of: canvasSize, debounce: 1) { _ in
-            guard isDraggable else { return }
-            snapBackTask?.cancel()
-            snapBackIfOutOfBounds()
-        }
-        // Watch only the *boundary* of the run lifecycle (active ↔ idle).
-        // Token-level streaming can pause around tool calls; `isRunning`
-        // remains true through those seams.
-        .onAppear {
-            resetTickerTrackingForCurrentConversation()
-            renderedIslandHeaderPayload = islandHeaderPayload
-        }
-        .task {
-            await LLMCreditsRefreshCoordinator.shared.refreshCredits(reason: .aiChatAppear)
-        }
-        .watch(value: hasActiveGeneration) { _, active in
-            if active {
-                hasObservedActiveGenerationInTrackedConversation = true
-            }
-            updateGenerationTicker(hasActiveGeneration: active)
-        }
-        .watch(value: fileState.aiChatConversationID) { _, _ in
-            resetTickerTrackingForCurrentConversation()
-            renderedIslandHeaderPayload = islandHeaderPayload
-        }
-        .watch(value: islandHeaderPayload) { _, payload in
-            guard let payload else { return }
-            renderedIslandHeaderPayload = payload
-        }
-        // Real-time tool-call surfacing. The streaming message accumulates
-        // tool calls before the message itself commits; reflecting that
-        // immediately means "Thinking…" flips to "Using <tool>…" the moment
-        // the model fires the call, instead of lingering until the message
-        // lands in `conversation.messages`. We also guard against beating
-        // a same-named display already on screen (no-op write).
-        .watch(value: liveToolCallName) { _, newName in
-            guard let newName else { return }
-            let label = toolCallDisplay(newName)
-            guard displayedReplyText != label else { return }
-            autoHideTask?.cancel()
-            toolCallSwitchTask?.cancel()
-            displayedReplyText = label
-        }
-        // Each new committed assistant message drives the ticker. We dedupe
-        // against `lastSeenAssistantMessageID` so unrelated re-renders don't
-        // re-process the same message and double-fire the timing chain.
-        .watch(value: latestAssistantMessageID) { _, newID in
-            if tickerTrackingConversationID != fileState.aiChatConversationID {
-                resetTickerTrackingForCurrentConversation()
-            }
-            guard let newID, newID != lastSeenAssistantMessageID else { return }
 
-            guard hasObservedActiveGenerationInTrackedConversation || hasActiveGeneration else {
-                lastSeenAssistantMessageID = newID
-                return
+                islandBody()
             }
-
-            lastSeenAssistantMessageID = newID
-            handleNewAssistantMessage()
-        }
-        .onDisappear {
-            autoHideTask?.cancel()
-            toolCallSwitchTask?.cancel()
-        }
-    }
-
-    private func resetTickerTrackingForCurrentConversation() {
-        tickerTrackingConversationID = fileState.aiChatConversationID
-        hasObservedActiveGenerationInTrackedConversation = hasActiveGeneration
-        lastSeenAssistantMessageID = latestAssistantMessageID
-
-        autoHideTask?.cancel()
-        toolCallSwitchTask?.cancel()
-        if hasActiveGeneration {
-            updateGenerationTicker(hasActiveGeneration: true)
-        } else {
-            displayedReplyText = nil
-        }
-    }
-
-    private func updateGenerationTicker(hasActiveGeneration: Bool) {
-        if hasActiveGeneration {
-            autoHideTask?.cancel()
-            toolCallSwitchTask?.cancel()
-            if displayedReplyText == nil {
-                displayedReplyText = String(localizable: .aiChatThinking)
+            .onAppear {
+                renderedIslandHeaderPayload = currentHeaderPayload
             }
-        } else if displayedReplyText == String(localizable: .aiChatThinking) {
-            autoHideTask?.cancel()
-            toolCallSwitchTask?.cancel()
-            displayedReplyText = nil
+            .watch(value: currentHeaderPayload) { _, payload in
+                guard let payload else { return }
+                renderedIslandHeaderPayload = payload
+            }
+            .modifier(AIChatIslandProposalModifier(
+                conversationID: fileState.aiChatConversationID,
+                conversation: conversation,
+                conversationMessageCount: conversationMessageCount,
+                islandWidth: islandWidth
+            ))
+            .readHeight($measuredHeight)
+            .offset(
+                x: isDraggable ? layoutState.aiChatIslandOffset.width + dragDelta.width : 0,
+                y: isDraggable ? layoutState.aiChatIslandOffset.height + dragDelta.height : 0
+            )
+            // Window resize / split changes shrink `canvasSize` and may strand
+            // the island outside the new bounds. Clamp immediately (no 1 s
+            // delay) — there's no drag in flight to wait for.
+            .onChange(of: canvasSize, debounce: 1) { _ in
+                guard isDraggable else { return }
+                snapBackTask?.cancel()
+                snapBackIfOutOfBounds()
+            }
+            .task {
+                await LLMCreditsRefreshCoordinator.shared.refreshCredits(reason: .aiChatAppear)
+            }
         }
     }
 
@@ -519,66 +336,6 @@ struct AIChatIslandView: View {
             }
     }
 
-    
-    /// Process the just-committed assistant message: derive its initial
-    /// frame (content text, or — if content is empty — the tool-call
-    /// label), schedule the optional content→tool-call switch, and queue
-    /// the auto-hide unless a tool call indicates more is coming.
-    private func handleNewAssistantMessage() {
-        guard let msg = latestAssistantMessage,
-              case .content(let c) = msg else { return }
-
-        autoHideTask?.cancel()
-        toolCallSwitchTask?.cancel()
-
-        let content = displayText(of: c)
-        let nonFinalTool = c.toolCalls?.first(where: { $0.name != "final_answer" })
-
-        if let nonFinalTool {
-            // Tool-call message: surface content first (if any) so the user
-            // sees what the model said before it fired the tool, then swap
-            // to the tool-call label. Don't auto-hide — more messages are
-            // expected later in the same round (tool result, then final
-            // answer), each of which will retrigger this handler.
-            //
-            // If the live-stream watcher already pushed this exact tool's
-            // display to the ticker, skip the content phase entirely —
-            // bouncing back to "Let me search…" before re-arriving at
-            // "Using web_search…" reads as a regression.
-            let toolLabel = toolCallDisplay(nonFinalTool.name)
-            let alreadyOnToolLabel = displayedReplyText == toolLabel
-            if content.isEmpty || alreadyOnToolLabel {
-                displayedReplyText = toolLabel
-            } else {
-                displayedReplyText = content
-                toolCallSwitchTask = Task { @MainActor in
-                    try? await Task.sleep(for: toolCallSwitchDelay)
-                    guard !Task.isCancelled else { return }
-                    displayedReplyText = toolLabel
-                }
-            }
-            return
-        }
-
-        // Pure-content (or final_answer) message — terminal frame for the
-        // round; show it briefly, then revert to the banner.
-        guard !content.isEmpty else { return }
-        displayedReplyText = content
-        scheduleAutoHide()
-    }
-
-    /// Schedule the "ticker → banner" revert. Cancels any prior pending
-    /// hide first so consecutive replies don't accidentally double-hide.
-    private func scheduleAutoHide() {
-        autoHideTask?.cancel()
-        autoHideTask = Task { @MainActor in
-            try? await Task.sleep(for: tickerDuration)
-            guard !Task.isCancelled else { return }
-            displayedReplyText = nil
-        }
-    }
-    
-    
     /// Cancel any pending snap-back, then queue a fresh one. The 1 s delay
     /// gives the user a beat to either drag again (which cancels this) or
     /// just see where they parked the island before it auto-corrects.
@@ -744,7 +501,220 @@ private struct AIChatIslandHeaderPayload: Equatable {
     let pendingQueue: [PendingQueueMessage]
 }
 
-// MARK: - ReplyTickerView
+// MARK: - Reply Ticker
+
+/// Shared lifecycle host for the compact "AI is replying" ticker.
+/// It owns the state machine used by both the floating island and iOS
+/// bottom-toolbar overlay: "Thinking…", live tool-call labels, committed
+/// assistant text, and the short linger after a terminal frame.
+struct AIChatReplyTickerHost<Content: View>: View {
+    @EnvironmentObject private var fileState: FileState
+    @EnvironmentObject private var llmState: LLMStateObject
+
+    @State private var displayedReplyText: String?
+    @State private var autoHideTask: Task<Void, Never>?
+    @State private var toolCallSwitchTask: Task<Void, Never>?
+    @State private var lastSeenAssistantMessageID: String?
+    @State private var tickerTrackingConversationID: String?
+    @State private var hasObservedActiveGenerationInTrackedConversation = false
+
+    let content: (String?) -> Content
+    let onReplyTextChange: (String?) -> Void
+
+    /// How long the ticker lingers after a final assistant frame.
+    private let tickerDuration: Duration = .seconds(3)
+    /// How long to show message content before swapping to a tool-call label.
+    private let toolCallSwitchDelay: Duration = .seconds(1)
+
+    init(
+        onReplyTextChange: @escaping (String?) -> Void = { _ in },
+        @ViewBuilder content: @escaping (String?) -> Content
+    ) {
+        self.onReplyTextChange = onReplyTextChange
+        self.content = content
+    }
+
+    private var conversation: Conversation? {
+        llmState.conversations.value?
+            .first { $0.id == fileState.aiChatConversationID }
+    }
+
+    private var hasActiveGeneration: Bool {
+        guard let conversationID = fileState.aiChatConversationID else { return false }
+        return llmState.isRunning(conversationID: conversationID)
+            || activeStreamingAssistantContent != nil
+    }
+
+    private var activeStreamingAssistantContent: ChatMessageContent? {
+        guard let conversationID = fileState.aiChatConversationID,
+              let messages = conversation?.messages else {
+            return nil
+        }
+        return messages.compactMap { message -> ChatMessageContent? in
+            guard case .content(let content) = message,
+                  content.role == .assistant,
+                  llmState.isStreaming(messageID: content.id, in: conversationID) else {
+                return nil
+            }
+            return content
+        }.last
+    }
+
+    private var latestAssistantMessage: ChatMessage? {
+        guard let conversationID = fileState.aiChatConversationID,
+              let messages = conversation?.messages else {
+            return nil
+        }
+        return messages.last { msg in
+            guard case .content(let c) = msg,
+                  c.role == .assistant else {
+                return false
+            }
+            if llmState.isStreaming(messageID: c.id, in: conversationID) {
+                return false
+            }
+            return true
+        }
+    }
+
+    private var latestAssistantMessageID: String? {
+        latestAssistantMessage?.id
+    }
+
+    private var liveToolCallName: String? {
+        activeStreamingAssistantContent?.toolCalls?
+            .first(where: { $0.name != "final_answer" })?
+            .name
+    }
+
+    var body: some View {
+        content(displayedReplyText)
+            .watch(value: hasActiveGeneration) { _, active in
+                if active {
+                    hasObservedActiveGenerationInTrackedConversation = true
+                }
+                updateGenerationTicker(hasActiveGeneration: active)
+            }
+            .watch(value: fileState.aiChatConversationID) { _, _ in
+                resetTickerTrackingForCurrentConversation()
+            }
+            .watch(value: liveToolCallName) { _, newName in
+                guard let newName else { return }
+                let label = toolCallDisplay(newName)
+                guard displayedReplyText != label else { return }
+                autoHideTask?.cancel()
+                toolCallSwitchTask?.cancel()
+                displayedReplyText = label
+            }
+            .watch(value: latestAssistantMessageID) { _, newID in
+                if tickerTrackingConversationID != fileState.aiChatConversationID {
+                    resetTickerTrackingForCurrentConversation()
+                }
+                guard let newID, newID != lastSeenAssistantMessageID else { return }
+
+                guard hasObservedActiveGenerationInTrackedConversation || hasActiveGeneration else {
+                    lastSeenAssistantMessageID = newID
+                    return
+                }
+
+                lastSeenAssistantMessageID = newID
+                handleNewAssistantMessage()
+            }
+            .onAppear {
+                resetTickerTrackingForCurrentConversation()
+                onReplyTextChange(displayedReplyText)
+            }
+            .watch(value: displayedReplyText) { _, text in
+                onReplyTextChange(text)
+            }
+            .onDisappear {
+                autoHideTask?.cancel()
+                toolCallSwitchTask?.cancel()
+                onReplyTextChange(nil)
+            }
+    }
+
+    private func resetTickerTrackingForCurrentConversation() {
+        tickerTrackingConversationID = fileState.aiChatConversationID
+        hasObservedActiveGenerationInTrackedConversation = hasActiveGeneration
+        lastSeenAssistantMessageID = latestAssistantMessageID
+
+        autoHideTask?.cancel()
+        toolCallSwitchTask?.cancel()
+        if hasActiveGeneration {
+            updateGenerationTicker(hasActiveGeneration: true)
+        } else {
+            displayedReplyText = nil
+        }
+    }
+
+    private func updateGenerationTicker(hasActiveGeneration: Bool) {
+        if hasActiveGeneration {
+            autoHideTask?.cancel()
+            toolCallSwitchTask?.cancel()
+            if displayedReplyText == nil {
+                displayedReplyText = String(localizable: .aiChatThinking)
+            }
+        } else if displayedReplyText == String(localizable: .aiChatThinking) {
+            autoHideTask?.cancel()
+            toolCallSwitchTask?.cancel()
+            displayedReplyText = nil
+        }
+    }
+
+    private func handleNewAssistantMessage() {
+        guard let msg = latestAssistantMessage,
+              case .content(let c) = msg else { return }
+
+        autoHideTask?.cancel()
+        toolCallSwitchTask?.cancel()
+
+        let content = displayText(of: c)
+        let nonFinalTool = c.toolCalls?.first(where: { $0.name != "final_answer" })
+
+        if let nonFinalTool {
+            let toolLabel = toolCallDisplay(nonFinalTool.name)
+            let alreadyOnToolLabel = displayedReplyText == toolLabel
+            if content.isEmpty || alreadyOnToolLabel {
+                displayedReplyText = toolLabel
+            } else {
+                displayedReplyText = content
+                toolCallSwitchTask = Task { @MainActor in
+                    try? await Task.sleep(for: toolCallSwitchDelay)
+                    guard !Task.isCancelled else { return }
+                    displayedReplyText = toolLabel
+                }
+            }
+            return
+        }
+
+        guard !content.isEmpty else { return }
+        displayedReplyText = content
+        scheduleAutoHide()
+    }
+
+    private func scheduleAutoHide() {
+        autoHideTask?.cancel()
+        autoHideTask = Task { @MainActor in
+            try? await Task.sleep(for: tickerDuration)
+            guard !Task.isCancelled else { return }
+            displayedReplyText = nil
+        }
+    }
+
+    private func displayText(of c: ChatMessageContent) -> String {
+        if let finalCall = c.toolCalls?.first(where: { $0.name == "final_answer" }) {
+            return parseFinalAnswerArgs(finalCall.arguments)
+        }
+        return c.content ?? ""
+    }
+
+    private func toolCallDisplay(_ name: String) -> String {
+        String(
+            localizable: .aiChatToolCallDisplay(ToolDisplayNameCache.displayName(for: name))
+        )
+    }
+}
 
 /// Single-line ticker that shows the AI's most recent line in the island
 /// header. Owns its own reveal animation: every time `text` changes, a

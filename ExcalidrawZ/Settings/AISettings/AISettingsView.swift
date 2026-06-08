@@ -11,6 +11,7 @@ import LLMKit
 import LLMCore
 
 struct AISettingsView: View {
+    @Environment(\.containerHorizontalSizeClass) var containerHorizontalSizeClass
     @EnvironmentObject var llmState: LLMStateObject
     @EnvironmentObject var store: Store
     @ObservedObject var prefs = AIChatPreferences.shared
@@ -42,6 +43,14 @@ struct AISettingsView: View {
     let aggregatePageSize: Int = 100
     let agentID = "excalidraw-canvas"
 
+    var usesCompactSettingsLayout: Bool {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact
+#else
+        false
+#endif
+    }
+
     var body: some View {
         SwiftUI.Group {
             if #available(macOS 14.0, iOS 17.0, *) {
@@ -72,6 +81,15 @@ struct AISettingsView: View {
                 await loadAISettingsDataIfEnabled()
             }
         }
+#if os(iOS)
+        .toolbar {
+            if usesCompactSettingsLayout, prefs.isAIEnabled {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    bottomTabBar
+                }
+            }
+        }
+#endif
         .sheet(isPresented: $isPresentingAIEnableConsent) {
             AIEnableConsentSheet {
                 prefs.isAIEnabled = true
