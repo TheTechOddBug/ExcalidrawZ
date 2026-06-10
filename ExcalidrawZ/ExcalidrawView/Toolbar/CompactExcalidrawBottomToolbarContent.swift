@@ -633,9 +633,11 @@ struct CompactExcalidrawBottomToolbarStateModifier: ViewModifier {
 
 private struct CompactAIChatToolbarAttachmentMenu: View {
     @EnvironmentObject private var fileState: FileState
+    @EnvironmentObject private var layoutState: LayoutState
     @EnvironmentObject private var aiChatState: AIChatState
 
     @State private var isImagePickerPresented = false
+    @State private var isPhotoLibraryPickerPresented = false
     @State private var selectedPhotoPickerItems: [PhotosPickerItem] = []
     @State private var isCameraPickerPresented = false
 
@@ -649,52 +651,89 @@ private struct CompactAIChatToolbarAttachmentMenu: View {
     }
 
     var body: some View {
-        Menu {
-            Button {
-                isImagePickerPresented = true
-            } label: {
-                Label(.localizable(.exportSheetButtonFile), systemSymbol: .doc)
-            }
+        ZStack {
+            Menu {
+                Button {
+                    beginAttachmentPickerPresentation()
+                    isImagePickerPresented = true
+                } label: {
+                    Label(.localizable(.exportSheetButtonFile), systemSymbol: .doc)
+                }
 
-            PhotosPicker(
-                selection: $selectedPhotoPickerItems,
-                matching: .images
-            ) {
-                Label(.localizable(.aiChatInputAttachmentMenuItemPhotoLibrary), systemSymbol: .photoOnRectangle)
-            }
+                Button {
+                    presentPhotoLibraryPicker()
+                } label: {
+                    Label(.localizable(.aiChatInputAttachmentMenuItemPhotoLibrary), systemSymbol: .photoOnRectangle)
+                }
 
-            Button {
-                isCameraPickerPresented = true
+                Button {
+                    beginAttachmentPickerPresentation()
+                    isCameraPickerPresented = true
+                } label: {
+                    Label(.localizable(.aiChatInputAttachmentMenuItemCamera), systemSymbol: .camera)
+                }
+                .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
             } label: {
-                Label(.localizable(.aiChatInputAttachmentMenuItemCamera), systemSymbol: .camera)
+                Label(.localizable(.aiChatInputAttachmentMenuButtonAdd), systemSymbol: .plus)
+                    .labelStyle(.iconOnly)
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
             }
-            .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
-        } label: {
-            Label(.localizable(.aiChatInputAttachmentMenuButtonAdd), systemSymbol: .plus)
-                .labelStyle(.iconOnly)
-                .font(.system(size: 17, weight: .semibold))
-                .frame(width: 28, height: 28)
-                .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+
+            Color.clear
+                .frame(width: 0, height: 0)
+                .photosPicker(
+                    isPresented: $isPhotoLibraryPickerPresented,
+                    selection: $selectedPhotoPickerItems,
+                    matching: .images
+                )
         }
-        .buttonStyle(.plain)
-        .menuIndicator(.hidden)
         .disabled(fileState.isAIChatConversationLoading || fileState.currentActiveFileIsInTrash)
         .fileImporter(
             isPresented: $isImagePickerPresented,
             allowedContentTypes: [.image],
             allowsMultipleSelection: true
         ) { result in
+            finishAttachmentPickerPresentation()
             handleImagePickerResult(result)
         }
-        .sheet(isPresented: $isCameraPickerPresented) {
+        .sheet(isPresented: $isCameraPickerPresented, onDismiss: {
+            finishAttachmentPickerPresentation()
+        }) {
             AIChatCameraImagePicker { image in
                 handleCameraImage(image)
             }
             .ignoresSafeArea()
         }
+        .watch(value: isPhotoLibraryPickerPresented) { _, isPresented in
+            guard !isPresented else { return }
+            finishAttachmentPickerPresentation()
+        }
         .watch(value: selectedPhotoPickerItems.map(\.itemIdentifier)) { _ in
             handlePhotoPickerItems(selectedPhotoPickerItems)
         }
+    }
+
+    @MainActor
+    private func presentPhotoLibraryPicker() {
+        beginAttachmentPickerPresentation()
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(120))
+            isPhotoLibraryPickerPresented = true
+        }
+    }
+
+    @MainActor
+    private func beginAttachmentPickerPresentation() {
+        layoutState.isCompactAIChatAttachmentPickerPresented = true
+    }
+
+    @MainActor
+    private func finishAttachmentPickerPresentation() {
+        layoutState.isCompactAIChatAttachmentPickerPresented = false
     }
 
     @MainActor

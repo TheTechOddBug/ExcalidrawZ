@@ -68,6 +68,7 @@ final class LayoutState: ObservableObject {
         didSet {
             guard isCompactAIChatToolbarPresented else {
                 isCompactAIChatInputEditing = false
+                isCompactAIChatAttachmentPickerPresented = false
                 isCompactAIChatReplyTickerVisible = false
                 isCompactAIChatReplyStartPending = false
                 return
@@ -80,6 +81,12 @@ final class LayoutState: ObservableObject {
     }
 
     @Published var isCompactAIChatInputEditing: Bool = false
+
+    /// True while compact iOS AI chat is presenting a system attachment
+    /// picker. Keyboard hide notifications during that transition should not
+    /// collapse the prompt overlay, otherwise SwiftUI tears down the picker
+    /// presenter mid-presentation.
+    @Published var isCompactAIChatAttachmentPickerPresented: Bool = false
 
     /// True while the compact iOS AI reply ticker is visible, including
     /// its short post-generation linger. The bottom toolbar uses this to
@@ -146,6 +153,7 @@ final class LayoutState: ObservableObject {
         withAnimation(.smooth) {
             isCompactAIChatToolbarPresented = false
             isCompactAIChatInputEditing = false
+            isCompactAIChatAttachmentPickerPresented = false
             isCompactAIChatReplyTickerVisible = false
             isCompactAIChatReplyStartPending = false
         }

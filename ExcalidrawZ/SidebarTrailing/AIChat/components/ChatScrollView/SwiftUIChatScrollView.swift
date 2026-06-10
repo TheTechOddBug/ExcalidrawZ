@@ -121,7 +121,6 @@ private struct ChatScrollContainer<Content: View>: View {
                 .padding(.horizontal, 10)
             }
             .chatScrollDismissesKeyboardInteractively()
-            .dismissKeyboardOnChatScrollDrag(onUserDragStart)
             .watch(value: scrollToBottomRequest.token) {
                 scrollToBottom(proxy, animated: scrollToBottomRequest.animated)
             }
@@ -197,17 +196,4 @@ private extension View {
 #endif
     }
 
-    @ViewBuilder
-    func dismissKeyboardOnChatScrollDrag(_ onUserDragStart: (() -> Void)?) -> some View {
-#if os(iOS)
-        self.simultaneousGesture(
-            DragGesture(minimumDistance: 6)
-                .onChanged { _ in
-                    onUserDragStart?()
-                }
-        )
-#else
-        self
-#endif
-    }
 }

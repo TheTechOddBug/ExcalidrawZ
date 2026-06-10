@@ -110,12 +110,16 @@ actor AIChatAttachmentRepository {
         _ source: URL,
         conversationID: String
     ) async throws -> PersistedFile {
-        let data = try Data(contentsOf: source)
+        let originalData = try Data(contentsOf: source)
         // Ext from source is already correct; fall back to "dat" for
         // path-less or extension-less file URLs (rare but possible for
         // temp files).
-        let ext = source.pathExtension.isEmpty ? "dat" : source.pathExtension.lowercased()
-        let mime = FileStorageContentType.mimeType(for: ext)
+        let originalExt = source.pathExtension.isEmpty ? "dat" : source.pathExtension.lowercased()
+        let originalMIME = FileStorageContentType.mimeType(for: originalExt)
+        let optimized = AIImagePayloadOptimizer.optimize(data: originalData, mimeType: originalMIME)
+        let data = optimized?.data ?? originalData
+        let mime = optimized?.mimeType ?? originalMIME
+        let ext = optimized.map { FileStorageContentType.fileExtension(for: $0.mimeType) } ?? originalExt
         return try await writeLocal(
             data: data,
             ext: ext,
@@ -131,11 +135,14 @@ actor AIChatAttachmentRepository {
         guard let parsed = parseDataURI(dataURI) else {
             throw FileStorageError.writeFailed("Invalid data URI for AI chat attachment")
         }
-        let ext = FileStorageContentType.fileExtension(for: parsed.mimeType)
+        let optimized = AIImagePayloadOptimizer.optimize(data: parsed.data, mimeType: parsed.mimeType)
+        let data = optimized?.data ?? parsed.data
+        let mimeType = optimized?.mimeType ?? parsed.mimeType
+        let ext = FileStorageContentType.fileExtension(for: mimeType)
         return try await writeLocal(
-            data: parsed.data,
+            data: data,
             ext: ext,
-            mimeType: parsed.mimeType,
+            mimeType: mimeType,
             conversationID: conversationID
         )
     }

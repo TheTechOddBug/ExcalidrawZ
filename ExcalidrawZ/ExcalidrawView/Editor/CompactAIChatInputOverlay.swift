@@ -16,6 +16,7 @@ private enum CompactAIChatOverlayMetrics {
     static let toolbarBottomPadding: CGFloat = 13
     static let toolbarControlLength: CGFloat = 80
     static let tickerHeight: CGFloat = 46
+    static let draftAttachmentsBottomPadding: CGFloat = toolbarBottomPadding + tickerHeight + 8
     static let tickerAppearDelay: Duration = .milliseconds(140)
     static let tickerCollapseDuration: Duration = .milliseconds(360)
 }
@@ -92,6 +93,9 @@ struct CompactAIChatInputOverlay: View {
 
         if isHiding {
             keyboardHeight = 0
+            guard !layoutState.isCompactAIChatAttachmentPickerPresented else {
+                return
+            }
             layoutState.exitCompactAIChatInputEditing()
             return
         }
@@ -299,6 +303,55 @@ struct CompactAIChatGeneratingOverlay: View {
 
 }
 
+struct CompactAIChatDraftAttachmentsOverlay: View {
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
+
+    @EnvironmentObject private var fileState: FileState
+    @EnvironmentObject private var layoutState: LayoutState
+    @EnvironmentObject private var aiChatState: AIChatState
+    @ObservedObject private var aiChatPreferences = AIChatPreferences.shared
+
+    private var isCompactIOS: Bool {
+        containerHorizontalSizeClass == .compact
+    }
+
+    private var canShowDraftAttachments: Bool {
+        isCompactIOS &&
+            layoutState.isCompactAIChatToolbarPresented &&
+            !layoutState.isCompactAIChatInputEditing &&
+            !layoutState.isCompactAIChatReplyTickerVisible &&
+            !layoutState.isCompactAIChatReplyStartPending &&
+            AIChatAvailability.isAvailable &&
+            aiChatPreferences.isAIEnabled &&
+            !fileState.currentActiveFileIsInTrash
+    }
+
+    private var draftState: AIChatPromptDraftState {
+        aiChatState.promptDraftState(
+            conversationID: fileState.aiChatConversationID,
+            fileScope: fileState.currentActiveFile?.aiConversationFileScope
+        )
+    }
+
+    var body: some View {
+        if canShowDraftAttachments {
+            HStack(spacing: 0) {
+                CompactAIChatDraftAttachmentStrip(draftState: draftState) {
+                    layoutState.enterCompactAIChatInputEditing()
+                }
+
+                Spacer(minLength: 0)
+                    .allowsHitTesting(false)
+            }
+            .padding(.horizontal, CompactAIChatOverlayMetrics.horizontalPadding)
+            .padding(.bottom, CompactAIChatOverlayMetrics.draftAttachmentsBottomPadding)
+            .safeAreaPadding(.bottom)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+            .animation(.smooth(duration: 0.18), value: draftState.images.count)
+        }
+    }
+}
+
 struct CompactAIChatProposalOverlay: View {
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
 
@@ -354,6 +407,80 @@ struct CompactAIChatProposalOverlay: View {
                 islandWidth: nil
             ))
             .frame(maxWidth: 360)
+    }
+}
+
+private struct CompactAIChatDraftAttachmentStrip: View {
+    @ObservedObject var draftState: AIChatPromptDraftState
+
+    let onTap: () -> Void
+
+    private var visibleImages: [PendingPastedImage] {
+        Array(draftState.images.prefix(4))
+    }
+
+    private var remainingCount: Int {
+        max(0, draftState.images.count - visibleImages.count)
+    }
+
+    var body: some View {
+        if !draftState.images.isEmpty {
+            Button(action: onTap) {
+                HStack(spacing: 6) {
+                    ForEach(visibleImages) { image in
+                        CompactAIChatDraftAttachmentThumbnail(image: image)
+                    }
+
+                    if remainingCount > 0 {
+                        Text("+\(remainingCount)")
+                            .font(.caption.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .frame(width: 34, height: 34)
+                            .background {
+                                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                    .fill(.thinMaterial)
+                            }
+                    }
+                }
+                .padding(6)
+                .background {
+                    attachmentStripBackground
+                }
+                .clipShape(Capsule())
+                .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .help("Attached images")
+        }
+    }
+
+    @ViewBuilder
+    private var attachmentStripBackground: some View {
+        if #available(iOS 26.0, *) {
+            Capsule()
+                .fill(.clear)
+                .glassEffect(.regular, in: Capsule())
+        } else {
+            Capsule()
+                .fill(.regularMaterial)
+        }
+    }
+}
+
+private struct CompactAIChatDraftAttachmentThumbnail: View {
+    let image: PendingPastedImage
+
+    var body: some View {
+        Image(uiImage: image.image)
+            .resizable()
+            .scaledToFill()
+            .frame(width: 34, height: 34)
+            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .stroke(.white.opacity(0.18), lineWidth: 0.5)
+            }
     }
 }
 
