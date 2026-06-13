@@ -35,6 +35,7 @@ struct CompactAIChatInputOverlay: View {
 
     @State private var keyboardHeight: CGFloat = 0
     @State private var keyboardAnimationDuration: TimeInterval = 0.25
+    @State private var keyboardPresentationStarted = false
 
     private var isCompactIOS: Bool {
         ExcalidrawToolbarLayoutPolicy.usesCompactIOSBottomToolbar(
@@ -80,6 +81,10 @@ struct CompactAIChatInputOverlay: View {
             .padding(.bottom, bottomPadding)
             .transition(.move(edge: .bottom).combined(with: .opacity))
             .animation(.easeOut(duration: keyboardAnimationDuration), value: keyboardHeight)
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
+                keyboardPresentationStarted = true
+                updateKeyboardHeight(notification)
+            }
             .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { notification in
                 updateKeyboardHeight(notification)
             }
@@ -99,10 +104,13 @@ struct CompactAIChatInputOverlay: View {
         }
 
         if isHiding {
+            let shouldExitEditing = keyboardPresentationStarted || keyboardHeight > 0
             keyboardHeight = 0
+            keyboardPresentationStarted = false
             guard !layoutState.isCompactAIChatAttachmentPickerPresented else {
                 return
             }
+            guard shouldExitEditing else { return }
             layoutState.exitCompactAIChatInputEditing()
             return
         }
@@ -115,7 +123,11 @@ struct CompactAIChatInputOverlay: View {
         let screenHeight = UIApplication.shared.connectedScenes
             .compactMap { ($0 as? UIWindowScene)?.screen.bounds.height }
             .first ?? UIScreen.main.bounds.height
-        keyboardHeight = max(0, screenHeight - frame.minY)
+        let nextKeyboardHeight = max(0, screenHeight - frame.minY)
+        if nextKeyboardHeight > 0 {
+            keyboardPresentationStarted = true
+        }
+        keyboardHeight = nextKeyboardHeight
     }
 }
 

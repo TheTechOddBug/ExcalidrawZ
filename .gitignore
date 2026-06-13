@@ -111,3 +111,5 @@ ExcalidrawZUIPlayground
 ExcalidrawZ/**/*.md
 ExcalidrawZ/SidebarTrailing/AIChat/**/*.json
 scripts/
+Resources/scripts/
+Resources/scripts/**

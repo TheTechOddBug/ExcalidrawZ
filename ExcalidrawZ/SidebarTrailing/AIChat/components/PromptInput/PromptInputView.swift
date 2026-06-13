@@ -489,6 +489,11 @@ struct PromptInputView<Background: View, Header: View>: View {
             guard !isEnabled else { return }
             cancelCurrentGeneration()
         }
+#if os(iOS)
+        .watch(value: isInputFocused) { _, isFocused in
+            handleCompactIOSInputFocusChanged(isFocused)
+        }
+#endif
 #if DEBUG
         .sheet(isPresented: $isDebugContextPresented) {
             debugChatContextSheet
@@ -508,6 +513,21 @@ struct PromptInputView<Background: View, Header: View>: View {
         regularBodyContent
 #endif
     }
+
+#if os(iOS)
+    @MainActor
+    private func handleCompactIOSInputFocusChanged(_ isFocused: Bool) {
+        guard usesCompactIOSIslandInput else { return }
+        guard !isFocused else { return }
+        guard layoutState.isCompactAIChatToolbarPresented,
+              layoutState.isCompactAIChatInputEditing,
+              !layoutState.isCompactAIChatAttachmentPickerPresented
+        else {
+            return
+        }
+        layoutState.exitCompactAIChatInputEditing()
+    }
+#endif
 
     @ViewBuilder
     private var regularBodyContent: some View {

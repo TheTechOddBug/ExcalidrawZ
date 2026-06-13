@@ -44,6 +44,8 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
                         // AI Chat
                         if compactAIChatIsReplying {
                             Spacer(minLength: 0)
+                        } else if layoutState.isCompactAIChatInputEditing {
+                            Spacer(minLength: 0)
                         } else {
                             compactAIChatToolbarAttachmentMenu
                             Spacer(minLength: 0)
@@ -458,7 +460,11 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
 
     private func toggleCompactAIChatPresentation() {
         if layoutState.isCompactAIChatToolbarPresented {
-            layoutState.exitCompactAIChatToolbar()
+            if layoutState.isCompactAIChatInputEditing {
+                layoutState.exitCompactAIChatToolbar()
+            } else {
+                layoutState.enterCompactAIChatInputEditing()
+            }
         } else if canPresentCompactAIChatToolbarInput {
             if !toolState.inDragMode {
                 toolState.setActivedTool(.hand)
@@ -590,6 +596,7 @@ private struct CompactAIChatToolbarPlaceholderButton: View {
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
         }
+        .buttonStyle(.plain)
         .help("AI Chat")
     }
 }

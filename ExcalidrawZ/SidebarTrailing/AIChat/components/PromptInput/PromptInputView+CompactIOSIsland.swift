@@ -243,7 +243,7 @@ extension PromptInputView {
         if didSubmit {
             onSuccessfulSubmit?()
             if dismissKeyboardOnSuccessfulSubmit {
-                isInputFocused = false
+                dismissIOSIslandKeyboard()
             }
         }
         return didSubmit
@@ -416,7 +416,7 @@ extension PromptInputView {
     @ViewBuilder
     var iOSIslandDismissKeyboardButton: some View {
         Button {
-            isInputFocused = false
+            dismissIOSIslandKeyboard()
         } label: {
             iOSIslandCircleLabel(length: iOSIslandInlineControlLength) {
                 Image(systemSymbol: .keyboardChevronCompactDown)
@@ -426,8 +426,19 @@ extension PromptInputView {
         .buttonStyle(.plain)
     }
 
-    private func enterIOSIslandFullChat() {
+    @MainActor
+    private func dismissIOSIslandKeyboard() {
         isInputFocused = false
+        guard layoutState.isCompactAIChatToolbarPresented,
+              layoutState.isCompactAIChatInputEditing
+        else {
+            return
+        }
+        layoutState.exitCompactAIChatInputEditing()
+    }
+
+    private func enterIOSIslandFullChat() {
+        dismissIOSIslandKeyboard()
         isIOSIslandFullscreenInputPresented = false
         layoutState.presentCompactAIChatFullChat()
     }
