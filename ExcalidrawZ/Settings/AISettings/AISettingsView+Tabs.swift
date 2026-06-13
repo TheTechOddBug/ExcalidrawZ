@@ -13,6 +13,21 @@ extension AISettingsView {
         @ViewBuilder leading: () -> Leading,
         @ViewBuilder accessory: () -> Accessory
     ) -> some View {
+#if os(macOS)
+        HStack(alignment: .top, spacing: 22) {
+            leading()
+
+            Spacer(minLength: 0)
+
+            if prefs.isAIEnabled {
+                VStack(alignment: .trailing, spacing: 12) {
+                    tabPicker
+                    accessory()
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+#else
         if usesCompactSettingsLayout {
             VStack(alignment: .leading, spacing: 12) {
                 leading()
@@ -64,6 +79,7 @@ extension AISettingsView {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+#endif
     }
 
     @ViewBuilder

@@ -6,12 +6,31 @@
 //
 
 import SwiftUI
+import SFSafeSymbols
 
 extension WhatsNewView {
     @ViewBuilder
     func featuresContent() -> some View {
         // 不能只有一行，不知道为啥一定报错
-        
+#if os(iOS)
+        WhatsNewFeatureRow(
+            title: .localizable(.whatsNewIOSToolbarTitle),
+            description: .localizable(.whatsNewIOSToolbarDescription),
+        ) {
+            Image(systemSymbol: .ipadAndIphone)
+                .resizable()
+                .symbolRenderingMode(.hierarchical)
+        }
+
+        WhatsNewFeatureRow(
+            title: .localizable(.whatsNewIOSMouseControlsTitle),
+            description: .localizable(.whatsNewIOSMouseControlsDescription),
+        ) {
+            Image(systemSymbol: .computermouse)
+                .resizable()
+                .symbolRenderingMode(.hierarchical)
+        }
+#else
         WhatsNewFeatureRow(
             title: .localizable(.whatsNewLockedFilesTitle),
             description: .localizable(.whatsNewLockedFilesDescription),
@@ -35,9 +54,10 @@ extension WhatsNewView {
                     .symbolRenderingMode(.hierarchical)
             }
         }
+#endif
     }
-    
-    
+
+
     @ViewBuilder
     func allFeaturesList() -> some View {
         VStack(spacing: 0) {
@@ -48,7 +68,34 @@ extension WhatsNewView {
                     ) {
                         featuresContent()
                     }
-                    
+#if os(iOS)
+                    WhatsNewVersionSection(version: "v2.1.0") {
+
+                        WhatsNewFeatureRow(
+                            title: .localizable(.whatsNewLockedFilesTitle),
+                            description: .localizable(.whatsNewLockedFilesDescription),
+                        ) {
+                            Image(systemSymbol: .lockShield)
+                                .resizable()
+                                .symbolRenderingMode(.hierarchical)
+                        }
+
+                        WhatsNewFeatureRow(
+                            title: .localizable(.whatsNewAIProposalCanvasTitle),
+                            description: .localizable(.whatsNewAIProposalCanvasDescription),
+                        ) {
+                            if #available(macOS 26.1, iOS 26.1, *) {
+                                Image(systemName: "rectangle.badge.sparkles")
+                                    .resizable()
+                                    .symbolRenderingMode(.hierarchical)
+                            } else {
+                                Image(systemSymbol: .sparkle)
+                                    .resizable()
+                                    .symbolRenderingMode(.hierarchical)
+                            }
+                        }
+                    }
+#endif
                     WhatsNewVersionSection(version: "v2.0.0") {
                         WhatsNewFeatureRow(
                             title: .localizable(.whatsNewAIForExcalidrawZTitle),

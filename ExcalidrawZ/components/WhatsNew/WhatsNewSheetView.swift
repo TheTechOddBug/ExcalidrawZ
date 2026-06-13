@@ -93,6 +93,10 @@ struct WhatsNewView: View {
     
     @State private var navigationMaxHeight: CGFloat = .zero
 
+    private var contentHorizontalPadding: CGFloat {
+        containerHorizontalSizeClass == .compact ? 10 : 40
+    }
+
 #if os(macOS)
     @State private var activeRoute: Route?
     @State private var window: NSWindow?
@@ -202,7 +206,6 @@ struct WhatsNewView: View {
             .bindWindow($window)
             .frame(width: 720, height: sheetContentHeight)
             .clipped()
-            .toolbar(.hidden, for: .windowToolbar)
             .onAppear {
                 updateSheetHeight(to: preferredSheetHeight, animated: false)
             }
@@ -257,64 +260,6 @@ struct WhatsNewView: View {
             .padding(20)
         }
 #endif
-        .background {
-            VStack {
-#if os(macOS)
-                Color.clear.frame(height: 20)
-
-#else
-                Color.clear.frame(height: containerHorizontalSizeClass == .compact ? 80 : 40)
-#endif
-                // V2 special
-                Image("AI Cover")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 400, alignment: .top)
-                    .mask {
-                        VStack(spacing: 0) {
-                            Color.black.frame(height: 100)
-                            if #available(macOS 14.0, iOS 17.0, *) {
-                                SmoothLinearGradient(
-                                    from: .black,
-                                    to: .black.opacity(0),
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            } else {
-                                LinearGradient(
-                                    colors: [.black, .black.opacity(0)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            }
-                        }
-                    }
-                    .mask {
-                        HStack(spacing: 0) {
-                            if #available(macOS 14.0, iOS 17.0, *) {
-                                SmoothLinearGradient(
-                                    from: .black.opacity(0),
-                                    to: .black,
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                                .frame(width: 200)
-                            } else {
-                                LinearGradient(
-                                    colors: [.black.opacity(0), .black],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                                .frame(width: 200)
-                            }
-                            Color.black
-                        }
-                    }
-
-                Spacer()
-            }
-            .ignoresSafeArea()
-        }
 #if os(iOS)
         .navigationTitle(
             Text(.localizable(
@@ -372,7 +317,7 @@ struct WhatsNewView: View {
 //#endif
 //                    }
 
-                    Color.clear.frame(height: 300)
+                    whatsNewCoverImage()
 
                     featuresContent()
                 }
@@ -429,8 +374,70 @@ struct WhatsNewView: View {
 #if os(macOS)
         .padding(.top, 40)
 #endif
-        .padding(.horizontal, containerHorizontalSizeClass == .compact ? 10 : 40)
+        .padding(.horizontal, contentHorizontalPadding)
         .padding(.bottom, 40)
+    }
+
+    @ViewBuilder
+    private func whatsNewCoverImage() -> some View {
+        Color.clear
+            .frame(height: 300)
+            .frame(maxWidth: .infinity)
+            .overlay(alignment: .top) {
+                whatsNewCoverArtwork()
+                    .padding(.horizontal, -contentHorizontalPadding)
+                    .offset(y: -16)
+            }
+            .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private func whatsNewCoverArtwork() -> some View {
+        Image("AI Cover")
+            .resizable()
+            .scaledToFill()
+            .frame(maxWidth: .infinity)
+            .frame(height: 400, alignment: .top)
+            .mask {
+                VStack(spacing: 0) {
+                    Color.black.frame(height: 100)
+                    if #available(macOS 14.0, iOS 17.0, *) {
+                        SmoothLinearGradient(
+                            from: .black,
+                            to: .black.opacity(0),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    } else {
+                        LinearGradient(
+                            colors: [.black, .black.opacity(0)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    }
+                }
+            }
+            .mask {
+                HStack(spacing: 0) {
+                    if #available(macOS 14.0, iOS 17.0, *) {
+                        SmoothLinearGradient(
+                            from: .black.opacity(0),
+                            to: .black,
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: 200)
+                    } else {
+                        LinearGradient(
+                            colors: [.black.opacity(0), .black],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: 200)
+                    }
+                    Color.black
+                }
+            }
     }
 
     @ViewBuilder

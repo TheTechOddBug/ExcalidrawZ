@@ -3,6 +3,7 @@
 #### Optimizations
 
 - Optimized the iPhone and iPad editor toolbar with quicker access to Library, Search, File History, AI, and editing controls.
+- Improved iPad and iPhone mouse and trackpad handling so canvas scroll and zoom gestures are recognized more naturally.
 
 #### Bug fixed
 
