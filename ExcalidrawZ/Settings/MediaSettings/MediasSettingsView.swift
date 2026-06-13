@@ -11,8 +11,6 @@ import ChocofordUI
 
 struct MediasSettingsView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
-    @Environment(\.containerVerticalSizeClass) private var containerVerticalSizeClass
     @Environment(\.alertToast) private var alertToast
     @FetchRequest(sortDescriptors: [SortDescriptor(\MediaItem.createdAt, order: .reverse)])
     private var medias: FetchedResults<MediaItem>
@@ -22,21 +20,25 @@ struct MediasSettingsView: View {
     @State private var isCleaningOrphans = false
     @State private var isCleanupAlertPresented = false
     @State private var cleanupResult: CleanupResult?
-    
+
     var body: some View {
         content()
-            
     }
-    
+
     @ViewBuilder
     private func content() -> some View {
 #if os(iOS)
-        galleryView()
+        NavigationStack {
+            galleryView()
+                .navigationDestination(for: MediaRoute.self) { route in
+                    MediaSettingsDestinationView(route: route)
+                }
+        }
 #elseif os(macOS)
         regularContent()
 #endif
     }
-    
+
     @ViewBuilder
     private func regularContent() -> some View {
         HStack(spacing: 0) {
@@ -57,7 +59,7 @@ struct MediasSettingsView: View {
                 }
         }
     }
-    
+
     @ViewBuilder
     private func mediaList() -> some View {
         VStack(spacing: 0) {
@@ -89,9 +91,9 @@ struct MediasSettingsView: View {
                         }
                 }
             }
-            
+
             Divider()
-            
+
             HStack {
                 Spacer()
                 cleanupOrphanMediasButton()
@@ -100,14 +102,14 @@ struct MediasSettingsView: View {
             .padding(12)
         }
     }
-    
+
     @ViewBuilder
     private func detailView() -> some View {
         ZStack {
             if let item = selection,
                let imageData = loadedData {
                 VStack {
-                    DataImage(data: imageData)
+                    DataImage(data: imageData, thumbnailSize: nil)
                         .scaledToFit()
                         .frame(maxHeight: .infinity)
                         .contextMenu {
@@ -163,7 +165,7 @@ struct MediasSettingsView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func placeholderView() -> some View {
         VStack {
@@ -182,14 +184,17 @@ struct MediasSettingsView: View {
         }
         .frame(maxWidth: 400)
     }
-    
+
     @ViewBuilder
     private func galleryView() -> some View {
         ScrollView {
             LazyVGrid(columns: [.init(.adaptive(minimum: 120, maximum: 300))]) {
                 ForEach(medias, id: \.objectID) { item in
-                    MediaItemImageView(item: item)
-                        .aspectRatio(1, contentMode: .fill)
+                    NavigationLink(value: MediaRoute.mediaItem(item.objectID)) {
+                        MediaItemImageView(item: item)
+                            .aspectRatio(1, contentMode: .fill)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -199,8 +204,6 @@ struct MediasSettingsView: View {
         }
 #endif
     }
-
-    // MARK: - Cleanup Methods
 
     @ViewBuilder
     private func cleanupOrphanMediasButton() -> some View {
@@ -251,7 +254,7 @@ struct MediasSettingsView: View {
         }
     }
 
-    /// Find and delete MediaItems that are no longer referenced by any File or FileCheckpoint
+    /// Find and delete MediaItems that are no longer referenced by any File or FileCheckpoint.
     private func performCleanupOrphanMedias(context: NSManagedObjectContext) async throws -> CleanupResult {
         return try await context.perform {
             let fetchRequest: NSFetchRequest<MediaItem> = MediaItem.fetchRequest()
@@ -261,11 +264,11 @@ struct MediasSettingsView: View {
             var recoveredSpace: Int64 = 0
 
             for mediaItem in allMediaItems {
-                // Check if the referenced file exists
+                // Check if the referenced file exists.
                 if let file = mediaItem.file {
-                    // File reference exists, check if file is deleted
+                    // File reference exists, check if file is deleted.
                     if file.isDeleted {
-                        // File is deleted, this media is orphaned
+                        // File is deleted, this media is orphaned.
                         if let dataURL = mediaItem.dataURL,
                            let base64String = dataURL.components(separatedBy: "base64,").last,
                            let data = Data(base64Encoded: base64String) {
@@ -275,7 +278,7 @@ struct MediasSettingsView: View {
                         deletedCount += 1
                     }
                 } else {
-                    // No file reference, this media is orphaned
+                    // No file reference, this media is orphaned.
                     if let dataURL = mediaItem.dataURL,
                        let base64String = dataURL.components(separatedBy: "base64,").last,
                        let data = Data(base64Encoded: base64String) {
@@ -295,85 +298,10 @@ struct MediasSettingsView: View {
     }
 }
 
-// MARK: - Supporting Types
-
 struct CleanupResult {
     let deletedCount: Int
     let recoveredSpace: Int64
 }
-
-struct MediaItemImageView: View {
-    var item: MediaItem
-    
-    @State private var data: Data? = nil
-    
-    var body: some View {
-        Color.clear
-            .overlay {
-                if let data {
-                    DataImage(data: data)
-                        .scaledToFit()
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .task {
-                // Load raw data directly from FileStorage (local/iCloud) or CoreData
-                let imageData = try? await item.loadData()
-                await MainActor.run {
-                    self.data = imageData
-                }
-            }
-    }
-}
-
-struct DataImage: View {
-    var data: Data
-    
-    init(data: Data) {
-        self.data = data
-    }
-    
-    @State private var image: Image?
-#if canImport(AppKit)
-    @State private var platformImage: NSImage?
-#elseif canImport(UIKit)
-    @State private var platformImage: UIImage?
-#endif
-    
-    @State private var viewID: UUID = UUID()
-    
-    var body: some View {
-        ZStack {
-            ThumbnailImage(
-                platformImage,
-                width: 300,
-            ) { image in
-                image
-                    .resizable()
-            } placeholder: {
-                Rectangle()
-                    .fill(.secondary.opacity(0.4))
-            }
-            .id(viewID)
-        }
-        .watch(value: data) { newValue in
-            Task.detached {
-                let image = Image(data: newValue)
-#if canImport(AppKit)
-                let platformImage = NSImage(data: newValue)
-#elseif canImport(UIKit)
-                let platformImage = UIImage(data: newValue)
-#endif
-                await MainActor.run {
-                    self.platformImage = platformImage
-                    self.image = image
-                    viewID = UUID()
-                }
-            }
-        }
-    }
-}
-
 
 #Preview {
     MediasSettingsView()

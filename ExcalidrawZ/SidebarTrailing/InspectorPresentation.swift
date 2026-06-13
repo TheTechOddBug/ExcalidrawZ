@@ -321,7 +321,9 @@ struct InspectorPresentationModifier: ViewModifier {
             inspectorContent()
                 .disabled(shouldDisableInspectorContent)
                 .navigationTitle(inspectorTitle)
+#if canImport(UIKit)
                 .navigationBarTitleDisplayMode(.inline)
+#endif
         }
     }
 

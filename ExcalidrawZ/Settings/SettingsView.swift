@@ -197,7 +197,7 @@ struct SettingsView: View {
 }
 
 extension SettingsView {
-    enum Route: CaseIterable, Identifiable {
+    enum Route: CaseIterable, Identifiable, Hashable {
         case general
         case excalidraw
 //        case fileHistory

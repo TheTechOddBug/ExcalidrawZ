@@ -39,6 +39,7 @@ enum PDFInsertMode: String, CaseIterable {
 
 struct PDFInsertSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
     
     var pdfInfo: PDFDropInfo?
     var onInsert: (Data, PDFInsertMode, String, Int?) async throws -> Void
@@ -64,6 +65,44 @@ struct PDFInsertSheet: View {
     @State private var errorMessage: String?
     
     var body: some View {
+        ZStack {
+            if usesCompactLayout {
+                compactSheetContent
+            } else {
+                regularSheetContent
+            }
+        }
+        .fileImporter(
+            isPresented: $isFilePickerPresented,
+            allowedContentTypes: [.pdf],
+            allowsMultipleSelection: false
+        ) { result in
+            handleFileSelection(result)
+        }
+        .watch(value: pdfInfo, initial: true) { _, pdfInfo in
+            // Load preloaded PDF data if available
+            if let pdfData = pdfInfo?.pdfData {
+#if canImport(PDFKit)
+                self.pdfDocument = PDFDocument(data: pdfData)
+                self.fileName = pdfInfo?.fileName
+#endif
+                self.pdfData = pdfData
+            } else {
+                self.fileName = nil
+            }
+        }
+    }
+
+    private var usesCompactLayout: Bool {
+#if os(iOS)
+        containerHorizontalSizeClass == .compact
+#else
+        false
+#endif
+    }
+
+    @ViewBuilder
+    private var regularSheetContent: some View {
         HStack(spacing: 0) {
             // Left side: Settings
             VStack(alignment: .leading, spacing: 20) {
@@ -233,49 +272,259 @@ struct PDFInsertSheet: View {
             .background(Color.gray.opacity(0.05))
         }
         .navigationTitle(.localizable(.insertPDFSheetTitle))
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button {
-                    dismiss()
-                } label: {
-                    Text(.localizable(.generalButtonCancel))
-                }
-                .modernButtonStyle(style: .glass, shape: .modern)
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button {
-                    insertPDF()
-                } label: {
-                    Text(.localizable(.insertPDFSheetButtonInsert))
-                }
-                .modernButtonStyle(style: .glassProminent, shape: .modern)
-                .disabled(pdfData == nil || isLoading)
-            }
-        }
-        .fileImporter(
-            isPresented: $isFilePickerPresented,
-            allowedContentTypes: [.pdf],
-            allowsMultipleSelection: false
-        ) { result in
-            handleFileSelection(result)
-        }
+        .toolbar(content: regularPDFInsertToolbar)
 #if os(macOS)
         .frame(width: 800, height: 600)
 #endif
-        .watch(value: pdfInfo, initial: true) { _, pdfInfo in
-            // Load preloaded PDF data if available
-            if let pdfData = pdfInfo?.pdfData {
-#if canImport(PDFKit)
-                self.pdfDocument = PDFDocument(data: pdfData)
-                self.fileName = pdfInfo?.fileName
+    }
+
+    @ViewBuilder
+    private var compactSheetContent: some View {
+#if os(iOS)
+        NavigationStack {
+            Form {
+                Section {
+                    compactFileSelectionRow
+                } header: {
+                    Text(localizable: .insertPDFSheetPDFFileLabel)
+                }
+
+                Section {
+                    ForEach(PDFInsertMode.allCases, id: \.self) { mode in
+                        compactModeRow(mode)
+                    }
+                } header: {
+                    Text(localizable: .insertPDFSheetDisplayModeLabel)
+                }
+
+                if selectedMode == .tiled {
+                    Section {
+                        Picker(selection: $direction) {
+                            Text(localizable: .insertPDFSheetDirectionVertical).tag(TilesDiection.vertical)
+                            Text(localizable: .insertPDFSheetDirectionHorizontal).tag(TilesDiection.horizontal)
+                        } label: {
+                            Text(localizable: .insertPDFSheetLayoutOptionsLabel)
+                        }
+                        .pickerStyle(.menu)
+
+                        Stepper(value: $itemsPerLine, in: 1...10) {
+                            HStack {
+                                Text(localizable: direction == .vertical ? .insertPDFSheetItemsPerRow : .insertPDFSheetItemsPerColumn)
+                                Spacer()
+                                Text("\(itemsPerLine)")
+                                    .foregroundStyle(.secondary)
+                                    .monospacedDigit()
+                            }
+                        }
+                    } header: {
+                        Text(localizable: .insertPDFSheetOptionsLabel)
+                    }
+                }
+
+                Section {
+                    compactPreviewContent
+                } header: {
+                    Text(localizable: .insertPDFSheetPreviewLabel)
+                }
+
+                if let errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle(.localizable(.insertPDFSheetTitle))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(content: compactPDFInsertToolbar)
+        }
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+#else
+        regularSheetContent
 #endif
-                self.pdfData = pdfData
-            } else {
-                self.fileName = nil
+    }
+
+    @ToolbarContentBuilder
+    private func regularPDFInsertToolbar() -> some ToolbarContent {
+        ToolbarItem(placement: .cancellationAction) {
+            Button {
+                dismiss()
+            } label: {
+                Text(.localizable(.generalButtonCancel))
+            }
+            .modernButtonStyle(style: .glass, shape: .modern)
+        }
+        ToolbarItem(placement: .confirmationAction) {
+            Button {
+                insertPDF()
+            } label: {
+                Text(.localizable(.insertPDFSheetButtonInsert))
+            }
+            .modernButtonStyle(style: .glassProminent, shape: .modern)
+            .disabled(pdfData == nil || isLoading)
+        }
+    }
+
+    @ToolbarContentBuilder
+    private func compactPDFInsertToolbar() -> some ToolbarContent {
+        ToolbarItem(placement: .cancellationAction) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemSymbol: .xmark)
+            }
+        }
+        ToolbarItem(placement: .confirmationAction) {
+            Button {
+                insertPDF()
+            } label: {
+                Text(.localizable(.insertPDFSheetButtonInsert))
+            }
+            .modernButtonStyle(style: .glassProminent)
+            .disabled(pdfData == nil || isLoading)
+        }
+    }
+
+    @ViewBuilder
+    private var compactFileSelectionRow: some View {
+        if let fileName {
+            HStack(spacing: 12) {
+                Image(systemSymbol: .docFill)
+                    .foregroundStyle(.red)
+                Text(fileName)
+                    .lineLimit(1)
+                Spacer()
+                Button {
+                    isFilePickerPresented = true
+                } label: {
+                    Text(.localizable(.insertPDFSheetButtonChange))
+                }
+            }
+        } else {
+            Button {
+                isFilePickerPresented = true
+            } label: {
+                Label(.localizable(.insertPDFSheetSelectPDFFileLabel), systemSymbol: .docBadgePlus)
             }
         }
     }
-    
+
+    @ViewBuilder
+    private func compactModeRow(_ mode: PDFInsertMode) -> some View {
+        Button {
+            selectedMode = mode
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(mode.title)
+                        .foregroundStyle(.primary)
+                    Text(mode.description)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+
+                Image(systemSymbol: selectedMode == mode ? .checkmarkCircleFill : .circle)
+                    .foregroundStyle(selectedMode == mode ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(HierarchicalShapeStyle.secondary))
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var compactPreviewContent: some View {
+        if pdfData == nil {
+            VStack(spacing: 12) {
+                if #available(macOS 15.0, iOS 18.0, *) {
+                    Image(systemSymbol: .textRectanglePage)
+                        .font(.system(size: 44))
+                        .foregroundColor(.gray)
+                } else {
+                    Image(systemSymbol: .docTextImage)
+                        .font(.system(size: 44))
+                        .foregroundColor(.gray)
+                }
+                Text(localizable: .insertPDFSheetSelectPrompt)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity, minHeight: 220)
+        } else {
+            compactPDFPreviewContent
+        }
+    }
+
+    @ViewBuilder
+    private var compactPDFPreviewContent: some View {
+#if canImport(PDFKit)
+        if let pdfDocument {
+            switch selectedMode {
+                case .viewer:
+                    compactViewerPreview(pdfDocument)
+                case .tiled:
+                    compactTiledPreview(pdfDocument)
+            }
+        }
+#else
+        Text(localizable: .insertPDFSheetNoPreview)
+            .foregroundColor(.secondary)
+#endif
+    }
+
+#if canImport(PDFKit)
+    @ViewBuilder
+    private func compactViewerPreview(_ pdfDocument: PDFDocument) -> some View {
+        VStack(spacing: 16) {
+            ForEach(0..<pdfDocument.pageCount, id: \.self) { pageIndex in
+                if let page = pdfDocument.page(at: pageIndex) {
+                    PDFPageView(page: page)
+                        .aspectRatio(
+                            page.bounds(for: .mediaBox).size.width / page.bounds(for: .mediaBox).size.height,
+                            contentMode: .fit
+                        )
+                        .frame(maxWidth: .infinity)
+                        .shadow(radius: 2)
+                }
+            }
+
+            if pdfDocument.pageCount > 1 {
+                Text(localizable: .insertPDFSheetPagesCount(pdfDocument.pageCount))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
+    private func compactTiledPreview(_ pdfDocument: PDFDocument) -> some View {
+        let columns = Array(
+            repeating: GridItem(.flexible(), spacing: 12),
+            count: compactTiledPreviewColumnCount
+        )
+
+        LazyVGrid(columns: columns, spacing: 12) {
+            ForEach(0..<pdfDocument.pageCount, id: \.self) { pageIndex in
+                pagePreviewItem(page: pdfDocument.page(at: pageIndex), pageNumber: pageIndex + 1)
+            }
+        }
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var compactTiledPreviewColumnCount: Int {
+        min(max(itemsPerLine, 1), 3)
+    }
+#endif
+
     @ViewBuilder
     private func previewContent() -> some View {
         switch selectedMode {

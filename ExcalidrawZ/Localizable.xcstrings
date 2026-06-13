@@ -110903,6 +110903,28 @@
         }
       }
     },
+    "whatsNewIOSToolbarDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The iPhone and iPad toolbar is cleaner and more direct, with faster access to Library, Search, File History, AI, and editing controls."
+          }
+        }
+      }
+    },
+    "whatsNewIOSToolbarTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimized toolbar"
+          }
+        }
+      }
+    },
     "whatsNewImportPDFDescription": {
       "extractionState": "manual",
       "localizations": {

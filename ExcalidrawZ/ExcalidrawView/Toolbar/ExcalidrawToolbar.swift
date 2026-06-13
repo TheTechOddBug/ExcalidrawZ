@@ -674,7 +674,6 @@ struct ExcalidrawToolbar: View {
                 .foregroundStyle(isActive ? Color.accentColor : Color.primary)
                 .frame(width: 28, height: 28)
         }
-        .buttonStyle(.plain)
         .help(title)
         .opacity(isDisabled && !isActive ? 0.55 : 1)
         .allowsHitTesting(!isDisabled)
@@ -706,7 +705,6 @@ struct ExcalidrawToolbar: View {
                 .foregroundStyle(compactCollapsedInspectorTabsContainActive ? Color.accentColor : Color.primary)
                 .frame(width: 28, height: 28)
         }
-        .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .help(String(localizable: .generalButtonMore))
 #if os(iOS)

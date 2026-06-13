@@ -69,10 +69,15 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
 
     @ViewBuilder
     private func activeToolControls(_ activatedTool: ExcalidrawTool) -> some View {
-        activeToolLockButton(for: activatedTool)
+        activeToolLockButton
+
+        Spacer(minLength: 0)
+
         Text(activatedTool.localization)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 2)
+            .frame(maxWidth: .infinity, alignment: .center)
+
+        Spacer(minLength: 0)
+
         Button {
             if activatedTool == .arrow {
                 Task {
@@ -87,21 +92,24 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
     }
 
     @ViewBuilder
-    private func activeToolLockButton(for activatedTool: ExcalidrawTool) -> some View {
+    private var activeToolLockButton: some View {
         Button {
             toolState.toggleToolLock()
         } label: {
             if #available(iOS 17.0, *) {
                 Image(systemSymbol: toolState.isToolLocked ? .lock : .lockOpen)
-                    .frame(width: 16, height: 16)
+                    .font(.system(size: 14, weight: .medium))
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
                     .contentTransition(.symbolEffect(.replace))
             } else {
                 Image(systemSymbol: toolState.isToolLocked ? .lock : .lockOpen)
-                    .frame(width: 16, height: 16)
+                    .font(.system(size: 14, weight: .medium))
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
             }
         }
         .foregroundStyle(toolState.isToolLocked ? Color.accentColor : Color.primary)
-        .modernButtonStyle(style: .glass, shape: .circle)
         .help("\(String(localizable: .toolbarButtonLockToolHelp)) - Q")
         .accessibilityLabel(Text(localizable: .toolbarButtonLockToolLabel))
         .animation(.default, value: toolState.isToolLocked)
@@ -272,7 +280,6 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
                 .contentShape(Rectangle())
         }
         .foregroundStyle(compactAIChatShowsStopButton ? Color.accentColor : Color.primary)
-        .buttonStyle(.plain)
         .help(compactAIChatToolbarTrailingTitle)
         .animation(.smooth(duration: 0.2), value: compactAIChatShowsStopButton)
     }
@@ -317,7 +324,6 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
                 .font(.system(size: 16))
                 .foregroundStyle(isActive ? Color.accentColor : Color.primary)
         }
-        .buttonStyle(.plain)
         .help(title)
         .opacity(isDisabled && !isActive ? 0.55 : 1)
         .allowsHitTesting(!isDisabled)
@@ -348,10 +354,9 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
                 .font(.system(size: 16))
                 .foregroundStyle(compactCollapsedInspectorTabsContainActive ? Color.accentColor : Color.primary)
         }
-        .fixedSize()
-        .buttonStyle(.plain)
-        .menuIndicator(.hidden)
-        .help(String(localizable: .generalButtonMore))
+            .fixedSize()
+            .menuIndicator(.hidden)
+            .help(String(localizable: .generalButtonMore))
         .menuOrder(.fixed)
     }
 
@@ -585,7 +590,6 @@ private struct CompactAIChatToolbarPlaceholderButton: View {
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
         }
-        .buttonStyle(.plain)
         .help("AI Chat")
     }
 }
@@ -718,7 +722,6 @@ private struct CompactAIChatToolbarAttachmentMenu: View {
                     .frame(width: 28, height: 28)
                     .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
             .menuIndicator(.hidden)
 
             Color.clear

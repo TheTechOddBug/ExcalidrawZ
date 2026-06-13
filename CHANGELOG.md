@@ -1,3 +1,13 @@
+## 2.1.1
+
+#### Optimizations
+
+- Optimized the iPhone and iPad editor toolbar with quicker access to Library, Search, File History, AI, and editing controls.
+
+#### Bug fixed
+
+- Fixed a macOS toolbar rendering issue that could leave toolbar picker items empty after switching layouts.
+
 ## 2.1.0
 
 #### Features
