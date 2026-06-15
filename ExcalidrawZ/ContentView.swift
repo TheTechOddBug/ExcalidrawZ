@@ -121,7 +121,15 @@ struct ContentView: View {
                 )
             }
             .withContainerSize()
-            .task { await prepare() }
+            .task {
+                await MainActor.run {
+                    ExcalidrawMCPAppBridge.shared.register(
+                        fileState: fileState,
+                        context: viewContext
+                    )
+                }
+                await prepare()
+            }
     }
     
     @ViewBuilder

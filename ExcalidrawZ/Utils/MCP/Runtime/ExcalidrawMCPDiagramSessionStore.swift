@@ -14,17 +14,24 @@ struct ExcalidrawMCPDiagramSession: Identifiable, Codable, Sendable {
     let updatedAt: Date
     let elements: [MCPJSONValue]
     let sourceElementCount: Int
-    let ratioHint: String?
 }
 
 struct ExcalidrawMCPCheckpoint: Codable, Sendable {
     let id: String
     let createdAt: Date
-    let elements: [MCPJSONValue]
+    let data: MCPJSONValue
+
+    var elements: [MCPJSONValue] {
+        ExcalidrawMCPElementSanitizer.checkpointElements(from: data) ?? []
+    }
+
+    var dataValue: MCPJSONValue {
+        data
+    }
 }
 
 actor ExcalidrawMCPDiagramSessionStore {
-    typealias UpdateHandler = @Sendable (ExcalidrawMCPDiagramSession) async -> Void
+    typealias UpdateHandler = @Sendable (ExcalidrawMCPDiagramSession) async throws -> Void
 
     private var checkpoints: [String: ExcalidrawMCPCheckpoint] = [:]
     private var currentSession: ExcalidrawMCPDiagramSession?
@@ -43,11 +50,31 @@ actor ExcalidrawMCPDiagramSessionStore {
     }
 
     @discardableResult
-    func saveCheckpoint(elements: [MCPJSONValue]) -> ExcalidrawMCPCheckpoint {
+    func saveCheckpoint(
+        id: String = makeCheckpointID(),
+        elements: [MCPJSONValue]
+    ) throws -> ExcalidrawMCPCheckpoint {
+        let sanitizedElements = try ExcalidrawMCPElementSanitizer.sanitizeElements(elements)
         let checkpoint = ExcalidrawMCPCheckpoint(
-            id: Self.makeCheckpointID(),
+            id: id,
             createdAt: Date(),
-            elements: elements
+            data: .object([
+                "elements": .array(sanitizedElements)
+            ])
+        )
+        checkpoints[checkpoint.id] = checkpoint
+        return checkpoint
+    }
+
+    @discardableResult
+    func saveCheckpoint(
+        id: String,
+        data: MCPJSONValue
+    ) throws -> ExcalidrawMCPCheckpoint {
+        let checkpoint = ExcalidrawMCPCheckpoint(
+            id: id,
+            createdAt: Date(),
+            data: data
         )
         checkpoints[checkpoint.id] = checkpoint
         return checkpoint
@@ -56,22 +83,21 @@ actor ExcalidrawMCPDiagramSessionStore {
     @discardableResult
     func publishSession(
         elements: [MCPJSONValue],
-        sourceElementCount: Int,
-        ratioHint: String?
-    ) async -> ExcalidrawMCPDiagramSession {
-        let checkpoint = saveCheckpoint(elements: elements)
+        sourceElementCount: Int
+    ) async throws -> ExcalidrawMCPDiagramSession {
+        let sanitizedElements = try ExcalidrawMCPElementSanitizer.sanitizeElements(elements)
+        let checkpoint = try saveCheckpoint(elements: sanitizedElements)
         let now = Date()
         let session = ExcalidrawMCPDiagramSession(
             id: UUID().uuidString,
             checkpointID: checkpoint.id,
             createdAt: now,
             updatedAt: now,
-            elements: elements,
-            sourceElementCount: sourceElementCount,
-            ratioHint: ratioHint
+            elements: sanitizedElements,
+            sourceElementCount: sourceElementCount
         )
+        try await updateHandler?(session)
         currentSession = session
-        await updateHandler?(session)
         return session
     }
 
@@ -82,4 +108,5 @@ actor ExcalidrawMCPDiagramSessionStore {
             .prefix(18)
             .description
     }
+
 }

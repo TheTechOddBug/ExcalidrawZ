@@ -9,6 +9,7 @@ import Foundation
 
 actor ExcalidrawMCPToolRouter {
     private let store: ExcalidrawMCPDiagramSessionStore
+    private var elementConverter: ExcalidrawMCPUpstreamToolHandler.ElementConverter?
 
     init(store: ExcalidrawMCPDiagramSessionStore = ExcalidrawMCPDiagramSessionStore()) {
         self.store = store
@@ -18,6 +19,12 @@ actor ExcalidrawMCPToolRouter {
         _ handler: ExcalidrawMCPDiagramSessionStore.UpdateHandler?
     ) async {
         await store.setUpdateHandler(handler)
+    }
+
+    func setElementConverter(
+        _ converter: ExcalidrawMCPUpstreamToolHandler.ElementConverter?
+    ) async {
+        elementConverter = converter
     }
 
     func handle(_ request: MCPJSONRPCRequest) async -> MCPJSONRPCResponse? {
@@ -85,104 +92,40 @@ actor ExcalidrawMCPToolRouter {
             throw MCPJSONRPCError.invalidParams("tools/call requires params.name.")
         }
 
-        let arguments = object["arguments"]?.objectValue ?? [:]
-        let result: ExcalidrawMCPToolResult
-        switch name {
-            case ExcalidrawMCPUpstreamContract.ToolName.readMe:
-                result = ExcalidrawMCPToolResult(text: ExcalidrawMCPUpstreamRecall.cheatSheet)
-            case ExcalidrawMCPUpstreamContract.ToolName.createView:
-                result = try await createView(arguments: arguments)
-            case ExcalidrawMCPUpstreamContract.ToolName.saveCheckpoint:
-                result = try await saveCheckpoint()
-            case ExcalidrawMCPUpstreamContract.ToolName.readCheckpoint:
-                result = try await readCheckpoint(arguments: arguments)
-            default:
-                throw MCPJSONRPCError.invalidParams("Unknown tool: \(name)")
-        }
-
+        let result = try await makeUpstreamToolHandler().callTool(
+            name: name,
+            arguments: object["arguments"]?.objectValue ?? [:]
+        )
         return result.jsonValue
     }
 
-    private func createView(
-        arguments: [String: MCPJSONValue]
-    ) async throws -> ExcalidrawMCPToolResult {
-        guard let elementsString = arguments["elements"]?.stringValue else {
-            throw MCPJSONRPCError.invalidParams("create_view requires arguments.elements.")
-        }
-
-        let inputData = Data(elementsString.utf8)
-        guard inputData.count <= ExcalidrawMCPUpstreamContract.maxInputBytes else {
-            return ExcalidrawMCPToolResult(
-                text: "Elements input exceeds \(ExcalidrawMCPUpstreamContract.maxInputBytes) byte limit. Reduce the number of elements or use checkpoints to build incrementally.",
-                isError: true
-            )
-        }
-
-        let parsedElements: [MCPJSONValue]
-        do {
-            parsedElements = try MCPJSONValue.parseJSONArray(from: inputData)
-        } catch {
-            return ExcalidrawMCPToolResult(
-                text: "Invalid JSON in elements. Ensure the value is a JSON array string with no comments or trailing commas.",
-                isError: true
-            )
-        }
-
-        let resolver = ExcalidrawMCPUpstreamElementResolver { [store] id in
-            await store.checkpoint(id: id)
-        }
-        let resolved = try await resolver.resolve(parsedElements)
-        let session = await store.publishSession(
-            elements: resolved.elements,
-            sourceElementCount: parsedElements.count,
-            ratioHint: resolved.ratioHint
+    private func makeUpstreamToolHandler() -> ExcalidrawMCPUpstreamToolHandler {
+        let converter = elementConverter
+        return ExcalidrawMCPUpstreamToolHandler(
+            convertRawElements: { elements in
+                guard let converter else {
+                    throw MCPJSONRPCError.internalError("MCP element converter is unavailable.")
+                }
+                return try await converter(elements)
+            },
+            publishDiagram: { [store] elements, sourceElementCount in
+                let session = try await store.publishSession(
+                    elements: elements,
+                    sourceElementCount: sourceElementCount
+                )
+                return ExcalidrawMCPUpstreamToolHandler.PublishedDiagram(
+                    checkpointID: session.checkpointID
+                )
+            },
+            saveCheckpointData: { [store] id, data in
+                _ = try await store.saveCheckpoint(id: id, data: data)
+            },
+            readCheckpointData: { [store] id in
+                await store.checkpoint(id: id)?.dataValue
+            },
+            readCheckpointElements: { [store] id in
+                await store.checkpoint(id: id)?.elements
+            }
         )
-
-        var message = """
-        Diagram received by ExcalidrawZ. Checkpoint id: "\(session.checkpointID)".
-        If the user asks to revise this diagram, call create_view again with a restoreCheckpoint pseudo-element using that id.
-        """
-        if let ratioHint = resolved.ratioHint {
-            message += "\n\(ratioHint)"
-        }
-
-        return ExcalidrawMCPToolResult(
-            text: message,
-            structuredContent: .object([
-                "checkpointId": .string(session.checkpointID)
-            ])
-        )
-    }
-
-    private func saveCheckpoint() async throws -> ExcalidrawMCPToolResult {
-        guard let session = await store.latestSession() else {
-            return ExcalidrawMCPToolResult(
-                text: "No active MCP diagram session to save.",
-                isError: true
-            )
-        }
-
-        let checkpoint = await store.saveCheckpoint(elements: session.elements)
-        return ExcalidrawMCPToolResult(
-            text: "Checkpoint saved. Checkpoint id: \"\(checkpoint.id)\"."
-        )
-    }
-
-    private func readCheckpoint(
-        arguments: [String: MCPJSONValue]
-    ) async throws -> ExcalidrawMCPToolResult {
-        guard let id = arguments["id"]?.stringValue else {
-            throw MCPJSONRPCError.invalidParams("read_checkpoint requires arguments.id.")
-        }
-        guard let checkpoint = await store.checkpoint(id: id) else {
-            return ExcalidrawMCPToolResult(
-                text: "Checkpoint \"\(id)\" was not found.",
-                isError: true
-            )
-        }
-
-        let data = try checkpoint.elements.mcpJSONData()
-        let json = String(data: data, encoding: .utf8) ?? "[]"
-        return ExcalidrawMCPToolResult(text: json)
     }
 }

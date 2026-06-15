@@ -50,6 +50,11 @@ extension AISettingsView {
         }
     }
 
+    enum SettingsSection {
+        case general
+        case mcp
+    }
+
     enum ActivityGrouping: String, CaseIterable, Identifiable {
         case recent
         case file

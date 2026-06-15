@@ -13,19 +13,22 @@ struct ExcalidrawMCPTool: Sendable {
     let description: String
     let inputSchema: MCPJSONValue
     let annotations: [String: MCPJSONValue]
+    let meta: [String: MCPJSONValue]
 
     init(
         name: String,
         title: String,
         description: String,
         inputSchema: MCPJSONValue,
-        annotations: [String: MCPJSONValue] = [:]
+        annotations: [String: MCPJSONValue] = [:],
+        meta: [String: MCPJSONValue] = [:]
     ) {
         self.name = name
         self.title = title
         self.description = description
         self.inputSchema = inputSchema
         self.annotations = annotations
+        self.meta = meta
     }
 
     var jsonValue: MCPJSONValue {
@@ -38,6 +41,9 @@ struct ExcalidrawMCPTool: Sendable {
 
         if !annotations.isEmpty {
             object["annotations"] = .object(annotations)
+        }
+        if !meta.isEmpty {
+            object["_meta"] = .object(meta)
         }
 
         return .object(object)
@@ -117,6 +123,31 @@ enum ExcalidrawMCPToolSchemas {
         "required": .array([.string("id")]),
         "additionalProperties": .bool(false)
     ])
+
+    static let saveCheckpoint: MCPJSONValue = .object([
+        "type": .string("object"),
+        "properties": .object([
+            "id": .object([
+                "type": .string("string"),
+                "description": .string("Checkpoint id to update.")
+            ]),
+            "data": .object([
+                "type": .string("string"),
+                "description": .string("Serialized checkpoint data JSON.")
+            ])
+        ]),
+        "required": .array([
+            .string("id"),
+            .string("data")
+        ]),
+        "additionalProperties": .bool(false)
+    ])
+
+    static let appOnlyToolMeta: [String: MCPJSONValue] = [
+        "ui": .object([
+            "visibility": .array([.string("app")])
+        ])
+    ]
 }
 
 enum ExcalidrawMCPUpstreamToolCatalog {
@@ -134,6 +165,20 @@ enum ExcalidrawMCPUpstreamToolCatalog {
             description: "Renders a hand-drawn diagram using Excalidraw elements. Elements stream in one by one with draw-on animations. Call read_me first to learn the element format.",
             inputSchema: ExcalidrawMCPToolSchemas.createView,
             annotations: ["readOnlyHint": .bool(true)]
+        ),
+        ExcalidrawMCPTool(
+            name: ExcalidrawMCPUpstreamContract.ToolName.saveCheckpoint,
+            title: "Save Checkpoint",
+            description: "Update checkpoint with user-edited state.",
+            inputSchema: ExcalidrawMCPToolSchemas.saveCheckpoint,
+            meta: ExcalidrawMCPToolSchemas.appOnlyToolMeta
+        ),
+        ExcalidrawMCPTool(
+            name: ExcalidrawMCPUpstreamContract.ToolName.readCheckpoint,
+            title: "Read Checkpoint",
+            description: "Read checkpoint state for restore.",
+            inputSchema: ExcalidrawMCPToolSchemas.checkpointID,
+            meta: ExcalidrawMCPToolSchemas.appOnlyToolMeta
         )
     ]
 }

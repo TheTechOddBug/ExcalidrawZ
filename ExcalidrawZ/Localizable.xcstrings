@@ -1922,6 +1922,17 @@
         }
       }
     },
+    "aiChatButtonMCPSettings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        }
+      }
+    },
     "aiChatClearChatConfimationDialogMessage": {
       "extractionState": "manual",
       "localizations": {
@@ -61824,6 +61835,17 @@
         }
       }
     },
+    "mcpGeneratedFileName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP Drawing"
+          }
+        }
+      }
+    },
     "openURLSheetPopUpTipsPopoverHelp": {
       "extractionState": "manual",
       "localizations": {
@@ -73236,6 +73258,270 @@
           "stringUnit": {
             "state": "translated",
             "value": "選擇 AI 聊天在開始或重新生成對話時使用的預設。"
+          }
+        }
+      }
+    },
+    "settingsAIMCPConnectHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect compatible MCP clients using ExcalidrawZ's local HTTP server."
+          }
+        }
+      }
+    },
+    "settingsAIMCPConnectLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect MCP Client"
+          }
+        }
+      }
+    },
+    "settingsAIMCPConnectionGuideMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep ExcalidrawZ open with the MCP server enabled, then copy this configuration into Claude or another MCP client that supports HTTP MCP servers."
+          }
+        }
+      }
+    },
+    "settingsAIMCPConnectionGuideClaudeTabTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        }
+      }
+    },
+    "settingsAIMCPConnectionGuideTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect MCP Client"
+          }
+        }
+      }
+    },
+    "settingsAIMCPConnectionGuideVSCodeTabTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        }
+      }
+    },
+    "settingsAIMCPClaudeUnsupportedHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use VS Code or another local MCP client for now. Remote HTTPS support can be added later."
+          }
+        }
+      }
+    },
+    "settingsAIMCPClaudeUnsupportedMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop custom connectors currently accept remote HTTPS URLs only. ExcalidrawZ runs a local HTTP MCP server, so it cannot be connected from that connector screen yet."
+          }
+        }
+      }
+    },
+    "settingsAIMCPClaudeUnsupportedTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop is not supported yet"
+          }
+        }
+      }
+    },
+    "settingsAIMCPHTTPConfigLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP Configuration"
+          }
+        }
+      }
+    },
+    "settingsAIMCPVSCodeConfigLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        }
+      }
+    },
+    "settingsAIMCPVSCodeGuideMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep ExcalidrawZ open with the MCP server enabled. In VS Code, open the Command Palette and run \"MCP: Open User Configuration\", or create `.vscode/mcp.json` in your workspace."
+          }
+        }
+      }
+    },
+    "settingsAIMCPVSCodeGuideSteps": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste the configuration below, save the file, then start or refresh the ExcalidrawZ MCP server in VS Code."
+          }
+        }
+      }
+    },
+    "settingsAIMCPHowToConnectButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect"
+          }
+        }
+      }
+    },
+    "settingsAIMCPServerToggleHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow external AI apps to connect to ExcalidrawZ through MCP."
+          }
+        }
+      }
+    },
+    "settingsAIMCPServerToggleTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP Server"
+          }
+        }
+      }
+    },
+    "settingsAIMCPStatusLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        }
+      }
+    },
+    "settingsAIMCPStatusOff": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        }
+      }
+    },
+    "settingsAIMCPStatusStarting": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starting"
+          }
+        }
+      }
+    },
+    "settingsAIMCPStatusRunning": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Running"
+          }
+        }
+      }
+    },
+    "settingsAIMCPStatusStopping": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopping"
+          }
+        }
+      }
+    },
+    "settingsAIMCPStatusFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed"
+          }
+        }
+      }
+    },
+    "settingsAIMCPSubtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let external AI apps control an ExcalidrawZ MCP canvas."
+          }
+        }
+      }
+    },
+    "settingsAIMCPTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
           }
         }
       }

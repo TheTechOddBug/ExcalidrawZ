@@ -491,6 +491,10 @@ extension ExcalidrawCore {
         var mermaidConfig: JSONValue?
     }
 
+    struct CreateElementsOptions: Codable, Hashable {
+        var regenerateIds: Bool?
+    }
+
     struct MermaidPoint: Codable, Hashable {
         var x: Double
         var y: Double
@@ -1144,6 +1148,48 @@ extension ExcalidrawCore {
             contentWorld: .page
         )
         documentSyncController.scheduleProgrammaticMutationCommit(reason: "replaceAllElements")
+    }
+
+    @MainActor
+    func replaceAllElements(
+        rawElementsJSON elementsJSON: String,
+        options: ReplaceAllElementsOptions = .init()
+    ) async throws {
+        guard !self.webView.isLoading else { return }
+        let optionsJSON = try encodeJSON(options)
+        _ = try await webView.callAsyncJavaScript(
+            """
+            const elements = JSON.parse(elementsJSON);
+            const options = JSON.parse(optionsJSON);
+            window.excalidrawZHelper.replaceAllElements(elements, options);
+            """,
+            arguments: [
+                "elementsJSON": elementsJSON,
+                "optionsJSON": optionsJSON
+            ],
+            contentWorld: .page
+        )
+        documentSyncController.scheduleProgrammaticMutationCommit(reason: "replaceAllElementsRaw")
+    }
+
+    @MainActor
+    func createElements(
+        _ elements: JSONValue,
+        options: CreateElementsOptions = .init()
+    ) async throws -> [JSONValue] {
+        guard !self.webView.isLoading else {
+            throw InvalidJavaScriptResult()
+        }
+        let elementsJSON = try encodeJSON(elements)
+        let optionsJSON = try encodeJSON(options)
+        let result = try await webView.callAsyncJavaScript(
+            makeJavaScriptHelperCall(
+                "window.excalidrawZHelper.createElements(\(elementsJSON), \(optionsJSON))"
+            ),
+            arguments: [:],
+            contentWorld: .page
+        )
+        return try decodeJavaScriptHelperResult(result, as: [JSONValue].self)
     }
 
     @MainActor

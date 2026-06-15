@@ -130,6 +130,10 @@ enum MCPJSONValue: Codable, Equatable, Sendable {
         }
         return try array.map(MCPJSONValue.init(jsonObject:))
     }
+
+    static func parse(from data: Data) throws -> MCPJSONValue {
+        try MCPJSONValue(jsonObject: JSONSerialization.jsonObject(with: data))
+    }
 }
 
 private enum MCPJSONValueError: Error {

@@ -59,6 +59,12 @@ struct MCPJSONRPCError: Encodable, Error, Sendable {
     }
 }
 
+extension MCPJSONRPCError: LocalizedError {
+    var errorDescription: String? {
+        message
+    }
+}
+
 extension Encodable {
     func mcpJSONData(prettyPrinted: Bool = false) throws -> Data {
         let encoder = JSONEncoder()

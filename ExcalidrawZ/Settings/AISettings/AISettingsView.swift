@@ -16,6 +16,7 @@ struct AISettingsView: View {
     @EnvironmentObject var store: Store
     @ObservedObject var prefs = AIChatPreferences.shared
     @ObservedObject var router = SettingsRouter.shared
+    @ObservedObject var mcpServerController = ExcalidrawZMCPServerController.shared
     
     @State var selectedTab: SettingsTab = .usage
     @State var activityGrouping: ActivityGrouping = .recent
@@ -32,7 +33,11 @@ struct AISettingsView: View {
     @State var isLoadingAIUserInfo: Bool = false
     @State var aiUserInfoLoadError: String?
     @State var didCopyAIAccountID: Bool = false
+    @State var didCopyMCPClientConfig: Bool = false
+    @State var isPresentingMCPConnectionGuide: Bool = false
+    @State var selectedMCPConnectionGuideTab: MCPConnectionGuideTab = .vscode
     @State var isPresentingAIEnableConsent: Bool = false
+    @State var preferredSettingsSection: SettingsSection = .general
     
     /// Model profile list for the Default Model picker, sourced from the
     /// agent's server-defined `modelProfiles`.
@@ -96,6 +101,9 @@ struct AISettingsView: View {
                 prefs.isAIEnabled = true
             }
         }
+        .sheet(isPresented: $isPresentingMCPConnectionGuide) {
+            mcpConnectionGuideSheet
+        }
         .watch(value: router.pendingAISettingsRoute) {
             consumePendingAISettingsRoute()
         }
@@ -117,6 +125,10 @@ struct AISettingsView: View {
             case .usage:
                 selectedTab = .usage
             case .settings:
+                preferredSettingsSection = .general
+                selectedTab = .settings
+            case .mcp:
+                preferredSettingsSection = .mcp
                 selectedTab = .settings
         }
         router.pendingAISettingsRoute = nil

@@ -10,46 +10,94 @@ import Foundation
 struct ExcalidrawMCPUpstreamElementResolver {
     struct Result: Sendable {
         let elements: [MCPJSONValue]
-        let ratioHint: String?
     }
 
-    var loadCheckpoint: @Sendable (String) async -> ExcalidrawMCPCheckpoint?
+    private struct ExtractedElements: Sendable {
+        let drawElements: [MCPJSONValue]
+        let restoreCheckpointID: String?
+        let deleteIDs: Set<String>
+    }
+
+    var loadCheckpointElements: @Sendable (String) async -> [MCPJSONValue]?
 
     func resolve(_ parsedElements: [MCPJSONValue]) async throws -> Result {
-        let restoreCheckpointID = parsedElements.first { element in
-            element["type"]?.stringValue == ExcalidrawMCPUpstreamContract.PseudoElementType.restoreCheckpoint
-        }?["id"]?.stringValue
-
-        let deleteIDs = Set(parsedElements.flatMap(Self.deleteIDs(from:)))
-        let newElements = parsedElements.filter { element in
-            let type = element["type"]?.stringValue
-            return type != ExcalidrawMCPUpstreamContract.PseudoElementType.restoreCheckpoint &&
-                type != ExcalidrawMCPUpstreamContract.PseudoElementType.delete
-        }
+        let extracted = Self.extractViewportAndElements(parsedElements)
 
         let resolvedElements: [MCPJSONValue]
-        if let restoreCheckpointID {
-            guard let checkpoint = await loadCheckpoint(restoreCheckpointID) else {
+        if let restoreCheckpointID = extracted.restoreCheckpointID {
+            guard let checkpointElements = await loadCheckpointElements(restoreCheckpointID) else {
                 throw MCPJSONRPCError.invalidParams(
                     "Checkpoint \"\(restoreCheckpointID)\" not found. Recreate the diagram from scratch."
                 )
             }
 
-            let baseElements = checkpoint.elements.filter { element in
-                let id = element["id"]?.stringValue
-                let containerID = element["containerId"]?.stringValue
-                return !deleteIDs.contains(id ?? "") &&
-                    !deleteIDs.contains(containerID ?? "")
-            }
-            resolvedElements = baseElements + newElements
+            let base = Self.extractViewportAndElements(checkpointElements).drawElements
+            let filteredBase = Self.filterDeletedElements(
+                base,
+                deleteIDs: extracted.deleteIDs
+            )
+            resolvedElements = filteredBase + extracted.drawElements
         } else {
-            resolvedElements = newElements
+            resolvedElements = extracted.drawElements
         }
 
-        return Result(
-            elements: resolvedElements,
-            ratioHint: Self.cameraRatioHint(in: parsedElements)
+        return Result(elements: resolvedElements)
+    }
+
+    private static func extractViewportAndElements(_ elements: [MCPJSONValue]) -> ExtractedElements {
+        var restoreCheckpointID: String?
+        var deleteIDs: Set<String> = []
+        var drawElements: [MCPJSONValue] = []
+
+        for element in elements {
+            switch element["type"]?.stringValue {
+                case ExcalidrawMCPUpstreamContract.PseudoElementType.cameraUpdate:
+                    continue
+                case ExcalidrawMCPUpstreamContract.PseudoElementType.restoreCheckpoint:
+                    restoreCheckpointID = element["id"]?.stringValue
+                case ExcalidrawMCPUpstreamContract.PseudoElementType.delete:
+                    deleteIDs.formUnion(Self.deleteIDs(from: element))
+                default:
+                    drawElements.append(element)
+            }
+        }
+
+        if !deleteIDs.isEmpty {
+            drawElements = drawElements.map { element in
+                guard Self.shouldHideInlineDeletedElement(element, deleteIDs: deleteIDs),
+                      var object = element.objectValue
+                else {
+                    return element
+                }
+                object["opacity"] = .number(1)
+                return .object(object)
+            }
+        }
+
+        return ExtractedElements(
+            drawElements: drawElements,
+            restoreCheckpointID: restoreCheckpointID,
+            deleteIDs: deleteIDs
         )
+    }
+
+    private static func filterDeletedElements(
+        _ elements: [MCPJSONValue],
+        deleteIDs: Set<String>
+    ) -> [MCPJSONValue] {
+        guard !deleteIDs.isEmpty else { return elements }
+        return elements.filter { element in
+            !shouldHideInlineDeletedElement(element, deleteIDs: deleteIDs)
+        }
+    }
+
+    private static func shouldHideInlineDeletedElement(
+        _ element: MCPJSONValue,
+        deleteIDs: Set<String>
+    ) -> Bool {
+        let id = element["id"]?.stringValue
+        let containerID = element["containerId"]?.stringValue
+        return deleteIDs.contains(id ?? "") || deleteIDs.contains(containerID ?? "")
     }
 
     private static func deleteIDs(from element: MCPJSONValue) -> [String] {
@@ -61,22 +109,5 @@ struct ExcalidrawMCPUpstreamElementResolver {
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-    }
-
-    private static func cameraRatioHint(in elements: [MCPJSONValue]) -> String? {
-        for element in elements where element["type"]?.stringValue == ExcalidrawMCPUpstreamContract.PseudoElementType.cameraUpdate {
-            guard let width = element["width"]?.numberValue,
-                  let height = element["height"]?.numberValue,
-                  height > 0
-            else {
-                continue
-            }
-
-            let ratio = width / height
-            if abs(ratio - 4.0 / 3.0) > 0.15 {
-                return "Tip: your cameraUpdate used \(Int(width))x\(Int(height)) — try to stick with 4:3 aspect ratio (e.g. 400x300, 800x600) in future."
-            }
-        }
-        return nil
     }
 }
