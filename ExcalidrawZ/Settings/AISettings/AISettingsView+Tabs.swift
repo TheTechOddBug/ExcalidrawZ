@@ -205,15 +205,9 @@ extension AISettingsView {
 
     @ViewBuilder
     var settingsSections: some View {
-        if preferredSettingsSection == .mcp {
-            mcpSettingsSection
-            defaultModelSettingsSection
-            aiAccountSettingsSection
-        } else {
-            defaultModelSettingsSection
-            mcpSettingsSection
-            aiAccountSettingsSection
-        }
+        defaultModelSettingsSection
+        mcpSettingsSection
+        aiAccountSettingsSection
     }
 
     @ViewBuilder

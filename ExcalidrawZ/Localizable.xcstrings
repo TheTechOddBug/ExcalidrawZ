@@ -1930,6 +1930,108 @@
             "state": "translated",
             "value": "MCP"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "एमसीपी"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "МCP"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
         }
       }
     },
@@ -61843,6 +61945,108 @@
             "state": "translated",
             "value": "MCP Drawing"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رسمة MCP"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP-Zeichnung"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dibujo MCP"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dessin MCP"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "एमसीपी ड्राइंग"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disegno MCP"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP図面"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 도면"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP Tekeningen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rysunek MCP"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desenho MCP"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чертеж MCP"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP Drawing"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP Çizimi"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bản vẽ MCP"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 图纸"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 繪圖"
+          }
         }
       }
     },
@@ -73270,6 +73474,108 @@
             "state": "translated",
             "value": "Connect compatible MCP clients using ExcalidrawZ's local HTTP server."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اتصل بعملاء MCP المتوافقين باستخدام خادم HTTP المحلي لExcalidrawZ."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbinden Sie kompatible MCP-Clients über den lokalen HTTP-Server von ExcalidrawZ."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conecta clientes MCP compatibles usando el servidor HTTP local de ExcalidrawZ."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connectez des clients MCP compatibles en utilisant le serveur HTTP local d'ExcalidrawZ."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ के स्थानीय HTTP सर्वर का उपयोग करके संगत MCP क्लाइंट को कनेक्ट करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collega i client MCP compatibili utilizzando il server HTTP locale di ExcalidrawZ."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZのローカルHTTPサーバーを使用して、互換性のあるMCPクライアントを接続します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ의 로컬 HTTP 서버를 사용하여 호환 가능한 MCP 클라이언트를 연결하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbind compatibele MCP-clients met de lokale HTTP-server van ExcalidrawZ."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Połącz zgodne klienty MCP korzystając z lokalnego serwera HTTP ExcalidrawZ."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conecte clientes MCP compatíveis usando o servidor HTTP local do ExcalidrawZ."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключите совместимые клиенты MCP, используя локальный HTTP-сервер ExcalidrawZ."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เชื่อมต่อคลินต์ MCP ที่เข้ากันได้โดยใช้เซิร์ฟเวอร์ HTTP ท้องถิ่นของ ExcalidrawZ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ'nin yerel HTTP sunucusunu kullanarak uyumlu MCP istemcilerini bağlayın."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kết nối các khách hàng MCP tương thích bằng máy chủ HTTP cục bộ của ExcalidrawZ."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 ExcalidrawZ 的本地 HTTP 服务器连接兼容的 MCP 客户端。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 ExcalidrawZ 的本地 HTTP 伺服器連接兼容的 MCP 客戶端。"
+          }
         }
       }
     },
@@ -73280,6 +73586,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Connect MCP Client"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اتصل بعميل MCP"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP-Client verbinden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectar Cliente MCP"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecter le client MCP"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP क्लाइंट कनेक्ट करें"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collega Client MCP"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCPクライアントを接続"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 클라이언트 연결"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbind MCP-client"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Połącz klienta MCP"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectar Cliente MCP"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключить клиент MCP"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เชื่อมต่อคลินต์ MCP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP İstemcisini Bağla"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kết nối Khách hàng MCP"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "连接 MCP 客户端"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "連接 MCP 客戶端"
           }
         }
       }
@@ -73292,6 +73700,108 @@
             "state": "translated",
             "value": "Keep ExcalidrawZ open with the MCP server enabled, then copy this configuration into Claude or another MCP client that supports HTTP MCP servers."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "احتفظ بExcalidrawZ مفتوحًا مع خادم MCP ممكّن، ثم انسخ هذا تكوين في Claude أو أي عميل MCP آخر يدعم خوادم HTTP MCP."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halten Sie ExcalidrawZ mit aktiviertem MCP-Server geöffnet und kopieren Sie diese Konfiguration in Claude oder einen anderen MCP-Client, der HTTP MCP-Server unterstützt."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantén ExcalidrawZ abierto con el servidor MCP habilitado, luego copia esta configuración en Claude u otro cliente MCP que soporte servidores HTTP MCP."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gardez ExcalidrawZ ouvert avec le serveur MCP activé, puis copiez cette configuration dans Claude ou un autre client MCP qui prend en charge les serveurs HTTP MCP."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ को चालू रखें और MCP सर्वर को सक्षम रखें, फिर इस कॉन्फ़िगरेशन को Claude या किसी दूसरे MCP क्लाइंट में कॉपी करें जो HTTP MCP सर्वरों का समर्थन करता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tieni aperto ExcalidrawZ con il server MCP attivato, quindi copia questa configurazione in Claude o in un altro client MCP che supporta i server HTTP MCP."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCPサーバーを有効にしてExcalidrawZを開いたままにし、この設定をClaudeやHTTP MCPサーバーをサポートする他のMCPクライアントにコピーします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 서버가 활성화된 상태로 ExcalidrawZ를 열어두고, 이 구성을 Claude 또는 HTTP MCP 서버를 지원하는 다른 MCP 클라이언트에 복사하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Houd ExcalidrawZ geopend met de MCP-server ingeschakeld en kopieer deze configuratie naar Claude of een andere MCP-client die HTTP MCP-servers ondersteunt."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utrzymaj otwarte ExcalidrawZ z włączonym serwerem MCP, a następnie skopiuj tę konfigurację do Claude'a lub innego klienta MCP, który obsługuje serwery HTTP MCP."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantenha o ExcalidrawZ aberto com o servidor MCP habilitado, e então copie esta configuração para o Claude ou outro cliente MCP que suporte servidores MCP HTTP."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Держите ExcalidrawZ открытым с включенным сервером MCP, затем скопируйте эту конфигурацию в Claude или другой клиент MCP, который поддерживает HTTP-серверы MCP."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ให้เปิด ExcalidrawZ พร้อมเซิร์ฟเวอร์ MCP เปิดอยู่ จากนั้นคัดลอกการตั้งค่านี้ไปยัง Claude หรือคลินต์ MCP อื่นที่รองรับเซิร์ฟเวอร์ HTTP MCP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ açık kalsın ve MCP sunucusu etkin olsun, ardından bu yapılandırmayı Claude veya HTTP MCP sunucularını destekleyen başka bir MCP istemcisine kopyalayın."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Giữ cho ExcalidrawZ mở với máy chủ MCP được bật, sau đó sao chép cấu hình này vào Claude hoặc một khách hàng MCP khác hỗ trợ máy chủ HTTP MCP."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保持 ExcalidrawZ 开放并启用 MCP 服务器，然后将此配置复制到 Claude 或其他支持 HTTP MCP 服务器的 MCP 客户端。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保持 ExcalidrawZ 開啟並啟用 MCP 伺服器，然後將此配置複製到 Claude 或其他支持 HTTP MCP 伺服器的 MCP 客戶端中。"
+          }
         }
       }
     },
@@ -73299,6 +73809,108 @@
       "extractionState": "manual",
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "Claude"
@@ -73314,6 +73926,108 @@
             "state": "translated",
             "value": "Connect MCP Client"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اتصل بعميل MCP"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP-Client verbinden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectar Cliente MCP"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecter le client MCP"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP क्लाइंट कनेक्ट करें"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collega Client MCP"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCPクライアントを接続"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 클라이언트 연결"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbind MCP-client"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Połącz klienta MCP"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectar Cliente MCP"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключить клиент MCP"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เชื่อมต่อคลินต์ MCP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP İstemcisini Bağla"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kết nối Khách hàng MCP"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "连接 MCP 客户端"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "連接 MCP 客戶端"
+          }
         }
       }
     },
@@ -73321,6 +74035,108 @@
       "extractionState": "manual",
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS कोड"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS 코드"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "VS Code"
@@ -73336,6 +74152,108 @@
             "state": "translated",
             "value": "Use VS Code or another local MCP client for now. Remote HTTPS support can be added later."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استخدم VS Code أو عميل MCP محلي آخر في الوقت الحالي. يمكن إضافة دعم HTTPS عن بُعد لاحقًا."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verwenden Sie vorerst VS Code oder einen anderen lokalen MCP-Client. Die Unterstützung für Remote-HTTPS kann später hinzugefügt werden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa VS Code u otro cliente MCP local por ahora. El soporte para HTTPS remoto puede ser añadido más tarde."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez VS Code ou un autre client MCP local pour le moment. Le support HTTPS distant peut être ajouté plus tard."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अभी के लिए VS कोड या किसी अन्य स्थानीय MCP क्लाइंट का उपयोग करें। दूरस्थ HTTPS समर्थन बाद में जोड़ा जा सकता है।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilizza VS Code o un altro client MCP locale per ora. Il supporto per HTTPS remoto può essere aggiunto in seguito."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今のところVS Codeまたは他のローカルMCPクライアントを使用してください。リモートHTTPSサポートは後で追加できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "지금은 VS 코드를 사용하거나 다른 로컬 MCP 클라이언트를 사용하세요. 원격 HTTPS 지원은 나중에 추가될 수 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gebruik voorlopig VS Code of een andere lokale MCP-client. Ondersteuning voor externe HTTPS kan later worden toegevoegd."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Na razie użyj VS Code lub innego lokalnego klienta MCP. Obsługa zdalnego HTTPS może być dodana później."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use o VS Code ou outro cliente MCP local por enquanto. O suporte a HTTPS remoto pode ser adicionado depois."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Используйте VS Code или другой локальный клиент MCP на данный момент. Поддержка удаленного HTTPS может быть добавлена позже."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ใช้ VS Code หรือคลินต์ MCP ท้องถิ่นอื่นในขณะนี้ การสนับสนุน HTTPS ระยะไกลสามารถเพิ่มเติมในภายหลัง"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şimdilik VS Code veya başka bir yerel MCP istemcisi kullanın. Uzaktan HTTPS desteği daha sonra eklenebilir."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiện tại, hãy sử dụng VS Code hoặc một khách hàng MCP cục bộ khác. Hỗ trợ HTTPS từ xa có thể được thêm sau."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时使用 VS Code 或其他本地 MCP 客户端。远程 HTTPS 支持可以稍后添加。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目前請使用 VS Code 或其他本地 MCP 客戶端。遠程 HTTPS 支持可以稍後添加。"
+          }
         }
       }
     },
@@ -73346,6 +74264,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Claude Desktop custom connectors currently accept remote HTTPS URLs only. ExcalidrawZ runs a local HTTP MCP server, so it cannot be connected from that connector screen yet."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "موصلات عميل Claude Desktop تقبل حاليًا عناوين URL عن بُعد HTTPS فقط. يقوم ExcalidrawZ بتشغيل خادم HTTP MCP محلي، لذا لا يمكن الاتصال من تلك الشاشة حتى الآن."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die benutzerdefinierten Connectoren von Claude Desktop akzeptieren derzeit nur Remote-HTTPS-URLs. ExcalidrawZ führt einen lokalen HTTP-MCP-Server aus, sodass dieser derzeit nicht von diesem Connector-Bildschirm aus verbunden werden kann."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los conectores personalizados de Claude Desktop actualmente aceptan solo URLs HTTPS remotas. ExcalidrawZ ejecuta un servidor HTTP MCP local, por lo que no se puede conectar desde esa pantalla de conectores aún."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les connecteurs personnalisés de Claude Desktop acceptent actuellement uniquement les URL HTTPS distantes. ExcalidrawZ exécute un serveur HTTP MCP local, donc il ne peut pas être connecté depuis cet écran de connecteur pour l'instant."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude डेस्कटॉप कस्टम कनेक्टर वर्तमान में केवल दूरस्थ HTTPS URLs स्वीकार करते हैं। ExcalidrawZ एक स्थानीय HTTP MCP सर्वर चलाता है, इसलिए इसे उस कनेक्टर स्क्रीन से अभी कनेक्ट नहीं किया जा सकता।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I connettori personalizzati di Claude Desktop attualmente accettano solo URL HTTPS remoti. ExcalidrawZ esegue un server HTTP MCP locale, quindi non può essere collegato da quella schermata del connettore per il momento."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktopのカスタムコネクタは現在、リモートHTTPS URLのみを受け付けます。ExcalidrawZはローカルHTTP MCPサーバーを実行しているため、そのコネクタ画面からは接続できません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop의 사용자 지정 커넥터는 현재 원격 HTTPS URL만 수락합니다. ExcalidrawZ는 로컬 HTTP MCP 서버를 실행하므로 해당 커넥터 화면에서 연결할 수 없습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop aangepaste connectors accepteren momenteel alleen externe HTTPS-URL's. ExcalidrawZ draait een lokale HTTP MCP-server, dus het kan nog niet vanuit dat connector-scherm worden verbonden."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kustomowe konektory Claude Desktop obecnie akceptują tylko zdalne adresy URL HTTPS. ExcalidrawZ działa jako lokalny serwer HTTP MCP, więc nie można się podłączyć z tego ekranu konektora na razie."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectores personalizados do Claude Desktop atualmente aceitam apenas URLs HTTPS remotas. O ExcalidrawZ executa um servidor HTTP MCP local, portanto, não pode ser conectado a partir dessa tela de conectores ainda."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пользовательские соединители Claude Desktop в настоящее время принимают только удаленные HTTPS URL. ExcalidrawZ запускает локальный HTTP MCP сервер, поэтому пока нельзя подключиться с этого экрана соединителей."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ตัวเชื่อมที่กำหนดเองของ Claude Desktop ขณะนี้รับเฉพาะ URL HTTPS ระยะไกล ExcalidrawZ รันเซิร์ฟเวอร์ HTTP MCP ท้องถิ่น ดังนั้นจึงไม่สามารถเชื่อมต่อจากหน้าจอนั้นได้ในขณะนี้"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop özel bağlayıcıları şu anda yalnızca uzaktan HTTPS URL'lerini kabul ediyor. ExcalidrawZ yerel bir HTTP MCP sunucusu çalıştırıyor, bu nedenle o bağlayıcı ekranından henüz bağlanamaz."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Các kết nối tùy chỉnh trên Claude Desktop hiện chỉ chấp nhận các URL HTTPS từ xa. ExcalidrawZ chạy một máy chủ HTTP MCP cục bộ, vì vậy không thể kết nối từ màn hình kết nối đó vào lúc này."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop 自定义连接器目前仅接受远程 HTTPS URL。ExcalidrawZ 运行一个本地 HTTP MCP 服务器，因此无法从该连接器界面连接。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop 自定義連接器目前僅接受遠程 HTTPS URL。ExcalidrawZ 運行一個本地 HTTP MCP 伺服器，因此目前無法從該連接器畫面連接。"
           }
         }
       }
@@ -73358,6 +74378,108 @@
             "state": "translated",
             "value": "Claude Desktop is not supported yet"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عميل Claude Desktop غير مدعوم بعد"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop wird noch nicht unterstützt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop no está soportado aún"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop n'est pas encore pris en charge"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude डेस्कटॉप अभी समर्थित नहीं है"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop non è ancora supportato"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktopはまだサポートされていません"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop은 아직 지원되지 않습니다"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop wordt nog niet ondersteund"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop nie jest jeszcze obsługiwany"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop ainda não é suportado"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop пока не поддерживается"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop ยังไม่ได้รับการสนับสนุน"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop henüz desteklenmiyor"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop chưa được hỗ trợ"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop 尚不支持"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Desktop 尚不支持"
+          }
         }
       }
     },
@@ -73369,6 +74491,108 @@
             "state": "translated",
             "value": "HTTP Configuration"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تكوين HTTP"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP-Konfiguration"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuración HTTP"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuration HTTP"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP कॉन्फ़िगरेशन"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configurazione HTTP"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP設定"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP 구성"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP-configuratie"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konfiguracja HTTP"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuração HTTP"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP Конфигурация"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การตั้งค่า HTTP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP Yapılandırması"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cấu hình HTTP"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP 配置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP 配置"
+          }
         }
       }
     },
@@ -73376,6 +74600,108 @@
       "extractionState": "manual",
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملف mcp.json لـ VS Code"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वीएस कोड mcp.json"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VS Code mcp.json"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "VS Code mcp.json"
@@ -73391,6 +74717,108 @@
             "state": "translated",
             "value": "Keep ExcalidrawZ open with the MCP server enabled. In VS Code, open the Command Palette and run \"MCP: Open User Configuration\", or create `.vscode/mcp.json` in your workspace."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ابقِ ExcalidrawZ مفتوحة مع تفعيل خادم MCP. في VS Code، افتح لوحة الأوامر وشغل \"MCP: فتح إعدادات المستخدم\"، أو أنشئ `.vscode/mcp.json` في مساحة العمل الخاصة بك."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halten Sie ExcalidrawZ mit dem aktivierten MCP-Server geöffnet. Öffnen Sie in VS Code die Befehlspalette und führen Sie \"MCP: Benutzereinstellungen öffnen\" aus oder erstellen Sie `.vscode/mcp.json` in Ihrem Arbeitsbereich."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantén ExcalidrawZ abierto con el servidor MCP habilitado. En VS Code, abre la Paleta de Comandos y ejecuta \"MCP: Abrir Configuración de Usuario\", o crea `.vscode/mcp.json` en tu espacio de trabajo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gardez ExcalidrawZ ouvert avec le serveur MCP activé. Dans VS Code, ouvrez la Palette de commandes et exécutez \"MCP : Ouvrir la configuration utilisateur\", ou créez `.vscode/mcp.json` dans votre espace de travail."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP सर्वर सक्षम रखकर ExcalidrawZ को खुला रखें। वीएस कोड में, कमांड पैलेट खोलें और \"MCP: उपयोगकर्ता कॉन्फ़िगरेशन खोलें\" चलाएँ, या अपने कार्यक्षेत्र में `.vscode/mcp.json` बनाएँ।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tieni ExcalidrawZ aperto con il server MCP abilitato. In VS Code, apri il Command Palette e esegui \"MCP: Apri configurazione utente\", oppure crea `.vscode/mcp.json` nel tuo spazio di lavoro."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZを開いたまま、MCPサーバーを有効にしてください。VS Codeでコマンドパレットを開き、「MCP: ユーザー設定を開く」と入力するか、作業スペースに`.vscode/mcp.json`を作成します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ExcalidrawZ를 열고 MCP 서버를 활성화하세요. VS Code에서 명령 팔레트를 열고 \"MCP: 사용자 구성 열기\"를 실행하거나 작업 영역에 `.vscode/mcp.json` 파일을 생성하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Houd ExcalidrawZ open met de MCP-server ingeschakeld. Open de Command Palette in VS Code en voer \"MCP: Open User Configuration\" uit, of maak `.vscode/mcp.json` aan in je werkruimte."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zachowaj ExcalidrawZ otwarte z włączonym serwerem MCP. W VS Code otwórz Paletę poleceń i uruchom \"MCP: Otwórz konfigurację użytkownika\", lub stwórz `.vscode/mcp.json` w swoim workspace."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantenha o ExcalidrawZ aberto com o servidor MCP ativado. No VS Code, abra a Paleta de Comando e execute \"MCP: Abrir Configuração do Usuário\" ou crie `.vscode/mcp.json` em seu espaço de trabalho."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Держите ExcalidrawZ открытым с включенным сервером MCP. В VS Code откройте палитру команд и выполните \"MCP: Открыть пользовательскую конфигурацию\" или создайте `.vscode/mcp.json` в вашем рабочем пространстве."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ให้เปิด ExcalidrawZ พร้อมกับเซิร์ฟเวอร์ MCP ที่เปิดใช้งาน ใน VS Code ให้เปิด Command Palette และรัน \"MCP: เปิดการตั้งค่าผู้ใช้\" หรือลองสร้าง `.vscode/mcp.json` ในพื้นที่ทำงานของคุณ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP sunucusu etkinken ExcalidrawZ'yi açık tutun. VS Code'da Komut Paletini açın ve \"MCP: Kullanıcı Yapılandırmasını Aç\" komutunu çalıştırın veya çalışma alanınızda `.vscode/mcp.json` oluşturun."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Giữ ExcalidrawZ mở với máy chủ MCP được bật. Trong VS Code, mở Bảng lệnh và chạy \"MCP: Mở cấu hình người dùng\", hoặc tạo `.vscode/mcp.json` trong không gian làm việc của bạn."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保持 ExcalidrawZ 打开，同时启用 MCP 服务器。在 VS Code 中，打开命令面板并运行 \"MCP: 打开用户配置\"，或者在工作区中创建 `.vscode/mcp.json`。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保持 ExcalidrawZ 開啟並啟用 MCP 伺服器。在 VS Code 中，打開命令面板並運行 \"MCP: 打開用戶配置\"，或在您的工作區中創建 `.vscode/mcp.json`。"
+          }
         }
       }
     },
@@ -73401,6 +74829,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Paste the configuration below, save the file, then start or refresh the ExcalidrawZ MCP server in VS Code."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصق الإعدادات أدناه، احفظ الملف، ثم ابدأ أو قم بتحديث خادم ExcalidrawZ MCP في VS Code."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fügen Sie die untenstehende Konfiguration ein, speichern Sie die Datei und starten oder aktualisieren Sie den ExcalidrawZ MCP-Server in VS Code."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pega la configuración a continuación, guarda el archivo y luego inicia o actualiza el servidor MCP de ExcalidrawZ en VS Code."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collez la configuration ci-dessous, enregistrez le fichier, puis démarrez ou rafraîchissez le serveur MCP d'ExcalidrawZ dans VS Code."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नीचे दिए गए कॉन्फ़िगरेशन को पेस्ट करें, फ़ाइल को सहेजें, फिर वीएस कोड में ExcalidrawZ MCP सर्वर शुरू करें या रिफ्रेश करें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incolla la configurazione qui sotto, salva il file, poi avvia o aggiorna il server MCP di ExcalidrawZ in VS Code."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以下の構成を貼り付けて、ファイルを保存し、VS CodeでExcalidrawZ MCPサーバーを開始または更新します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "아래 구성을 붙여넣고 파일을 저장한 다음, VS Code에서 ExcalidrawZ MCP 서버를 시작하거나 새로 고침하세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plak de onderstaande configuratie, sla het bestand op en start of vernieuw de ExcalidrawZ MCP-server in VS Code."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wklej poniższą konfigurację, zapisz plik, a następnie uruchom lub odśwież serwer MCP ExcalidrawZ w VS Code."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cole a configuração abaixo, salve o arquivo e, em seguida, inicie ou atualize o servidor MCP do ExcalidrawZ no VS Code."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вставьте конфигурацию ниже, сохраните файл, затем запустите или обновите сервер ExcalidrawZ MCP в VS Code."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "วางการตั้งค่าด้านล่าง บันทึกไฟล์ แล้วเริ่มหรือรีเฟรชเซิร์ฟเวอร์ ExcalidrawZ MCP ใน VS Code"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aşağıdaki yapılandırmayı yapıştırın, dosyayı kaydedin, ardından VS Code'da ExcalidrawZ MCP sunucusunu başlatın veya yenileyin."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dán cấu hình bên dưới, lưu tệp, rồi khởi động hoặc làm mới máy chủ MCP ExcalidrawZ trong VS Code."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粘贴以下配置，保存文件，然后在 VS Code 中启动或刷新 ExcalidrawZ MCP 服务器。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粘貼以下配置，保存文件，然後在 VS Code 中啟動或刷新 ExcalidrawZ MCP 伺服器。"
           }
         }
       }
@@ -73413,6 +74943,108 @@
             "state": "translated",
             "value": "Connect"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اتصل"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbinden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecter"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कनेक्ट"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collegati"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "接続"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연결"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbinden"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Połącz"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключиться"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เชื่อมต่อ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bağlan"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kết nối"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "连接"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "連接"
+          }
         }
       }
     },
@@ -73423,6 +75055,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Allow external AI apps to connect to ExcalidrawZ through MCP."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسمح لتطبيقات الذكاء الاصطناعي الخارجية بالاتصال بـ ExcalidrawZ من خلال MCP."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erlauben Sie externen KI-Apps, sich über MCP mit ExcalidrawZ zu verbinden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir que aplicaciones de IA externas se conecten a ExcalidrawZ a través de MCP."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser les applications AI externes à se connecter à ExcalidrawZ via MCP."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बाहरी एआई ऐप्स को MCP के माध्यम से ExcalidrawZ से कनेक्ट करने की अनुमति दें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consenti alle app AI esterne di connettersi a ExcalidrawZ tramite MCP."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外部AIアプリがMCPを介してExcalidrawZに接続できるようにします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "외부 AI 앱이 MCP를 통해 ExcalidrawZ에 연결할 수 있도록 허용합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sta externe AI-apps toe om verbinding te maken met ExcalidrawZ via MCP."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zezwól zewnętrznym aplikacjom AI na połączenie z ExcalidrawZ przez MCP."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir que aplicativos de IA externos se conectem ao ExcalidrawZ através do MCP."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешить внешним AI-приложениям подключаться к ExcalidrawZ через MCP."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "อนุญาตให้แอป AI ภายนอกเชื่อมต่อกับ ExcalidrawZ ผ่าน MCP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dış AI uygulamalarının ExcalidrawZ'ye MCP aracılığıyla bağlanmasına izin verin."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cho phép các ứng dụng AI bên ngoài kết nối với ExcalidrawZ thông qua MCP."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许外部 AI 应用通过 MCP 连接到 ExcalidrawZ。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允許外部 AI 應用通過 MCP 連接到 ExcalidrawZ。"
           }
         }
       }
@@ -73435,6 +75169,108 @@
             "state": "translated",
             "value": "MCP Server"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خادم MCP"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP-Server"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servidor MCP"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serveur MCP"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP सर्वर"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server MCP"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCPサーバー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 서버"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP-server"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serwer MCP"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servidor MCP"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сервер MCP"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เซิร์ฟเวอร์ MCP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP Sunucusu"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Máy chủ MCP"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 服务器"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP 伺服器"
+          }
         }
       }
     },
@@ -73445,6 +75281,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Status"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحالة"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Statut"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "स्थिति"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stato"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ステータス"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "상태"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Статус"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "สถานะ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durum"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trạng thái"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "状态"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "狀態"
           }
         }
       }
@@ -73457,6 +75395,108 @@
             "state": "translated",
             "value": "Off"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متوقف"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apagado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactivé"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बंद"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spento"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オフ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "꺼짐"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uit"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyłączony"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desligado"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выключено"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ปิด"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapalı"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tắt"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉"
+          }
         }
       }
     },
@@ -73467,6 +75507,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Starting"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يبدأ"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird gestartet"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iniciando"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarrage"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "शुरू हो रहा है"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avvio"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開始中"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "시작 중"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starten"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rozpoczynanie"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iniciando"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запуск"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "กำลังเริ่มต้น"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başlatılıyor"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đang khởi động"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启动中"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "啟動中"
           }
         }
       }
@@ -73479,6 +75621,108 @@
             "state": "translated",
             "value": "Running"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يعمل"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Läuft"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En funcionamiento"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En cours"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "चल रहा है"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In esecuzione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "実行中"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실행 중"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bezig"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Działający"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Em execução"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Работает"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "กำลังทำงาน"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çalışıyor"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đang chạy"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行中"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "運行中"
+          }
         }
       }
     },
@@ -73489,6 +75733,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stopping"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يتوقف"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird gestoppt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deteniendo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रोका जा रहा है"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arresto"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止中"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "중지 중"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stoppen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zatrzymywanie"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parando"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Остановка"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "กำลังหยุด"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durduruluyor"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đang dừng"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止中"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止中"
           }
         }
       }
@@ -73501,6 +75847,108 @@
             "state": "translated",
             "value": "Failed"
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فشل"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fehlgeschlagen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fallido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échoué"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "विफल"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fallito"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "失敗"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실패"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mislukt"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niepowodzenie"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Falhou"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ล้มเหลว"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başarısız"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thất bại"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "失败"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "失敗"
+          }
         }
       }
     },
@@ -73512,6 +75960,108 @@
             "state": "translated",
             "value": "Let external AI apps control an ExcalidrawZ MCP canvas."
           }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسمح لتطبيقات الذكاء الاصطناعي الخارجية بالتحكم في لوحة ExcalidrawZ MCP."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lassen Sie externe KI-Apps eine ExcalidrawZ MCP-Leinwand steuern."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir que aplicaciones de IA externas controlen un lienzo MCP de ExcalidrawZ."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permettre aux applications AI externes de contrôler un canevas MCP d'ExcalidrawZ."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बाहरी एआई ऐप्स को ExcalidrawZ MCP कैनवास को नियंत्रित करने दें।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consenti alle app AI esterne di controllare un canvas MCP di ExcalidrawZ."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外部AIアプリがExcalidrawZ MCPキャンバスを制御できるようにします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "외부 AI 앱이 ExcalidrawZ MCP 캔버스를 제어할 수 있게 합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laat externe AI-apps een ExcalidrawZ MCP-canvas beheren."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pozwól zewnętrznym aplikacjom AI kontrolować płótno MCP ExcalidrawZ."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deixe aplicativos de IA externos controlarem uma tela MCP do ExcalidrawZ."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Позвольте внешним AI-приложениям управлять холстом ExcalidrawZ MCP."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ให้แอป AI ภายนอกควบคุมแคนวาส ExcalidrawZ MCP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dış AI uygulamalarının bir ExcalidrawZ MCP tuvalini kontrol etmesine izin verin."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cho phép các ứng dụng AI bên ngoài điều khiển một canvas MCP ExcalidrawZ."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "让外部 AI 应用控制 ExcalidrawZ MCP 画布。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "讓外部 AI 應用控制 ExcalidrawZ MCP 畫布。"
+          }
         }
       }
     },
@@ -73519,6 +76069,108 @@
       "extractionState": "manual",
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MCP"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "MCP"
@@ -82565,6 +85217,232 @@
           "stringUnit": {
             "state": "translated",
             "value": "繪圖設定"
+          }
+        }
+      }
+    },
+    "settingsExcalidrawToolbarOrderFooter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag tools to change the toolbar order. Number shortcuts follow the first tools in this list."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قم بسحب الأدوات لتغيير ترتيب شريط الأدوات. تتبع الاختصارات الرقمية الأدوات الأولى في هذه القائمة."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ziehen Sie die Werkzeuge, um die Reihenfolge der Werkzeugleiste zu ändern. Die Nummern-Tastenkombinationen folgen den ersten Werkzeugen in dieser Liste."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrastra las herramientas para cambiar el orden de la barra de herramientas. Los accesos directos numéricos siguen a las primeras herramientas en esta lista."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites glisser les outils pour changer l'ordre de la barre d'outils. Les raccourcis numériques suivent les premiers outils de cette liste."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "टूल्स को खींचें ताकि टूलबार के क्रम को बदल सकें। संख्या शॉर्टकट इस सूची में पहले टूल्स का पालन करते हैं।"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trascina gli strumenti per cambiare l'ordine della toolbar. Le scorciatoie numeriche seguono i primi strumenti in questa lista."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ツールをドラッグしてツールバーの順序を変更します。番号ショートカットはこのリストの最初のツールに従います。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "도구를 드래그하여 툴바 순서를 변경하세요. 번호 단축키는 이 목록의 첫 번째 도구를 따릅니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep gereedschappen om de volgorde van de werkbalk te wijzigen. Nummer snelkoppelingen volgen de eerste gereedschappen in deze lijst."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przeciągnij narzędzia, aby zmienić kolejność na pasku narzędzi. Skróty numeryczne podążają za pierwszymi narzędziami na tej liście."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arraste as ferramentas para mudar a ordem da barra de ferramentas. Os atalhos numéricos seguem as primeiras ferramentas nesta lista."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перетащите инструменты, чтобы изменить порядок панели инструментов. Номерные комбинации следуют за первыми инструментами в этом списке."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ลากเครื่องมือเพื่อเปลี่ยนลำดับแถบเครื่องมือ ชอร์ตคัตหมายเลขจะตามเครื่องมือแรกในรายการนี้。"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Araçları sürükleyerek araç çubuğu sırasını değiştirin. Sayı kısayolları bu listedeki ilk araçları takip eder."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kéo công cụ để thay đổi thứ tự thanh công cụ. Các phím tắt số theo sau các công cụ đầu tiên trong danh sách này."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖动工具以更改工具栏顺序。数字快捷键遵循此列表中的第一个工具。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖動工具以更改工具欄順序。數字快捷方式跟隨此列表中的第一個工具。"
+          }
+        }
+      }
+    },
+    "settingsExcalidrawToolbarOrderTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toolbar"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شريط الأدوات"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Werkzeugleiste"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Barra de herramientas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Barre d'outils"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "टूलबार"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toolbar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ツールバー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "툴바"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Werkbalk"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pasek narzędzi"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Barra de Ferramentas"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Панель инструментов"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "แถบเครื่องมือ"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Araç Çubuğu"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thanh công cụ"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工具栏"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工具欄"
           }
         }
       }

@@ -19,6 +19,7 @@ struct ExcalidrawToolbar: View {
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
     @Environment(\.alertToast) private var alertToast
     
+    @EnvironmentObject var appPreference: AppPreference
     @EnvironmentObject var fileState: FileState
     @EnvironmentObject var toolState: ToolState
     @EnvironmentObject var layoutState: LayoutState
@@ -95,13 +96,14 @@ struct ExcalidrawToolbar: View {
             .excalidrawToolbarSurface(.circle)
 #endif
         ExcalidrawToolbarToolContainer { sizeClass in
-            let pickerItems = toolbarPickerItems(for: sizeClass)
+            let toolOrder = appPreference.toolbarToolOrder
+            let pickerItems = toolOrder.pickerItems(for: sizeClass)
             
             HStack(spacing: 10) {
                 ZStack {
                     Color.clear
                     if sizeClass == .dense {
-                        denseContent()
+                        denseContent(toolOrder.tools)
                     } else {
                         segmentedPicker(
                             sizeClass: sizeClass,
@@ -156,50 +158,6 @@ struct ExcalidrawToolbar: View {
     }
     
     @State private var lastActivatedSecondaryTool: ExcalidrawTool?
-    
-    private func toolbarPickerItems(
-        for sizeClass: ExcalidrawToolbarToolSizeClass
-    ) -> (primary: [ExcalidrawTool], secondary: [ExcalidrawTool]) {
-        switch sizeClass {
-            case .dense:
-                return (
-                    [.cursor, .rectangle, .diamond, .ellipse, .arrow, .line],
-                    [.freedraw, .text, .image, .eraser, .laser, .lasso, .hand, .frame, .webEmbed, .magicFrame]
-                )
-            case .compact:
-                return (
-                    [.cursor, .rectangle, .diamond, .ellipse, .arrow, .line],
-                    [.freedraw, .text, .image, .eraser, .laser, .lasso, .hand, .frame, .webEmbed, .magicFrame]
-                )
-            case .regular:
-                return (
-                    [.cursor, .rectangle, .diamond, .ellipse, .arrow, .line, .freedraw, .text, .image],
-                    [.eraser, .laser, .lasso, .hand, .frame, .webEmbed, .magicFrame]
-                )
-            case .expanded:
-                return (
-                    [
-                        .cursor,
-                        .rectangle,
-                        .diamond,
-                        .ellipse,
-                        .arrow,
-                        .line,
-                        .freedraw,
-                        .text,
-                        .image,
-                        .eraser,
-                        .laser,
-                        .lasso,
-                        .hand,
-                        .frame,
-                        .webEmbed,
-                        .magicFrame,
-                    ],
-                    []
-                )
-        }
-    }
     
     @ViewBuilder
     private func segmentedPicker(
@@ -353,10 +311,10 @@ struct ExcalidrawToolbar: View {
     }
     
     @ViewBuilder
-    private func denseContent() -> some View {
+    private func denseContent(_ toolbarTools: [ExcalidrawTool]) -> some View {
         HStack {
             Picker(selection: $toolState.activatedTool) {
-                ForEach(ExcalidrawTool.allCases, id: \.self) { tool in
+                ForEach(toolbarTools, id: \.self) { tool in
                     densePickerItems(tool: tool)
                         .tag(tool)
                 }
@@ -412,10 +370,11 @@ struct ExcalidrawToolbar: View {
             SegmentedToolPickerItemView(
                 tool: tool,
                 size: size,
-                withFooter: withFooter
+                withFooter: withFooter,
+                shortcutLabel: appPreference.toolbarToolOrder.shortcutLabel(for: tool)
             )
         }
-        .help(tool.help)
+        .help(tool.help(shortcutLabel: appPreference.toolbarToolOrder.shortcutLabel(for: tool)))
     }
     
     @ViewBuilder
@@ -460,73 +419,7 @@ struct ExcalidrawToolbar: View {
                 }
                 Spacer()
                 Menu {
-                    Button {
-                        toolState.setActivedTool(.rectangle)
-                    } label: {
-                        Label(.localizable(.toolbarRectangle), systemSymbol: .rectangle)
-                    }
-                    Button {
-                        toolState.setActivedTool(.diamond)
-                    } label: {
-                        Label(.localizable(.toolbarDiamond), systemSymbol: .diamond)
-                    }
-                    Button {
-                        toolState.setActivedTool(.ellipse)
-                    } label: {
-                        Label(.localizable(.toolbarEllipse), systemSymbol: .circle)
-                    }
-                    Button {
-                        toolState.setActivedTool(.arrow)
-                    } label: {
-                        Label(.localizable(.toolbarArrow), systemSymbol: .lineDiagonalArrow)
-                    }
-                    Button {
-                        toolState.setActivedTool(.line)
-                    } label: {
-                        Label(.localizable(.toolbarLine), systemSymbol: .lineDiagonal)
-                    }
-                    Button {
-                        toolState.setActivedTool(.text)
-                    } label: {
-                        Label(.localizable(.toolbarText), systemSymbol: .characterTextbox)
-                    }
-                    Button {
-                        toolState.setActivedTool(.image)
-                    } label: {
-                        Label(.localizable(.toolbarInsertImage), systemSymbol: .photoOnRectangle)
-                    }
-                    
-                    Divider()
-                    
-                    Button {
-                        toolState.setActivedTool(.eraser)
-                    } label: {
-                        if #available(macOS 13.0, *) {
-                            Label(.localizable(.toolbarEraser), systemSymbol: .eraser)
-                        } else {
-                            Label(.localizable(.toolbarEraser), systemSymbol: .pencilSlash)
-                        }
-                    }
-                    Button {
-                        toolState.setActivedTool(.laser)
-                    } label: {
-                        Label(.localizable(.toolbarLaser), systemSymbol: .cursorarrowRays)
-                    }
-                    Button {
-                        toolState.setActivedTool(.frame)
-                    } label: {
-                        Label(.localizable(.toolbarFrame), systemSymbol: .grid)
-                    }
-                    Button {
-                        toolState.setActivedTool(.webEmbed)
-                    } label: {
-                        Label(.localizable(.toolbarWebEmbed), systemSymbol: .chevronLeftForwardslashChevronRight)
-                    }
-                    Button {
-                        toolState.setActivedTool(.magicFrame)
-                    } label: {
-                        Label(.localizable(.toolbarMagicFrame), systemSymbol: .wandAndStarsInverse)
-                    }
+                    compactShapeAndToolMenuItems
                 } label: {
                     if toolState.activatedTool == .cursor {
                         Label(.localizable(.toolbarShapesAndTools), systemSymbol: .squareOnCircle)
@@ -762,22 +655,50 @@ struct ExcalidrawToolbar: View {
     private func densePickerItems(tool: ExcalidrawTool) -> some View {
         Text(tool.localization)
     }
+
+    private var compactShapeAndToolMenuTools: [ExcalidrawTool] {
+        appPreference.toolbarToolOrder.tools.filter { tool in
+            switch tool {
+                case .cursor, .freedraw, .hand, .lasso:
+                    false
+                default:
+                    true
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var compactShapeAndToolMenuItems: some View {
+        ForEach(compactShapeAndToolMenuTools, id: \.self) { tool in
+            compactShapeAndToolMenuButton(tool)
+        }
+    }
+
+    @ViewBuilder
+    private func compactShapeAndToolMenuButton(_ tool: ExcalidrawTool) -> some View {
+        Button {
+            toolState.setActivedTool(tool)
+        } label: {
+            toolMenuLabel(tool)
+        }
+    }
     
     @ViewBuilder
     private func activeShape() -> some View {
-        switch toolState.activatedTool {
-            case .rectangle:
-                Label(.localizable(.toolbarRectangle), systemSymbol: .rectangle)
-            case .diamond:
-                Label(.localizable(.toolbarDiamond), systemSymbol: .diamond)
-            case .ellipse:
-                Label(.localizable(.toolbarEllipse), systemSymbol: .ellipsis)
-            case .arrow:
-                Label(.localizable(.toolbarArrow), systemSymbol: .lineDiagonalArrow)
-            case .line:
-                Label(.localizable(.toolbarLine), systemSymbol: .lineDiagonal)
-            default:
-                Label(.localizable(.toolbarShapes), systemSymbol: .squareOnCircle)
+        if let tool = toolState.activatedTool,
+           tool != .cursor {
+            toolMenuLabel(tool)
+        } else {
+            Label(.localizable(.toolbarShapes), systemSymbol: .squareOnCircle)
+        }
+    }
+
+    @ViewBuilder
+    private func toolMenuLabel(_ tool: ExcalidrawTool) -> some View {
+        Label {
+            Text(tool.localization)
+        } icon: {
+            Image(systemSymbol: tool.menuSystemSymbol)
         }
     }
     
@@ -952,11 +873,18 @@ struct SegmentedToolPickerItemView: View {
     var tool: ExcalidrawTool
     var size: CGFloat
     var withFooter: Bool
+    var shortcutLabel: String?
     
-    init(tool: ExcalidrawTool, size: CGFloat, withFooter: Bool) {
+    init(
+        tool: ExcalidrawTool,
+        size: CGFloat,
+        withFooter: Bool,
+        shortcutLabel: String? = nil
+    ) {
         self.tool = tool
         self.size = size
         self.withFooter = withFooter
+        self.shortcutLabel = shortcutLabel
     }
     
     /// Padding behavior for the icon container — Path/SVG-style icons use less internal padding.
@@ -968,25 +896,6 @@ struct SegmentedToolPickerItemView: View {
                 return .svg
             default:
                 return .image
-        }
-    }
-    
-    /// Keyboard shortcut hint shown as a footer label.
-    private var shortcutLabel: String? {
-        switch tool {
-            case .cursor: return "1"
-            case .rectangle: return "2"
-            case .diamond: return "3"
-            case .ellipse: return "4"
-            case .arrow: return "5"
-            case .line: return "6"
-            case .freedraw: return "7"
-            case .text: return "8"
-            case .image: return "9"
-            case .eraser: return "0"
-            case .laser: return "K"
-            case .frame: return "F"
-            case .hand, .webEmbed, .magicFrame, .lasso: return nil
         }
     }
     

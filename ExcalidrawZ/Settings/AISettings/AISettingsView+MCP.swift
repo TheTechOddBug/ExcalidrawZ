@@ -159,22 +159,23 @@ extension AISettingsView {
             isPresentingMCPConnectionGuide = false
         } label: {
             Image(systemSymbol: .xmark)
+                .labelStyle(.iconOnly)
+                .frame(width: 36, height: 36)
+                .contentShape(Circle())
+                .background {
+                    if #available(macOS 26.0, iOS 26.0, *) {
+                        Circle()
+                            .fill(.clear)
+                            .glassEffect(.clear, in: Circle())
+                    } else {
+                        Circle()
+                            .fill(.regularMaterial)
+                    }
+                }
         }
-        .labelStyle(.iconOnly)
         .buttonStyle(.plain)
         .controlSize(.regular)
-        .frame(width: 32, height: 32)
         .contentShape(Circle())
-        .background {
-            if #available(macOS 26.0, iOS 26.0, *) {
-                Circle()
-                    .fill(.clear)
-                    .glassEffect(.clear, in: Circle())
-            } else {
-                Circle()
-                    .fill(.regularMaterial)
-            }
-        }
         .help(String(localizable: .generalButtonClose))
     }
 
@@ -272,6 +273,8 @@ extension AISettingsView {
         Text(text)
             .font(.system(.caption, design: .monospaced))
             .foregroundStyle(.secondary)
+            .lineLimit(nil)
+            .fixedSize(horizontal: false, vertical: true)
             .textSelection(.enabled)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(10)

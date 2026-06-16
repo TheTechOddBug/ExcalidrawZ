@@ -131,7 +131,13 @@ class ExcalidrawCore: NSObject, ObservableObject {
             switch key {
                 case .number(let int):
                     Task {
-                        try? await self.toggleToolbarAction(key: int)
+                        let toolOrder = self.parent?.appPreference.toolbarToolOrder
+                            ?? ExcalidrawToolbarToolOrder()
+                        if let tool = toolOrder.tool(forShortcutNumber: int) {
+                            try? await self.parent?.toolState.toggleTool(tool)
+                        } else if self.parent == nil {
+                            try? await self.toggleToolbarAction(key: int)
+                        }
                     }
                 case .char(let character):
                     Task {

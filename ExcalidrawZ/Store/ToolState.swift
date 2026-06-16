@@ -109,6 +109,91 @@ enum ExcalidrawTool: Int, Hashable, CaseIterable {
                 nil
         }
     }
+
+    init?(toolbarOrderID: String) {
+        switch toolbarOrderID {
+            case "eraser":
+                self = .eraser
+            case "cursor":
+                self = .cursor
+            case "rectangle":
+                self = .rectangle
+            case "diamond":
+                self = .diamond
+            case "ellipse":
+                self = .ellipse
+            case "arrow":
+                self = .arrow
+            case "line":
+                self = .line
+            case "freedraw":
+                self = .freedraw
+            case "text":
+                self = .text
+            case "image":
+                self = .image
+            case "laser":
+                self = .laser
+            case "frame":
+                self = .frame
+            case "webEmbed":
+                self = .webEmbed
+            case "magicFrame":
+                self = .magicFrame
+            case "hand":
+                self = .hand
+            case "lasso":
+                self = .lasso
+            default:
+                return nil
+        }
+    }
+
+    var toolbarOrderID: String {
+        switch self {
+            case .eraser:
+                "eraser"
+            case .cursor:
+                "cursor"
+            case .rectangle:
+                "rectangle"
+            case .diamond:
+                "diamond"
+            case .ellipse:
+                "ellipse"
+            case .arrow:
+                "arrow"
+            case .line:
+                "line"
+            case .freedraw:
+                "freedraw"
+            case .text:
+                "text"
+            case .image:
+                "image"
+            case .laser:
+                "laser"
+            case .frame:
+                "frame"
+            case .webEmbed:
+                "webEmbed"
+            case .magicFrame:
+                "magicFrame"
+            case .hand:
+                "hand"
+            case .lasso:
+                "lasso"
+        }
+    }
+
+    var supportsOrderedNumericShortcut: Bool {
+        switch self {
+            case .lasso:
+                false
+            default:
+                true
+        }
+    }
     
     var localization: String {
         switch self {
@@ -153,40 +238,56 @@ enum ExcalidrawTool: Int, Hashable, CaseIterable {
         }
     }
     
+    func help(shortcutLabel: String? = nil) -> String {
+        let fixedShortcut = keyEquivalent.flatMap { shortcut -> String? in
+            shortcut.isNumber ? nil : String(shortcut).uppercased()
+        }
+        let shortcuts = [fixedShortcut, shortcutLabel].compactMap { $0 }
+        guard !shortcuts.isEmpty else {
+            return localization
+        }
+        let separator = " \(String(localizable: .toolbarOr)) "
+        return "\(localization) — \(shortcuts.joined(separator: separator))"
+    }
+
     var help: String {
+        help()
+    }
+
+    var menuSystemSymbol: SFSymbol {
         switch self {
             case .eraser:
-                "\(String(localizable: .toolbarEraser)) — E \(String(localizable: .toolbarOr)) 0"
+                .pencilSlash
             case .cursor:
-                "\(String(localizable: .toolbarSelection)) - V \(String(localizable: .toolbarOr)) 1"
+                .cursorarrow
             case .rectangle:
-                "\(String(localizable: .toolbarRectangle)) — R \(String(localizable: .toolbarOr)) 2"
+                .rectangle
             case .diamond:
-                "\(String(localizable: .toolbarDiamond)) — D \(String(localizable: .toolbarOr)) 3"
+                .diamond
             case .ellipse:
-                "\(String(localizable: .toolbarEllipse)) — O \(String(localizable: .toolbarOr)) 4"
+                .circle
             case .arrow:
-                "\(String(localizable: .toolbarArrow)) — A \(String(localizable: .toolbarOr)) 5"
+                .lineDiagonalArrow
             case .line:
-                "\(String(localizable: .toolbarLine)) — L \(String(localizable: .toolbarOr)) 6"
+                .lineDiagonal
             case .freedraw:
-                "\(String(localizable: .toolbarDraw)) — P \(String(localizable: .toolbarOr)) 7"
+                .pencil
             case .text:
-                "\(String(localizable: .toolbarText)) — T \(String(localizable: .toolbarOr)) 8"
+                .characterTextbox
             case .image:
-                "\(String(localizable: .toolbarInsertImage)) — 9"
+                .photoOnRectangle
             case .laser:
-                "\(String(localizable: .toolbarLaser)) — K"
+                .cursorarrowRays
             case .frame:
-                "\(String(localizable: .toolbarFrame)) - F"
+                .grid
             case .webEmbed:
-                "\(String(localizable: .toolbarWebEmbed))"
+                .chevronLeftForwardslashChevronRight
             case .magicFrame:
-                "\(String(localizable: .toolbarMagicFrame))"
+                .wandAndStarsInverse
             case .hand:
-                "\(String(localizable: .toolbarHand)) - H"
+                .handRaised
             case .lasso:
-                "Lasso Selection"
+                .selectionPinInOut
         }
     }
     

@@ -19,6 +19,7 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
     @Environment(\.containerHorizontalSizeClass) private var containerHorizontalSizeClass
     @Environment(\.containerSize) private var containerSize
 
+    @EnvironmentObject private var appPreference: AppPreference
     @EnvironmentObject private var fileState: FileState
     @EnvironmentObject private var toolState: ToolState
     @EnvironmentObject private var layoutState: LayoutState
@@ -479,90 +480,42 @@ struct CompactExcalidrawBottomToolbarContent: ToolbarContent {
 
     @ViewBuilder
     private var shapeAndToolMenuItems: some View {
-        Button {
-            toolState.setActivedTool(.rectangle)
-        } label: {
-            Label(.localizable(.toolbarRectangle), systemSymbol: .rectangle)
-        }
-        Button {
-            toolState.setActivedTool(.diamond)
-        } label: {
-            Label(.localizable(.toolbarDiamond), systemSymbol: .diamond)
-        }
-        Button {
-            toolState.setActivedTool(.ellipse)
-        } label: {
-            Label(.localizable(.toolbarEllipse), systemSymbol: .circle)
-        }
-        Button {
-            toolState.setActivedTool(.arrow)
-        } label: {
-            Label(.localizable(.toolbarArrow), systemSymbol: .lineDiagonalArrow)
-        }
-        Button {
-            toolState.setActivedTool(.line)
-        } label: {
-            Label(.localizable(.toolbarLine), systemSymbol: .lineDiagonal)
-        }
-        Button {
-            toolState.setActivedTool(.text)
-        } label: {
-            Label(.localizable(.toolbarText), systemSymbol: .characterTextbox)
-        }
-        Button {
-            toolState.setActivedTool(.image)
-        } label: {
-            Label(.localizable(.toolbarInsertImage), systemSymbol: .photoOnRectangle)
-        }
-
-        Divider()
-
-        Button {
-            toolState.setActivedTool(.eraser)
-        } label: {
-            if #available(iOS 16.0, *) {
-                Label(.localizable(.toolbarEraser), systemSymbol: .eraser)
-            } else {
-                Label(.localizable(.toolbarEraser), systemSymbol: .pencilSlash)
+        ForEach(compactShapeAndToolMenuTools, id: \.self) { tool in
+            Button {
+                toolState.setActivedTool(tool)
+            } label: {
+                toolMenuLabel(tool)
             }
         }
-        Button {
-            toolState.setActivedTool(.laser)
-        } label: {
-            Label(.localizable(.toolbarLaser), systemSymbol: .cursorarrowRays)
-        }
-        Button {
-            toolState.setActivedTool(.frame)
-        } label: {
-            Label(.localizable(.toolbarFrame), systemSymbol: .grid)
-        }
-        Button {
-            toolState.setActivedTool(.webEmbed)
-        } label: {
-            Label(.localizable(.toolbarWebEmbed), systemSymbol: .chevronLeftForwardslashChevronRight)
-        }
-        Button {
-            toolState.setActivedTool(.magicFrame)
-        } label: {
-            Label(.localizable(.toolbarMagicFrame), systemSymbol: .wandAndStarsInverse)
+    }
+
+    private var compactShapeAndToolMenuTools: [ExcalidrawTool] {
+        appPreference.toolbarToolOrder.tools.filter { tool in
+            switch tool {
+                case .cursor, .freedraw, .hand, .lasso:
+                    false
+                default:
+                    true
+            }
         }
     }
 
     @ViewBuilder
     private func activeShape() -> some View {
-        switch toolState.activatedTool {
-            case .rectangle:
-                Label(.localizable(.toolbarRectangle), systemSymbol: .rectangle)
-            case .diamond:
-                Label(.localizable(.toolbarDiamond), systemSymbol: .diamond)
-            case .ellipse:
-                Label(.localizable(.toolbarEllipse), systemSymbol: .ellipsis)
-            case .arrow:
-                Label(.localizable(.toolbarArrow), systemSymbol: .lineDiagonalArrow)
-            case .line:
-                Label(.localizable(.toolbarLine), systemSymbol: .lineDiagonal)
-            default:
-                Label(.localizable(.toolbarShapes), systemSymbol: .squareOnCircle)
+        if let tool = toolState.activatedTool,
+           tool != .cursor {
+            toolMenuLabel(tool)
+        } else {
+            Label(.localizable(.toolbarShapes), systemSymbol: .squareOnCircle)
+        }
+    }
+
+    @ViewBuilder
+    private func toolMenuLabel(_ tool: ExcalidrawTool) -> some View {
+        Label {
+            Text(tool.localization)
+        } icon: {
+            Image(systemSymbol: tool.menuSystemSymbol)
         }
     }
 }
