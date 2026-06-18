@@ -12,6 +12,35 @@ import ChocofordUI
 import MathJaxSwift
 
 enum LatexMathSVGRenderer {
+    struct RenderedSVG: Hashable {
+        let latex: String
+        let svg: String
+        let width: Double?
+        let height: Double?
+
+        var mathImageParams: ExcalidrawCore.MathImageParams {
+            ExcalidrawCore.MathImageParams(
+                svg: svg,
+                latex: latex,
+                renderer: "mathjax",
+                width: width,
+                height: height
+            )
+        }
+    }
+
+    static func render(from input: String, foregroundColor: String? = nil) throws -> RenderedSVG {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        let svg = try renderSVG(from: trimmed, foregroundColor: foregroundColor)
+        let size = intrinsicSize(from: svg)
+        return RenderedSVG(
+            latex: trimmed,
+            svg: svg,
+            width: size.width,
+            height: size.height
+        )
+    }
+
     static func renderSVG(from input: String, foregroundColor: String? = nil) throws -> String {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -64,6 +93,29 @@ enum LatexMathSVGRenderer {
         return svg
     }
 
+    private static func intrinsicSize(from svg: String) -> (width: Double?, height: Double?) {
+        (
+            width: numericSVGLength(attribute: "width", in: svg),
+            height: numericSVGLength(attribute: "height", in: svg)
+        )
+    }
+
+    private static func numericSVGLength(attribute: String, in svg: String) -> Double? {
+        let pattern = #"\b\#(attribute)="([0-9]+(?:\.[0-9]+)?)(px)?""#
+        guard let range = svg.range(of: pattern, options: .regularExpression) else {
+            return nil
+        }
+        let match = String(svg[range])
+        let valuePattern = #""([0-9]+(?:\.[0-9]+)?)(px)?""#
+        guard let valueRange = match.range(of: valuePattern, options: .regularExpression) else {
+            return nil
+        }
+        let value = match[valueRange]
+            .dropFirst()
+            .dropLast(match[valueRange].hasSuffix(#"px""#) ? 3 : 1)
+        return Double(String(value))
+    }
+
     static func debugPrintSVGBeforeInsert(_ svg: String, source: String) {
 #if DEBUG
         print(
@@ -104,14 +156,17 @@ struct MathInputSheetViewModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .sheet(isPresented: $isPresented) {
-                MathInputSheetView(canvasColorScheme: canvasColorScheme) { svg in
-                    LatexMathSVGRenderer.debugPrintSVGBeforeInsert(svg, source: "toolbar")
-                    guard let data = svg.data(using: .utf8) else { return }
+                MathInputSheetView(canvasColorScheme: canvasColorScheme) { renderedSVG in
+                    LatexMathSVGRenderer.debugPrintSVGBeforeInsert(renderedSVG.svg, source: "toolbar")
                     Task {
                         do {
-                            try await fileState.excalidrawWebCoordinator?.loadImageToExcalidrawCanvas(
-                                imageData: data,
-                                type: "svg+xml"
+                            try await fileState.excalidrawWebCoordinator?.insertMathImage(
+                                params: renderedSVG.mathImageParams,
+                                options: .init(
+                                    position: .auto,
+                                    focus: .enabled(true),
+                                    captureUpdate: .immediately
+                                )
                             )
                         } catch {
                             alertToast(error)
@@ -142,12 +197,12 @@ struct MathInputSheetView: View {
     let logger = Logger(label: "MathInputSheetView")
 
     var canvasColorScheme: ColorScheme
-    var onInsert: (_ svg: String) -> Void
+    var onInsert: (_ renderedSVG: LatexMathSVGRenderer.RenderedSVG) -> Void
     
     @State private var inputText = ""
     @State private var selectedSVGColor = "#1e1e1e"
     
-    @State private var svgContent: String?
+    @State private var svgContent: LatexMathSVGRenderer.RenderedSVG?
     @State private var previewSVGURL: URL?
     
     @State private var error: Error?
@@ -276,7 +331,7 @@ struct MathInputSheetView: View {
         }
 
         do {
-            let svg = try LatexMathSVGRenderer.renderSVG(
+            let renderedSVG = try LatexMathSVGRenderer.render(
                 from: input,
                 foregroundColor: selectedSVGColor
             )
@@ -284,9 +339,9 @@ struct MathInputSheetView: View {
             let svgFilename = "\(UUID()).svg"
             
             let svgURL = tempDir.appendingPathComponent(svgFilename, conformingTo: .svg)
-            try svg.data(using: .utf8)?.write(to: svgURL)
+            try renderedSVG.svg.data(using: .utf8)?.write(to: svgURL)
             
-            self.svgContent = svg
+            self.svgContent = renderedSVG
             self.previewSVGURL = svgURL
         }
         catch {

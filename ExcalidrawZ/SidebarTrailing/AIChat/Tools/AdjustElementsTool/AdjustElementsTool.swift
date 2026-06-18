@@ -438,8 +438,10 @@ struct CanvasApplyResult {
 }
 
 struct LatexInsertResult: Codable, Hashable {
+    var elementId: String?
     var elementCount: Int
-    var durationMs: Double
+    var durationMs: Double?
+    var usedLegacyFallback: Bool?
 }
 
 struct ToolInput: Decodable {

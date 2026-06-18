@@ -115,24 +115,28 @@ enum ExcalidrawCanvasActionApplier {
                         try await cameraDirector.submitInsertedContentBounds(makeRect(from: insertResult.bounds))
 
                     case .insertLatex(let op):
-                        let svg = try LatexMathSVGRenderer.renderSVG(
+                        let renderedSVG = try LatexMathSVGRenderer.render(
                             from: op.latex,
                             foregroundColor: op.color
                         )
-                        LatexMathSVGRenderer.debugPrintSVGBeforeInsert(svg, source: "adjust_elements")
-                        guard let data = svg.data(using: .utf8) else {
-                            throw ToolError.executionFailed("Failed to encode rendered math SVG.")
-                        }
-                        guard let insertResult = try await coordinator.loadImageToExcalidrawCanvas(
-                            imageData: data,
-                            type: "svg+xml"
-                        ) else {
-                            throw ToolError.executionFailed("Failed to insert rendered math SVG.")
-                        }
+                        LatexMathSVGRenderer.debugPrintSVGBeforeInsert(renderedSVG.svg, source: "adjust_elements")
+                        let insertResult = try await coordinator.insertMathImage(
+                            params: renderedSVG.mathImageParams,
+                            options: .init(
+                                position: .auto,
+                                focus: .enabled(true),
+                                captureUpdate: .immediately
+                            )
+                        )
                         latexResults.append(LatexInsertResult(
-                            elementCount: insertResult.elementCount,
-                            durationMs: insertResult.durationMs
+                            elementId: insertResult.elementId,
+                            elementCount: insertResult.elementCount ?? (insertResult.elementId == nil ? 0 : 1),
+                            durationMs: insertResult.durationMs,
+                            usedLegacyFallback: insertResult.usedLegacyFallback
                         ))
+                        if let bounds = insertResult.bounds {
+                            try await cameraDirector.submitInsertedContentBounds(makeRect(from: bounds))
+                        }
 
                     case .insertSkeleton(let op):
                         let options = ExcalidrawCore.SkeletonInsertOptions(
