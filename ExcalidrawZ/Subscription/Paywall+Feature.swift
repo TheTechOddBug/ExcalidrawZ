@@ -17,6 +17,17 @@ extension Paywall {
         let subtitle: String
         let badge: String?
 
+        var mcpServiceMode: ExcalidrawMCPServiceMode? {
+            switch id {
+                case Self.basicMCPServices.id:
+                    .basic
+                case Self.optimizedMCPServices.id:
+                    .optimized
+                default:
+                    nil
+            }
+        }
+
         private init(
             id: String,
             symbol: SFSymbol,

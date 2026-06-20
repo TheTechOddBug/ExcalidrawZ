@@ -511,7 +511,7 @@ private struct MCPServiceModeHelpSheet: View {
                 .zIndex(1)
 
             ScrollView {
-                modeContent(for: selectedMode)
+                MCPServiceModeFeaturesView(mode: selectedMode)
                     .padding(.horizontal, 24)
                     .padding(.top, 14)
                     .padding(.bottom, 24)
@@ -572,6 +572,46 @@ private struct MCPServiceModeHelpSheet: View {
 
     @ViewBuilder
     private var tabPicker: some View {
+        MCPServiceModeSegmentedPicker(selection: $selectedMode)
+    }
+}
+
+struct MCPServiceModeFeaturesPopoverContent: View {
+    private let initialMode: ExcalidrawMCPServiceMode
+
+    @State private var selectedMode: ExcalidrawMCPServiceMode
+
+    init(initialMode: ExcalidrawMCPServiceMode = .basic) {
+        self.initialMode = initialMode
+        _selectedMode = State(initialValue: initialMode)
+    }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            MCPServiceModeSegmentedPicker(selection: $selectedMode)
+                .zIndex(2)
+
+            ScrollView {
+                MCPServiceModeFeaturesView(mode: selectedMode)
+                    .padding(.vertical, 2)
+            }
+            .scrollIndicators(.hidden)
+            .scrollClipDisabledIfAvailable()
+            .zIndex(0)
+        }
+        .padding(16)
+        .frame(minWidth: 320, idealWidth: 410, maxWidth: 440)
+        .frame(minHeight: 260, idealHeight: 420, maxHeight: 500)
+        .onAppear {
+            selectedMode = initialMode
+        }
+    }
+}
+
+private struct MCPServiceModeSegmentedPicker: View {
+    @Binding var selection: ExcalidrawMCPServiceMode
+
+    var body: some View {
         HStack(spacing: 2) {
             ForEach(ExcalidrawMCPServiceMode.allCases) { mode in
                 tabButton(mode)
@@ -587,13 +627,13 @@ private struct MCPServiceModeHelpSheet: View {
 
     @ViewBuilder
     private func tabButton(_ mode: ExcalidrawMCPServiceMode) -> some View {
-        let isSelected = selectedMode == mode
+        let isSelected = selection == mode
         Button {
             withAnimation(.easeInOut(duration: 0.18)) {
-                selectedMode = mode
+                selection = mode
             }
         } label: {
-            Text(title(for: mode))
+            Text(Self.title(for: mode))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(isSelected ? Color.primary : Color.secondary)
                 .frame(minWidth: 92, minHeight: 28)
@@ -608,10 +648,22 @@ private struct MCPServiceModeHelpSheet: View {
         .buttonStyle(.plain)
     }
 
-    @ViewBuilder
-    private func modeContent(for mode: ExcalidrawMCPServiceMode) -> some View {
+    static func title(for mode: ExcalidrawMCPServiceMode) -> String {
+        switch mode {
+            case .basic:
+                String(localizable: .settingsAIMCPServiceModeBasicTitle)
+            case .optimized:
+                String(localizable: .settingsAIMCPServiceModeOptimizedTitle)
+        }
+    }
+}
+
+private struct MCPServiceModeFeaturesView: View {
+    let mode: ExcalidrawMCPServiceMode
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ForEach(features(for: mode)) { feature in
+            ForEach(Self.features(for: mode)) { feature in
                 featureRow(feature)
             }
         }
@@ -647,25 +699,7 @@ private struct MCPServiceModeHelpSheet: View {
         .mcpFeatureRowScrollTransition()
     }
 
-    private func title(for mode: ExcalidrawMCPServiceMode) -> String {
-        switch mode {
-            case .basic:
-                String(localizable: .settingsAIMCPServiceModeBasicTitle)
-            case .optimized:
-                String(localizable: .settingsAIMCPServiceModeOptimizedTitle)
-        }
-    }
-
-    private func symbol(for mode: ExcalidrawMCPServiceMode) -> SFSymbol {
-        switch mode {
-            case .basic:
-                .serverRack
-            case .optimized:
-                .sparkles
-        }
-    }
-
-    private func features(for mode: ExcalidrawMCPServiceMode) -> [MCPServiceModeFeature] {
+    private static func features(for mode: ExcalidrawMCPServiceMode) -> [MCPServiceModeFeature] {
         switch mode {
             case .basic:
                 [

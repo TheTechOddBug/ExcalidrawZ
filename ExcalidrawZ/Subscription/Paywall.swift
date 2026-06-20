@@ -29,6 +29,7 @@ struct Paywall: View {
     @State var isPresented = false
     @State var billingPeriod: BillingPeriod = .monthly
     @State var maxCreditTier: MaxCreditTier = .standard
+    @State var presentedMCPFeatureHelpID: String?
     
     enum Route: Hashable {
         case plans, donation
@@ -312,6 +313,13 @@ struct Paywall: View {
                 HStack(spacing: 8) {
                     Text(feature.title)
                         .font(.callout.weight(.semibold))
+
+                    if let mcpServiceMode = feature.mcpServiceMode {
+                        mcpFeatureHelpButton(
+                            feature: feature,
+                            initialMode: mcpServiceMode
+                        )
+                    }
                     
                     if let badge = feature.badge {
                         Text(badge)
@@ -332,6 +340,37 @@ struct Paywall: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    @ViewBuilder
+    func mcpFeatureHelpButton(
+        feature: Feature,
+        initialMode: ExcalidrawMCPServiceMode
+    ) -> some View {
+        Button {
+            presentedMCPFeatureHelpID = feature.id
+        } label: {
+            Image(systemSymbol: .questionmarkCircle)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 18, height: 18)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .popover(
+            isPresented: Binding(
+                get: { presentedMCPFeatureHelpID == feature.id },
+                set: { isPresented in
+                    if !isPresented {
+                        presentedMCPFeatureHelpID = nil
+                    }
+                }
+            ),
+            arrowEdge: .trailing
+        ) {
+            MCPServiceModeFeaturesPopoverContent(initialMode: initialMode)
+        }
+        .help(String(localizable: .settingsAIMCPServiceModeHelp))
     }
     
 #if APP_STORE
