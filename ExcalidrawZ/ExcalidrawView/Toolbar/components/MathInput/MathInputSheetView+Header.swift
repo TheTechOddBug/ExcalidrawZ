@@ -64,7 +64,7 @@ extension MathInputSheetView {
         .buttonStyle(.plain)
         .foregroundStyle(isInspectorPresented ? Color.accentColor : Color.secondary)
         .contentShape(Circle())
-        .help("Templates")
+        .help(String(localizable: .toolbarLatexMathTemplatesHelp))
     }
 #endif
 
@@ -166,7 +166,7 @@ extension MathInputSheetView {
     }
 
     var formulaTabs: some View {
-        Picker("Formula Panel", selection: $formulaTab) {
+        Picker(String(localizable: .toolbarLatexMathFormulaPanelPickerTitle), selection: $formulaTab) {
             ForEach(MathFormulaTab.allCases) { tab in
                 Text(tab.title)
                     .tag(tab)

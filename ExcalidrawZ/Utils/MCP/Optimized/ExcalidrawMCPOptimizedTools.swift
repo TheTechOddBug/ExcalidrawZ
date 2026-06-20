@@ -103,13 +103,12 @@ enum ExcalidrawMCPOptimizedRecall {
     - update_view is the primary drawing mutation tool. Use it for new drawings,
       whole-scene replacement, or any edit where you can provide the complete
       revised raw elements array.
+    - Use insert_math for LaTeX formulas and function plots. It renders the
+      math as a canvas image and inserts it into the currently open file.
     - Use adjust_elements only for small targeted patches to the currently open
       file, such as adding a few elements, editing known element ids, deleting a
-      small set, inserting Mermaid content, or inserting LaTeX formulas with
-      the `latex` op while preserving the rest of the canvas. For formulas, pass
-      `color` as a hex foreground color when the equation needs a specific
-      visible color. Do not use adjust_elements for whole-scene creation or
-      replacement.
+      small set, or inserting Mermaid content. Do not use adjust_elements for
+      math insertion, whole-scene creation, or replacement.
     - Use navigate_canvas for viewport/camera changes.
     - Use list_files, create_file, open_file, and get_checkpoints for file and
       history context.
@@ -443,9 +442,21 @@ enum ExcalidrawMCPOptimizedToolCatalog {
             }
         ),
         ExcalidrawMCPLLMCoreToolAdapter(
+            tool: InsertMathTool(),
+            title: "Math",
+            description: "Insert math content into the active ExcalidrawZ file. Use mode=formula for LaTeX equations and mode=function for plotted function graphs. Prefer this over adjust_elements for formula or graph insertion.",
+            contextProvider: {
+                try await ExcalidrawMCPAppBridge.shared.optimizedChatToolContext(
+                    requiresMutation: true,
+                    requiresActiveFile: true
+                )
+            },
+            mutationCheckpointDescription: "MCP insert_math"
+        ),
+        ExcalidrawMCPLLMCoreToolAdapter(
             tool: AdjustElementsTool(),
             title: "Adjust Elements",
-            description: "Targeted patch tool for the currently open ExcalidrawZ file. Use update_view for new drawings, whole-scene replacement, or complete raw-elements updates. Use adjust_elements only for small incremental add/update/delete/Mermaid/math edits when preserving the rest of the canvas is important.",
+            description: "Targeted patch tool for the currently open ExcalidrawZ file. Use update_view for new drawings, whole-scene replacement, or complete raw-elements updates. Use adjust_elements only for small incremental add/update/delete/Mermaid edits when preserving the rest of the canvas is important.",
             contextProvider: {
                 try await ExcalidrawMCPAppBridge.shared.optimizedChatToolContext(
                     requiresMutation: true,

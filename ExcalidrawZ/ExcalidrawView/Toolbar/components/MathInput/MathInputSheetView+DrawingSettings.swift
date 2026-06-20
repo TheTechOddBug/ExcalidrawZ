@@ -20,7 +20,7 @@ extension MathInputSheetView {
 
     var functionDrawingSettings: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("AXIS SETTINGS")
+            Text(String(localizable: .toolbarLatexMathAxisSettingsTitle).uppercased())
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .tracking(1.2)
@@ -33,18 +33,18 @@ extension MathInputSheetView {
                 alignment: .leading,
                 spacing: 10
             ) {
-                functionTextField("X min", text: $functionXMin)
-                functionTextField("X max", text: $functionXMax)
-                functionTextField("Y min", text: $functionYMin)
-                functionTextField("Y max", text: $functionYMax)
-                functionTextField("X label", text: $functionXLabel)
-                functionTextField("Y label", text: $functionYLabel)
+                functionTextField(String(localizable: .toolbarLatexMathXMinLabel), text: $functionXMin)
+                functionTextField(String(localizable: .toolbarLatexMathXMaxLabel), text: $functionXMax)
+                functionTextField(String(localizable: .toolbarLatexMathYMinLabel), text: $functionYMin)
+                functionTextField(String(localizable: .toolbarLatexMathYMaxLabel), text: $functionYMax)
+                functionTextField(String(localizable: .toolbarLatexMathXLabelField), text: $functionXLabel)
+                functionTextField(String(localizable: .toolbarLatexMathYLabelField), text: $functionYLabel)
             }
 
-            Toggle("Show grid", isOn: $functionShowGrid)
+            Toggle(String(localizable: .toolbarLatexMathShowGridToggle), isOn: $functionShowGrid)
 
             HStack(alignment: .center, spacing: 10) {
-                Text("BACKGROUND")
+                Text(String(localizable: .toolbarLatexMathBackgroundSectionTitle).uppercased())
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .tracking(1.2)

@@ -143,6 +143,7 @@ struct ExcalidrawZApp: App {
             ReadFileTool(),
             ReadCanvasImageTool(),
             ExportTool(),
+            InsertMathTool(),
             AdjustElementsTool(),
             RenameFileTool(),
             ListAllFilesTool(),

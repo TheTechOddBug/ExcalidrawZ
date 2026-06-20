@@ -40,6 +40,7 @@ enum ExcalidrawAgentConfig {
         "read_file",
         "read_canvas_image",
         "export",
+        "insert_math",
         "calculator",
         "datetime",
         "adjust_elements",
@@ -60,6 +61,7 @@ enum ExcalidrawAgentConfig {
         "read_file",
         "read_canvas_image",
         "export",
+        "insert_math",
         "calculator",
         "datetime",
         "adjust_elements",
@@ -74,6 +76,7 @@ enum ExcalidrawAgentConfig {
         "web_search",
         "web_fetch",
         "file_access_status",
+        "insert_math",
         "calculator",
         "datetime",
         "adjust_elements",
@@ -150,6 +153,7 @@ enum ExcalidrawAgentConfig {
     /// Keeping a pair around it stays consistent with every other
     /// canvas mutation.
     static let canvasModifyingToolNames: Set<String> = [
+        "insert_math",
         "adjust_elements",
         "add_library_item_to_canvas",
         "restore_file_history",

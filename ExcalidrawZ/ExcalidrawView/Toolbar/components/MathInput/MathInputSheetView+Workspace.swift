@@ -17,15 +17,15 @@ extension MathInputSheetView {
                 equationWorkspace
             case .function:
                 templateWorkspace(
-                    title: "Functions",
-                    subtitle: "Start with common function notation and calculus templates.",
+                    title: String(localizable: .toolbarLatexMathFunctionsTitle),
+                    subtitle: String(localizable: .toolbarLatexMathFunctionsSubtitle),
                     templates: MathTemplate.functionTemplates,
                     showsSearch: false
                 )
             case .geometry:
                 templateWorkspace(
-                    title: "Geometry",
-                    subtitle: "Insert common geometry formulas and coordinate geometry expressions.",
+                    title: String(localizable: .toolbarLatexMathGeometryTitle),
+                    subtitle: String(localizable: .toolbarLatexMathGeometrySubtitle),
                     templates: MathTemplate.geometryTemplates,
                     showsSearch: true
                 )
@@ -42,8 +42,8 @@ extension MathInputSheetView {
                     equationEditor
                 case .library:
                     templateWorkspace(
-                        title: "Formula Library",
-                        subtitle: "Pick a template, then refine the LaTeX before inserting.",
+                        title: String(localizable: .toolbarLatexMathFormulaLibraryTitle),
+                        subtitle: String(localizable: .toolbarLatexMathFormulaLibrarySubtitle),
                         templates: MathTemplate.equationTemplates,
                         showsSearch: true
                     )
@@ -89,7 +89,7 @@ extension MathInputSheetView {
 
     var latexEditor: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(isLatexAIModePresented ? "AI PROMPT" : "LATEX")
+            Text(latexEditorTitle.uppercased())
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .tracking(1.2)
@@ -153,8 +153,14 @@ extension MathInputSheetView {
 
     var latexEditorPlaceholder: String {
         isLatexAIModePresented
-            ? "Describe the formula you want"
-            : "Type LaTeX or use the toolbar above"
+            ? String(localizable: .toolbarLatexMathAIPromptPlaceholder)
+            : String(localizable: .toolbarLatexMathLatexPlaceholder)
+    }
+
+    var latexEditorTitle: String {
+        isLatexAIModePresented
+            ? String(localizable: .toolbarLatexMathAIPromptTitle)
+            : String(localizable: .toolbarLatexMathLatexTitle)
     }
 
     private var latexEditorInsets: EdgeInsets {
@@ -194,7 +200,7 @@ extension MathInputSheetView {
                     Image(systemSymbol: .xmark)
                 }
                 .buttonStyle(MathInlineCircleButtonStyle())
-                .help("Cancel AI mode")
+                .help(String(localizable: .toolbarLatexMathCancelAIModeHelp))
 
                 Button {
                     if hasInsufficientLatexAICredits {
@@ -215,7 +221,11 @@ extension MathInputSheetView {
                 }
                 .buttonStyle(MathInlineGenerateButtonStyle())
                 .disabled(!canUseLatexAIAction)
-                .help(hasInsufficientLatexAICredits ? "Upgrade to continue" : "Generate LaTeX")
+                .help(
+                    hasInsufficientLatexAICredits
+                        ? String(localizable: .toolbarLatexMathUpgradeToContinueHelp)
+                        : String(localizable: .toolbarLatexMathGenerateLatexHelp)
+                )
             } else {
                 Button {
                     enterLatexAIMode()
@@ -224,7 +234,11 @@ extension MathInputSheetView {
                 }
                 .buttonStyle(MathInlineCircleButtonStyle())
                 .disabled(!canUseLatexAI)
-                .help(canUseLatexAI ? "Generate with AI" : "Enable AI in Settings")
+                .help(
+                    canUseLatexAI
+                        ? String(localizable: .toolbarLatexMathGenerateWithAIHelp)
+                        : String(localizable: .toolbarLatexMathEnableAIInSettingsHelp)
+                )
             }
         }
     }
@@ -255,9 +269,9 @@ extension MathInputSheetView {
 
     var latexAICreditsText: String {
         guard let balance = llmState.creditsInfo?.balance else {
-            return "Credits --"
+            return String(localizable: .toolbarLatexMathCreditsUnavailable)
         }
-        return "\(formatLatexAICredits(balance)) credits"
+        return String(localizable: .toolbarLatexMathCreditsCount(formatLatexAICredits(balance)))
     }
 
     func formatLatexAICredits(_ value: Double) -> String {
@@ -269,9 +283,11 @@ extension MathInputSheetView {
 
     var latexAIActionTitle: String {
         if hasInsufficientLatexAICredits {
-            return "Upgrade"
+            return String(localizable: .generalButtonUpgrade)
         }
-        return isGeneratingLatex ? "Generating" : "Generate"
+        return isGeneratingLatex
+            ? String(localizable: .toolbarLatexMathGeneratingButton)
+            : String(localizable: .toolbarLatexMathGenerateButton)
     }
 
     func templateWorkspace(
@@ -296,7 +312,7 @@ extension MathInputSheetView {
                 HStack(spacing: 8) {
                     Image(systemSymbol: .magnifyingglass)
                         .foregroundStyle(.secondary)
-                    TextField("Search templates...", text: $templateSearchText)
+                    TextField(String(localizable: .toolbarLatexMathSearchTemplatesPlaceholder), text: $templateSearchText)
                         .textFieldStyle(.plain)
                 }
                 .padding(.horizontal, 12)
@@ -345,7 +361,7 @@ extension MathInputSheetView {
 
     var colorControls: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("COLOR")
+            Text(String(localizable: .toolbarLatexMathColorSectionTitle).uppercased())
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .tracking(1.2)

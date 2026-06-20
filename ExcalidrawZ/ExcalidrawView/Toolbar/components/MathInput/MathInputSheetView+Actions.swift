@@ -380,7 +380,7 @@ private enum MathLatexAIGenerationError: LocalizedError {
     var errorDescription: String? {
         switch self {
             case .emptyResponse:
-                "AI did not return a LaTeX expression."
+                String(localizable: .toolbarLatexMathAIEmptyResponseError)
             case .server(let message):
                 message
         }

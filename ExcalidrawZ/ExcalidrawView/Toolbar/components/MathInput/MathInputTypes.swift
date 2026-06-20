@@ -38,22 +38,22 @@ enum MathInputWorkspace: CaseIterable, Hashable, Identifiable {
     var title: String {
         switch self {
             case .equation:
-                "Formula"
+                String(localizable: .toolbarLatexMathWorkspaceFormula)
             case .function:
-                "Function"
+                String(localizable: .toolbarLatexMathWorkspaceFunction)
             case .geometry:
-                "Geometry"
+                String(localizable: .toolbarLatexMathWorkspaceGeometry)
         }
     }
 
     var shortTitle: String {
         switch self {
             case .equation:
-                "Formula"
+                String(localizable: .toolbarLatexMathWorkspaceFormula)
             case .function:
-                "Function"
+                String(localizable: .toolbarLatexMathWorkspaceFunction)
             case .geometry:
-                "Geometry"
+                String(localizable: .toolbarLatexMathWorkspaceGeometry)
         }
     }
 
@@ -71,9 +71,9 @@ enum MathFormulaTab: CaseIterable, Hashable, Identifiable {
     var title: String {
         switch self {
             case .editor:
-                "Quick Input"
+                String(localizable: .toolbarLatexMathFormulaTabQuickInput)
             case .library:
-                "Library"
+                String(localizable: .toolbarLatexMathFormulaTabLibrary)
         }
     }
 }
@@ -87,9 +87,9 @@ enum MathFunctionPanelTab: CaseIterable, Hashable, Identifiable {
     var title: String {
         switch self {
             case .input:
-                "Input"
+                String(localizable: .toolbarLatexMathFunctionPanelInput)
             case .preferences:
-                "Preferences"
+                String(localizable: .toolbarLatexMathFunctionPanelPreferences)
         }
     }
 }

@@ -20,7 +20,7 @@ extension MathInputSheetView {
 
     var functionPanel: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Picker("Function Panel", selection: $functionPanelTab) {
+            Picker(String(localizable: .toolbarLatexMathFunctionPanelPickerTitle), selection: $functionPanelTab) {
                 ForEach(MathFunctionPanelTab.allCases) { tab in
                     Text(tab.title)
                         .tag(tab)
@@ -44,7 +44,7 @@ extension MathInputSheetView {
     var functionInputPanel: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                Text("FUNCTIONS")
+                Text(String(localizable: .toolbarLatexMathFunctionsTitle).uppercased())
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .tracking(1.2)
@@ -54,7 +54,7 @@ extension MathInputSheetView {
                 Button {
                     addFunctionExpression()
                 } label: {
-                    Label("Add function", systemSymbol: .plus)
+                    Label(String(localizable: .toolbarLatexMathAddFunctionButton), systemSymbol: .plus)
                         .labelStyle(.titleAndIcon)
                 }
             }
@@ -111,13 +111,13 @@ extension MathInputSheetView {
 #endif
             .disabled(functionExpressions.count <= 1)
             .opacity(functionExpressions.count > 1 ? 1 : 0)
-            .help("Remove function")
+            .help(String(localizable: .toolbarLatexMathRemoveFunctionHelp))
         }
     }
 
     var compactFunctionTemplates: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("TEMPLATES")
+            Text(String(localizable: .toolbarLatexMathTemplatesTitle).uppercased())
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .tracking(1.2)

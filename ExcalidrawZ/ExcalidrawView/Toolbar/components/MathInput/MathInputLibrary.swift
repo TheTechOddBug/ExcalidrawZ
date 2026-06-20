@@ -10,7 +10,7 @@ import Foundation
 extension MathSnippetSection {
     static let editorSections: [MathSnippetSection] = [
         .init(
-            title: "Structure",
+            title: String(localizable: .toolbarLatexMathSnippetSectionStructure),
             snippets: [
                 .init(display: "a⁄b", latex: "\\frac{a}{b}"),
                 .init(display: "xⁿ", latex: "x^{n}"),
@@ -21,7 +21,7 @@ extension MathSnippetSection {
             ]
         ),
         .init(
-            title: "Operators",
+            title: String(localizable: .toolbarLatexMathSnippetSectionOperators),
             snippets: [
                 .init(display: "±", latex: "\\pm"),
                 .init(display: "×", latex: "\\times"),
@@ -34,7 +34,7 @@ extension MathSnippetSection {
             ]
         ),
         .init(
-            title: "Calculus",
+            title: String(localizable: .toolbarLatexMathSnippetSectionCalculus),
             snippets: [
                 .init(display: "∫", latex: "\\int_a^b f(x)\\,dx"),
                 .init(display: "∑", latex: "\\sum_{i=1}^{n} i"),
@@ -46,7 +46,7 @@ extension MathSnippetSection {
             ]
         ),
         .init(
-            title: "Greek",
+            title: String(localizable: .toolbarLatexMathSnippetSectionGreek),
             snippets: [
                 .init(display: "α", latex: "\\alpha"),
                 .init(display: "β", latex: "\\beta"),
@@ -62,7 +62,7 @@ extension MathSnippetSection {
             ]
         ),
         .init(
-            title: "Trig",
+            title: String(localizable: .toolbarLatexMathSnippetSectionTrig),
             minimumItemWidth: 64,
             snippets: [
                 .init(display: "sin", latex: "\\sin(x)"),
@@ -73,7 +73,7 @@ extension MathSnippetSection {
             ]
         ),
         .init(
-            title: "Layout",
+            title: String(localizable: .toolbarLatexMathSnippetSectionLayout),
             minimumItemWidth: 104,
             snippets: [
                 .init(display: "cases", latex: "\\begin{cases} a, & x > 0 \\\\ b, & x \\le 0 \\end{cases}"),
