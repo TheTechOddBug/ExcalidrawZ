@@ -68833,6 +68833,119 @@
         }
       }
     },
+    "paywallReachReasonOptimizedMCPServices" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تتطلب خدمات MCP المحسّنة خطة Starter أو أعلى."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimierte MCP-Dienste erfordern Starter oder höher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimized MCP Services require Starter or higher."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los servicios MCP optimizados requieren Starter o superior."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les services MCP optimisés nécessitent Starter ou supérieur."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimized MCP Services के लिए Starter या उससे ऊँचा प्लान चाहिए."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I servizi MCP ottimizzati richiedono Starter o superiore."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimized MCP Services には Starter 以上が必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimized MCP Services를 사용하려면 Starter 이상이 필요합니다."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geoptimaliseerde MCP-services vereisen Starter of hoger."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoptymalizowane usługi MCP wymagają planu Starter lub wyższego."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os Serviços MCP otimizados exigem Starter ou superior."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для оптимизированных сервисов MCP требуется Starter или выше."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บริการ MCP แบบปรับแต่งต้องใช้ Starter หรือสูงกว่า"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimize MCP Hizmetleri için Starter veya üstü gerekir."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch vụ MCP tối ưu yêu cầu Starter hoặc cao hơn."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimized MCP Services 需要 Starter 或更高方案。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimized MCP Services 需要 Starter 或更高方案。"
+          }
+        }
+      }
+    },
     "paywallRestorePurchasesDoneAlertTitle" : {
       "extractionState" : "manual",
       "localizations" : {

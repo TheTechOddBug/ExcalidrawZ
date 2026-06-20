@@ -34,7 +34,7 @@ struct MathInputSheetViewModifier: ViewModifier {
                     LatexMathSVGRenderer.debugPrintSVGBeforeInsert(renderedSVG.svg, source: "toolbar")
                     Task {
                         do {
-                            try await fileState.excalidrawWebCoordinator?.insertMathImage(
+                            _ = try await fileState.excalidrawWebCoordinator?.insertMathImage(
                                 params: renderedSVG.mathImageParams,
                                 options: .init(
                                     position: .auto,
@@ -134,7 +134,7 @@ struct MathImageEditSheetViewModifier: ViewModifier {
                     LatexMathSVGRenderer.debugPrintSVGBeforeInsert(renderedSVG.svg, source: "edit_math")
                     Task {
                         do {
-                            try await coordinator.updateMathImage(
+                            _ = try await coordinator.updateMathImage(
                                 elementId: request.elementId,
                                 params: renderedSVG.mathImageParams,
                                 options: .init(

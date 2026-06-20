@@ -120,7 +120,7 @@ class ExcalidrawCore: NSObject, ObservableObject {
         ) { key in
             switch key {
                 case .number(let int):
-                    Task {
+                    Task { @MainActor in
                         let toolOrder = self.parent?.appPreference.toolbarToolOrder
                             ?? ExcalidrawToolbarToolOrder()
                         if let tool = toolOrder.tool(forShortcutNumber: int) {
@@ -130,15 +130,15 @@ class ExcalidrawCore: NSObject, ObservableObject {
                         }
                     }
                 case .char(let character):
-                    Task {
+                    Task { @MainActor in
                         try? await self.toggleToolbarAction(key: character)
                     }
                 case .space:
-                    Task {
+                    Task { @MainActor in
                         try? await self.toggleToolbarAction(key: " ")
                     }
                 case .escape:
-                    Task {
+                    Task { @MainActor in
                         try? await self.toggleToolbarAction(key: "\u{1B}")
                     }
             }

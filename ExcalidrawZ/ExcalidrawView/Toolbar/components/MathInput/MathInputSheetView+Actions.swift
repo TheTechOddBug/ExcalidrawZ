@@ -77,11 +77,8 @@ extension MathInputSheetView {
     func errorDescription(for error: Error) -> String {
         if let error = error as? LocalizedError {
             return error.errorDescription ?? error.localizedDescription
-        } else if let error = error as? any CustomStringConvertible {
-            return error.description
-        } else {
-            return error.localizedDescription
         }
+        return error.localizedDescription
     }
 
     func insertSnippet(_ latex: String) {

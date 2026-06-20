@@ -205,7 +205,7 @@ extension Store {
                     // TODO: add a localized key for this reason.
                     "Your AI credits have run out. Upgrade to keep chatting."
                 case .optimizedMCPServices:
-                    "Optimized MCP Services require Starter or higher."
+                    String(localizable: .paywallReachReasonOptimizedMCPServices)
             }
         }
     }
