@@ -10,7 +10,7 @@ import LLMCore
 
 enum ExcalidrawMCPOptimizedContract {
     static let instructions = """
-    Use read_me first. It includes the full upstream excalidraw-mcp drawing guide
+    Use read_me first. It includes the full excalidraw-mcp drawing guide
     plus ExcalidrawZ Optimized notes. Open or create a file first, then use
     replace_view with Excalidraw raw elements JSON. replace_view replaces the
     current file's complete raw elements array.
@@ -22,8 +22,9 @@ enum ExcalidrawMCPOptimizedContract {
     set_canvas_preferences, export, navigate_canvas,
     get_current_file_checkpoints, rename_file, restore_file_history,
     list_libraries, list_library_items, query_library_item,
-    add_library_item_to_canvas, read_canvas_image, and adjust_elements when you
-    need app, file, history, library, visual, export, or canvas context.
+    add_library_item_to_canvas, insert_math, read_canvas_image, and
+    adjust_elements when you need app, file, history, library, math, visual,
+    export, or canvas context.
     """
 
     enum ToolName {
@@ -49,13 +50,13 @@ enum ExcalidrawMCPOptimizedRecall {
     static let guide = """
     # ExcalidrawZ Optimized MCP
 
-    This mode uses the upstream excalidraw-mcp raw Excalidraw element workflow
-    as its drawing foundation. The full upstream guide is included below and
+    This mode uses the excalidraw-mcp raw Excalidraw element workflow
+    as its drawing foundation. The full guide is included below and
     remains the primary reference for colors, cameraUpdate, examples, animation,
     and common mistakes.
 
     Default flow:
-    1. Read the upstream guide below.
+    1. Read the drawing guide below.
     2. Generate raw Excalidraw elements using the same format.
     3. If no file is open, call list_files and open_file, or call create_file.
        Use list_groups first when the user asks to create the file in a
@@ -104,10 +105,10 @@ enum ExcalidrawMCPOptimizedRecall {
 
     Optional app tools:
     - Use read_file for targeted structural reads of the current canvas.
-    - Use read_canvas_image as the normal visual self-check after replace_view.
-      Skip it only when the user explicitly asks for speed/no visual check, when
-      no visible canvas content changed, or when the tool reports that the
-      canvas cannot be captured.
+    - Use read_canvas_image as the normal visual self-check after replace_view
+      or after a series of visible native/tool edits. Skip it only when the user
+      explicitly asks for speed/no visual check, when no visible canvas content
+      changed, or when the tool reports that the canvas cannot be captured.
     - Use export when the user asks for an artifact: kind=image for PNG/SVG,
       kind=file for an .excalidraw file, or kind=pdf for vector/lossless PDF.
       For visual inspection, normally use read_canvas_image. Use export
@@ -177,11 +178,11 @@ enum ExcalidrawMCPOptimizedRecall {
         )
         .replacingOccurrences(
             of: "- **With restoreCheckpoint**: restore a saved state, then surgically remove specific elements before adding new ones",
-            with: "- **With App File History**: call get_current_file_checkpoints / restore_file_history when the user asks to roll back a saved library file state"
+            with: "- **Optimized revision**: read the current elements if needed, then send the complete desired final array to replace_view. Omit elements you want removed; use inline delete only for animation-style removals"
         )
         .replacingOccurrences(
             of: "If the user asks to revise, call create_view again",
-            with: "If the user asks to revise, call replace_view again"
+            with: "If the user asks to revise a raw-only scene, call replace_view with the complete revised elements array. For targeted changes, or after using native insertion tools such as insert_math, use adjust_elements unless you intentionally replace the whole scene."
         )
         return replacingDarkModeWorkaround(in: guide)
     }
@@ -625,7 +626,7 @@ enum ExcalidrawMCPOptimizedToolCatalog {
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.readMe,
             title: "Read ExcalidrawZ Optimized MCP Guide",
-            description: "Returns the full upstream excalidraw-mcp drawing guide plus ExcalidrawZ Optimized replacement workflow notes. Call this first when using Optimized MCP.",
+            description: "Returns the full excalidraw-mcp drawing guide plus ExcalidrawZ Optimized replacement workflow notes. Call this first when using Optimized MCP.",
             inputSchema: ExcalidrawMCPToolSchemas.emptyObject,
             annotations: ["readOnlyHint": .bool(true)]
         ),

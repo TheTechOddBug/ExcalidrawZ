@@ -35,7 +35,7 @@ struct AISettingsView: View {
     @State var didCopyAIAccountID: Bool = false
     @State var isPresentingMCPConnectionGuide: Bool = false
     @State var isPresentingMCPServiceModeHelp: Bool = false
-    @State var selectedMCPConnectionGuideTab: MCPConnectionGuideTab = .vscode
+    @State var selectedMCPConnectionGuideTab: MCPConnectionGuideTab = .claude
     @State var isPresentingAIEnableConsent: Bool = false
     @State var preferredSettingsSection: SettingsSection = .general
     

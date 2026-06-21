@@ -401,8 +401,8 @@ extension AISettingsView {
         {
           "mcpServers": {
             "excalidrawz": {
-              "type": "http",
-              "url": "\(mcpEndpoint)"
+              "command": "npx",
+              "args": ["-y", "mcp-remote", "\(mcpEndpoint)"]
             }
           }
         }

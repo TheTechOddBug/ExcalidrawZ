@@ -75066,7 +75066,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Claude Desktop can connect to ExcalidrawZ through the local HTTP MCP endpoint. Keep ExcalidrawZ open and enable the MCP Server first."
+            "value" : "Claude Desktop connects through mcp-remote, which bridges Claude's stdio MCP config to ExcalidrawZ's local HTTP MCP endpoint. Keep ExcalidrawZ open and enable the MCP Server first."
           }
         },
         "es" : {
@@ -75150,13 +75150,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Claude Desktop 可以通过本地 HTTP MCP 端点连接到 ExcalidrawZ。请先保持 ExcalidrawZ 打开并启用 MCP 服务器。"
+            "value" : "Claude Desktop 通过 mcp-remote 连接，它会把 Claude 的 stdio MCP 配置桥接到 ExcalidrawZ 的本地 HTTP MCP 端点。请先保持 ExcalidrawZ 打开并启用 MCP 服务器。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Claude 桌面可以通過本地 HTTP MCP 端點連接到 ExcalidrawZ。首先保持 ExcalidrawZ 開啟並啟用 MCP 伺服器。"
+            "value" : "Claude Desktop 透過 mcp-remote 連接，它會把 Claude 的 stdio MCP 配置橋接到 ExcalidrawZ 的本地 HTTP MCP 端點。請先保持 ExcalidrawZ 開啟並啟用 MCP 伺服器。"
           }
         }
       }
@@ -75179,7 +75179,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In Claude Desktop, open Settings > Developer > Edit Config. Paste the configuration below, save the file, then restart Claude Desktop."
+            "value" : "In Claude Desktop, open Settings > Developer > Edit Config. Paste the mcpServers configuration below into claude_desktop_config.json, save the file, then restart Claude Desktop. This requires Node.js/npx."
           }
         },
         "es" : {
@@ -75263,13 +75263,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在 Claude Desktop 中，打开设置 > 开发者 > 编辑配置。粘贴下面的配置，保存文件，然后重启 Claude Desktop。"
+            "value" : "在 Claude Desktop 中，打开设置 > 开发者 > 编辑配置。将下面的 mcpServers 配置粘贴到 claude_desktop_config.json，保存文件，然后重启 Claude Desktop。此方式需要 Node.js/npx。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在 Claude 桌面中，打開設置 > 開發者 > 編輯配置。粘貼以下配置，保存文件，然後重新啟動 Claude 桌面。"
+            "value" : "在 Claude Desktop 中，打開設置 > 開發者 > 編輯配置。將下面的 mcpServers 配置貼到 claude_desktop_config.json，保存文件，然後重新啟動 Claude Desktop。此方式需要 Node.js/npx。"
           }
         }
       }
@@ -76987,7 +76987,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Matches the upstream excalidraw-mcp tool set: read the guide, create a view, and exchange MCP checkpoints."
+            "value" : "Matches the excalidraw-mcp tool set: read the guide, create a view, and exchange MCP checkpoints."
           }
         },
         "es" : {
@@ -77071,13 +77071,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "与上游 excalidraw-mcp 工具集一致：读取指南、创建视图，并交换 MCP 检查点。"
+            "value" : "与 excalidraw-mcp 工具集一致：读取指南、创建视图，并交换 MCP 检查点。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "與上游 excalidraw-mcp 工具集一致：讀取指南、建立視圖，並交換 MCP 檢查點。"
+            "value" : "與 excalidraw-mcp 工具集一致：讀取指南、建立視圖，並交換 MCP 檢查點。"
           }
         }
       }

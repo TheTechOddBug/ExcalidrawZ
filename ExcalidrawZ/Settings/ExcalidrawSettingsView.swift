@@ -224,7 +224,6 @@ private struct ToolbarToolOrderDragPreview: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-        .shadow(radius: 8, y: 3)
     }
 }
 
