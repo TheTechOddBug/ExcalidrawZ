@@ -20,7 +20,7 @@ enum ExcalidrawMCPOptimizedResources {
         schemas[key] ?? ExcalidrawMCPToolSchemas.emptyObject
     }
 
-    static func description(named key: String, fallback: String = "Optimized MCP tool.") -> String {
+    static func description(named key: String, fallback: String = "ExcalidrawZ MCP tool.") -> String {
         descriptions[key]?.stringValue ?? fallback
     }
 

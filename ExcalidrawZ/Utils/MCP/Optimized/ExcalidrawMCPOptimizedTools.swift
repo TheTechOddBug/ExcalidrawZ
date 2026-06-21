@@ -11,7 +11,7 @@ import LLMCore
 enum ExcalidrawMCPOptimizedContract {
     static let instructions = ExcalidrawMCPOptimizedResources.text(
         named: "ExcalidrawMCPOptimizedInstructions",
-        fallback: "Use read_me first. Optimized MCP resources are unavailable in this build."
+        fallback: "Use read_me first. ExcalidrawZ MCP resources are unavailable in this build."
     )
 
     enum ToolName {
@@ -36,7 +36,7 @@ enum ExcalidrawMCPOptimizedContract {
 enum ExcalidrawMCPOptimizedRecall {
     static let guide = ExcalidrawMCPOptimizedResources.text(
         named: "ExcalidrawMCPOptimizedReadMe",
-        fallback: "Optimized MCP guide resource is unavailable in this build."
+        fallback: "ExcalidrawZ MCP guide resource is unavailable in this build."
     )
 }
 
@@ -212,7 +212,7 @@ enum ExcalidrawMCPOptimizedToolCatalog {
     private static let baseTools: [ExcalidrawMCPTool] = [
         ExcalidrawMCPTool(
             name: ExcalidrawMCPOptimizedContract.ToolName.readMe,
-            title: "Read ExcalidrawZ Optimized MCP Guide",
+            title: "Read ExcalidrawZ MCP Guide",
             description: description("read_me"),
             inputSchema: ExcalidrawMCPToolSchemas.emptyObject,
             annotations: ["readOnlyHint": .bool(true)]
