@@ -269,20 +269,18 @@ actor LocalStorageManager {
         mediaID: String,
         updatedAt: Date? = nil
     ) throws -> String {
-        // Parse data URL
-        guard let (mimeType, base64Data) = parseDataURL(dataURL),
-              let data = Data(base64Encoded: base64Data) else {
+        guard let decodedDataURL = decodeDataURL(dataURL) else {
             throw FileStorageError.writeFailed("Invalid data URL format")
         }
         
         let directory = try ensureDirectoryExists(for: .mediaItems)
-        let fileExtension = FileStorageContentType.fileExtension(for: mimeType)
+        let fileExtension = FileStorageContentType.fileExtension(for: decodedDataURL.mimeType)
         let filename = "\(mediaID).\(fileExtension)"
         let fileURL = directory.appendingPathComponent(filename)
         let relativePath = "\(StorageDirectory.mediaItems.path)/\(filename)"
         
         do {
-            try data.write(to: fileURL, options: .atomic)
+            try decodedDataURL.data.write(to: fileURL, options: .atomic)
 
             // Always set modification date (use provided date or current time)
             let date = updatedAt ?? Date()
@@ -340,20 +338,6 @@ actor LocalStorageManager {
     
     // MARK: - Helper Methods
     
-    private func parseDataURL(_ dataURL: String) -> (mimeType: String, base64Data: String)? {
-        guard dataURL.hasPrefix("data:") else { return nil }
-        
-        let components = dataURL.dropFirst(5).split(separator: ",", maxSplits: 1)
-        guard components.count == 2 else { return nil }
-        
-        let header = String(components[0])
-        let base64 = String(components[1])
-        
-        let mimeType = header.split(separator: ";").first.map(String.init) ?? "application/octet-stream"
-        
-        return (mimeType, base64)
-    }
-
     private func mimeType(for fileExtension: String) -> String {
         switch fileExtension.lowercased() {
             case "png": return "image/png"

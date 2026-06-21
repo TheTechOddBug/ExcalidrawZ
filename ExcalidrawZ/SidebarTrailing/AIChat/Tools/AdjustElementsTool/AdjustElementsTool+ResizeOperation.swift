@@ -12,7 +12,14 @@ extension AdjustElementsMiddleware {
     ) throws {
         let index = try indexOfElement(op.id, in: elements)
         elements[index] = try resizeElement(elements[index], op: op)
-        updatedElementIds.append(op.id)
+        appendUpdatedElementID(op.id, to: &updatedElementIds)
+
+        if case .generic(let container) = elements[index] {
+            let labelIDs = recenterBoundLabels(for: container, elements: &elements)
+            for labelID in labelIDs {
+                appendUpdatedElementID(labelID, to: &updatedElementIds)
+            }
+        }
     }
 
     func resizeElement(_ element: ExcalidrawElement, op: ResizeOp) throws -> ExcalidrawElement {
@@ -43,8 +50,13 @@ extension AdjustElementsMiddleware {
                 item.height = newH
                 bump(&item.version, &item.versionNonce, &item.updated)
                 return .arrow(item)
+            case .image(var item):
+                item.width = resolvedDimension(current: item.width, absolute: op.width, delta: op.dw)
+                item.height = resolvedDimension(current: item.height, absolute: op.height, delta: op.dh)
+                bump(&item.version, &item.versionNonce, &item.updated)
+                return .image(item)
             default:
-                throw AdjustmentError(message: "Resize only supports text, rectangle, ellipse, diamond, line, and arrow.")
+                throw AdjustmentError(message: "Resize only supports text, rectangle, ellipse, diamond, line, arrow, and image elements.")
         }
     }
 

@@ -45,10 +45,9 @@ extension MediaItem {
         }
 
         // Fallback to CoreData dataURL
-        if let dataURL = dataURL,
-           let base64String = dataURL.components(separatedBy: "base64,").last,
-           let data = Data(base64Encoded: base64String) {
-            return data
+        if let dataURL,
+           let decodedDataURL = decodeDataURL(dataURL) {
+            return decodedDataURL.data
         }
 
         throw MediaItemError.dataNotAvailable

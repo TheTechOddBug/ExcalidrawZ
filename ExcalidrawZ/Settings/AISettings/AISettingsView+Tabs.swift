@@ -171,7 +171,12 @@ extension AISettingsView {
     @ViewBuilder
     var selectedTabContent: some View {
         if !prefs.isAIEnabled {
-            informationSection
+            if selectedTab == .settings,
+               preferredSettingsSection == .mcp {
+                mcpSettingsSection
+            } else {
+                informationSection
+            }
         } else {
             selectedEnabledTabContent
         }
@@ -192,21 +197,36 @@ extension AISettingsView {
                     }
                 }
             case .settings:
-                Section {
-                    defaultModelPicker
-                } header: {
-                    settingsHeader
-                        .textCase(nil)
-                }
-
-                Section {
-                    aiAccountRows
-                } header: {
-                    aiAccountHeader
-                        .textCase(nil)
-                }
+                settingsSections
             case .information:
                 informationSection
+        }
+    }
+
+    @ViewBuilder
+    var settingsSections: some View {
+        defaultModelSettingsSection
+        mcpSettingsSection
+        aiAccountSettingsSection
+    }
+
+    @ViewBuilder
+    var defaultModelSettingsSection: some View {
+        Section {
+            defaultModelPicker
+        } header: {
+            settingsHeader
+                .textCase(nil)
+        }
+    }
+
+    @ViewBuilder
+    var aiAccountSettingsSection: some View {
+        Section {
+            aiAccountRows
+        } header: {
+            aiAccountHeader
+                .textCase(nil)
         }
     }
 

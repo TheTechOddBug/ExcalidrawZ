@@ -30,7 +30,10 @@ struct DataImage: View {
 
     var body: some View {
         ZStack {
-            if let platformImage {
+            if let svgContent {
+                SVGPreviewView(svg: svgContent)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let platformImage {
 #if canImport(AppKit)
                 Image(nsImage: platformImage)
                     .resizable()
@@ -46,8 +49,23 @@ struct DataImage: View {
             }
         }
         .task(id: data) {
+            guard svgContent == nil else {
+                platformImage = nil
+                return
+            }
             loadImage(from: data, thumbnailSize: thumbnailSize)
         }
+    }
+
+    private var svgContent: String? {
+        guard let string = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("<svg") || trimmed.contains("<svg ") else {
+            return nil
+        }
+        return string
     }
 
     private func loadImage(from data: Data, thumbnailSize: CGSize?) {

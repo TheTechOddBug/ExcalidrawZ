@@ -86,6 +86,7 @@ struct ExcalidrawZApp: App {
             return stdoutHandler
         }
         FeatureDiscoveryTips.configureIfAvailable()
+        _ = ExcalidrawZMCPServerController.shared
 
         // If you want to start the updater manually, pass false to startingUpdater and call .startUpdater() later
         // This is where you can also pass an updater delegate if you need one
@@ -141,6 +142,8 @@ struct ExcalidrawZApp: App {
             FileAccessStatusTool(),
             ReadFileTool(),
             ReadCanvasImageTool(),
+            ExportTool(),
+            InsertMathTool(),
             AdjustElementsTool(),
             RenameFileTool(),
             ListAllFilesTool(),

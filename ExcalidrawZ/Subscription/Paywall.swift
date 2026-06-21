@@ -29,6 +29,7 @@ struct Paywall: View {
     @State var isPresented = false
     @State var billingPeriod: BillingPeriod = .monthly
     @State var maxCreditTier: MaxCreditTier = .standard
+    @State var presentedMCPFeatureHelpID: String?
     
     enum Route: Hashable {
         case plans, donation
@@ -98,8 +99,12 @@ struct Paywall: View {
         [
             .completeCanvasWorkspace,
             .cloudReadyLibrary,
-            .mcpServices
+            mcpServicesFeature(for: currentSubscriptionItemForComparison)
         ]
+    }
+
+    func mcpServicesFeature(for plan: SubscriptionItem) -> Feature {
+        plan >= .starter ? .optimizedMCPServices : .basicMCPServices
     }
     
     var baselinePlan: SubscriptionItem? {
@@ -124,9 +129,18 @@ struct Paywall: View {
             return []
         }
 
-        let baselineFeatureIDs = Set(baselinePlanFeatureLines.map(\.id))
-        return featureLines(for: supplementTargetPlan, maxCredits: maxCredits(for: supplementTargetPlan))
-            .filter { !baselineFeatureIDs.contains($0.id) }
+        let baselineFeatureIDs = Set(
+            planComparisonFeatureLines(
+                for: baselinePlan,
+                maxCredits: maxCredits(for: baselinePlan)
+            )
+            .map(\.id)
+        )
+        return planComparisonFeatureLines(
+            for: supplementTargetPlan,
+            maxCredits: maxCredits(for: supplementTargetPlan)
+        )
+        .filter { !baselineFeatureIDs.contains($0.id) }
     }
     
     var selectedPlanSupplementTitle: String {
@@ -153,7 +167,7 @@ struct Paywall: View {
 
     var compactSelectedFeatureLines: [Feature] {
         guard let selectedSubscriptionItem else { return baseFeatureLines }
-        return baseFeatureLines + featureLines(
+        return planComparisonFeatureLines(
             for: selectedSubscriptionItem,
             maxCredits: maxCredits(for: selectedSubscriptionItem)
         )
@@ -299,6 +313,13 @@ struct Paywall: View {
                 HStack(spacing: 8) {
                     Text(feature.title)
                         .font(.callout.weight(.semibold))
+
+                    if let mcpServiceMode = feature.mcpServiceMode {
+                        mcpFeatureHelpButton(
+                            feature: feature,
+                            initialMode: mcpServiceMode
+                        )
+                    }
                     
                     if let badge = feature.badge {
                         Text(badge)
@@ -319,6 +340,37 @@ struct Paywall: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    @ViewBuilder
+    func mcpFeatureHelpButton(
+        feature: Feature,
+        initialMode: ExcalidrawMCPServiceMode
+    ) -> some View {
+        Button {
+            presentedMCPFeatureHelpID = feature.id
+        } label: {
+            Image(systemSymbol: .questionmarkCircle)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 18, height: 18)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .popover(
+            isPresented: Binding(
+                get: { presentedMCPFeatureHelpID == feature.id },
+                set: { isPresented in
+                    if !isPresented {
+                        presentedMCPFeatureHelpID = nil
+                    }
+                }
+            ),
+            arrowEdge: .trailing
+        ) {
+            MCPServiceModeFeaturesPopoverContent(initialMode: initialMode)
+        }
+        .help(String(localizable: .settingsAIMCPServiceModeHelp))
     }
     
 #if APP_STORE
@@ -529,6 +581,14 @@ struct Paywall: View {
             default:
                 []
         }
+    }
+
+    func planComparisonFeatureLines(for plan: SubscriptionItem, maxCredits: Int? = nil) -> [Feature] {
+        [
+            .completeCanvasWorkspace,
+            .cloudReadyLibrary,
+            mcpServicesFeature(for: plan)
+        ] + featureLines(for: plan, maxCredits: maxCredits)
     }
     
     var starterFeatureLines: [Feature] {

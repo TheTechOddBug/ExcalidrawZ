@@ -12,7 +12,19 @@ extension AdjustElementsMiddleware {
     ) throws {
         let index = try indexOfElement(op.id, in: elements)
         elements[index] = try moveElement(elements[index], dx: op.dx, dy: op.dy)
-        updatedElementIds.append(op.id)
+        appendUpdatedElementID(op.id, to: &updatedElementIds)
+
+        if case .generic(let container) = elements[index] {
+            let labelIDs = moveBoundLabels(
+                for: container,
+                dx: op.dx,
+                dy: op.dy,
+                elements: &elements
+            )
+            for labelID in labelIDs {
+                appendUpdatedElementID(labelID, to: &updatedElementIds)
+            }
+        }
     }
 
     func moveElement(_ element: ExcalidrawElement, dx: Double, dy: Double) throws -> ExcalidrawElement {
@@ -37,8 +49,13 @@ extension AdjustElementsMiddleware {
                 item.y += dy
                 bump(&item.version, &item.versionNonce, &item.updated)
                 return .arrow(item)
+            case .image(var item):
+                item.x += dx
+                item.y += dy
+                bump(&item.version, &item.versionNonce, &item.updated)
+                return .image(item)
             default:
-                throw AdjustmentError(message: "Move only supports text, rectangle, ellipse, diamond, line, and arrow.")
+                throw AdjustmentError(message: "Move only supports text, rectangle, ellipse, diamond, line, arrow, and image elements.")
         }
     }
 

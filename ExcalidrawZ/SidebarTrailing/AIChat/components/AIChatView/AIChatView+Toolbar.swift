@@ -82,9 +82,16 @@ extension AIChatView {
 
 #if os(macOS)
             if #available(macOS 14.0, *) {
+                OpenMCPSettingsMenuItem(deepLinkTo: .ai)
                 OpenSettingsMenuItem(deepLinkTo: .ai, aiSettingsRoute: .settings)
             } else {
                 // Pre-`openSettings` env fallback — NSApp.sendAction path.
+                Button {
+                    presentMCPSettings()
+                } label: {
+                    Label(.localizable(.aiChatButtonMCPSettings), systemSymbol: .serverRack)
+                }
+
                 Button {
                     presentAISettings()
                 } label: {
@@ -92,6 +99,12 @@ extension AIChatView {
                 }
             }
 #else
+            Button {
+                presentMCPSettings()
+            } label: {
+                Label(.localizable(.aiChatButtonMCPSettings), systemSymbol: .serverRack)
+            }
+
             Button {
                 presentAISettings()
             } label: {
@@ -135,6 +148,16 @@ extension AIChatView {
     private func presentAISettings() {
         SettingsRouter.shared.pendingRoute = .ai
         SettingsRouter.shared.pendingAISettingsRoute = .settings
+#if os(iOS)
+        isAISettingsSheetPresented = true
+#else
+        SettingsRouter.shared.requestOpen(.ai)
+#endif
+    }
+
+    private func presentMCPSettings() {
+        SettingsRouter.shared.pendingRoute = .ai
+        SettingsRouter.shared.pendingAISettingsRoute = .mcp
 #if os(iOS)
         isAISettingsSheetPresented = true
 #else

@@ -12,7 +12,6 @@ import Combine
 enum iCloudDriveError: LocalizedError {
     case containerNotAvailable
     case invalidDataURL
-    case invalidBase64Data
     case downloadTimeout
     case fileNotFound
     case conflictUnresolved
@@ -24,8 +23,6 @@ enum iCloudDriveError: LocalizedError {
                 return "iCloud Drive container is not available. Please ensure iCloud is enabled."
             case .invalidDataURL:
                 return "Invalid data URL format"
-            case .invalidBase64Data:
-                return "Invalid base64 data"
             case .downloadTimeout:
                 return "Timeout waiting for iCloud file download"
             case .fileNotFound:
@@ -203,25 +200,20 @@ actor iCloudDriveFileManager {
     
     /// Save MediaItem data to iCloud Drive
     /// - Parameters:
-    ///   - dataURL: The base64 data URL string (e.g., "data:image/png;base64,...")
+    ///   - dataURL: The media data URL string
     ///   - itemID: The ID of the MediaItem
     /// - Returns: The relative path to the stored file
     func saveMediaItem(dataURL: String, itemID: String) async throws -> String {
-        // Parse data URL to extract mime type and base64 data
-        guard let (mimeType, base64Data) = parseDataURL(dataURL) else {
+        guard let decodedDataURL = decodeDataURL(dataURL) else {
             throw iCloudDriveError.invalidDataURL
         }
         
-        guard let data = Data(base64Encoded: base64Data) else {
-            throw iCloudDriveError.invalidBase64Data
-        }
-        
         let directory = try ensureDirectoryExists(for: .mediaItems)
-        let fileExtension = FileStorageContentType.fileExtension(for: mimeType)
+        let fileExtension = FileStorageContentType.fileExtension(for: decodedDataURL.mimeType)
         let filename = "\(itemID).\(fileExtension)"
         let fileURL = directory.appendingPathComponent(filename)
 
-        try await fileCoordinator.coordinatedWrite(url: fileURL, data: data)
+        try await fileCoordinator.coordinatedWrite(url: fileURL, data: decodedDataURL.data)
 
         logger.info("Saved media item to iCloud Drive: \(filename)")
 
@@ -308,24 +300,6 @@ actor iCloudDriveFileManager {
         }
     }
     
-    // MARK: - Helper Methods
-
-    private func parseDataURL(_ dataURL: String) -> (mimeType: String, base64Data: String)? {
-        // Format: data:image/png;base64,iVBORw0KGgo...
-        guard dataURL.hasPrefix("data:") else { return nil }
-        
-        let components = dataURL.dropFirst(5).split(separator: ",", maxSplits: 1)
-        guard components.count == 2 else { return nil }
-        
-        let header = String(components[0])
-        let base64 = String(components[1])
-        
-        // Extract mime type from header (e.g., "image/png;base64" -> "image/png")
-        let mimeType = header.split(separator: ";").first.map(String.init) ?? "application/octet-stream"
-        
-        return (mimeType, base64)
-    }
-
     // MARK: - iCloud Status Detection Module
 
     /// Check if iCloud Drive is currently available
@@ -460,9 +434,7 @@ actor iCloudDriveFileManager {
     ) async throws -> String {
         logger.info("Starting media item migration for ID: \(mediaID)")
 
-        // Parse data URL
-        guard let (mimeType, base64Data) = parseDataURL(dataURL),
-              let data = Data(base64Encoded: base64Data) else {
+        guard let decodedDataURL = decodeDataURL(dataURL) else {
             throw iCloudDriveError.invalidDataURL
         }
 
@@ -473,7 +445,7 @@ actor iCloudDriveFileManager {
         }
 
         let directory = try ensureDirectoryExists(for: .mediaItems)
-        let fileExtension = FileStorageContentType.fileExtension(for: mimeType)
+        let fileExtension = FileStorageContentType.fileExtension(for: decodedDataURL.mimeType)
         let filename = "\(mediaID).\(fileExtension)"
         let iCloudURL = directory.appendingPathComponent(filename)
         let relativePath = "\(Directory.mediaItems.path)/\(filename)"
@@ -485,7 +457,7 @@ actor iCloudDriveFileManager {
         }
 
         // Upload to iCloud
-        try await fileCoordinator.coordinatedWrite(url: iCloudURL, data: data)
+        try await fileCoordinator.coordinatedWrite(url: iCloudURL, data: decodedDataURL.data)
         // Always set iCloud timestamp (use local date or current time)
         let date = localUpdatedAt ?? Date()
         try? FileManager.default.setAttributes([.modificationDate: date], ofItemAtPath: iCloudURL.filePath)

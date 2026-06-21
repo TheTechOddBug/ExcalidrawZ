@@ -512,7 +512,11 @@ private struct PromptDraftTextArea: View {
 
 private extension TextArea {
     func promptInputSubmitOnReturn(_ submit: @escaping () -> Void) -> TextArea {
+#if os(iOS)
+        self.submitOnReturn(sources: .hardwareKeyboard, submit)
+#else
         self.submitOnReturn(submit)
+#endif
     }
 }
 

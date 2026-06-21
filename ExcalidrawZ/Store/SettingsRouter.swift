@@ -30,6 +30,7 @@ final class SettingsRouter: ObservableObject {
     enum AISettingsRoute {
         case usage
         case settings
+        case mcp
     }
 
     /// Tab to switch to the next time `SettingsView` appears or this value

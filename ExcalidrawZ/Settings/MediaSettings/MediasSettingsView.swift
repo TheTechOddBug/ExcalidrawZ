@@ -270,9 +270,8 @@ struct MediasSettingsView: View {
                     if file.isDeleted {
                         // File is deleted, this media is orphaned.
                         if let dataURL = mediaItem.dataURL,
-                           let base64String = dataURL.components(separatedBy: "base64,").last,
-                           let data = Data(base64Encoded: base64String) {
-                            recoveredSpace += Int64(data.count)
+                           let decodedDataURL = decodeDataURL(dataURL) {
+                            recoveredSpace += Int64(decodedDataURL.data.count)
                         }
                         context.delete(mediaItem)
                         deletedCount += 1
@@ -280,9 +279,8 @@ struct MediasSettingsView: View {
                 } else {
                     // No file reference, this media is orphaned.
                     if let dataURL = mediaItem.dataURL,
-                       let base64String = dataURL.components(separatedBy: "base64,").last,
-                       let data = Data(base64Encoded: base64String) {
-                        recoveredSpace += Int64(data.count)
+                       let decodedDataURL = decodeDataURL(dataURL) {
+                        recoveredSpace += Int64(decodedDataURL.data.count)
                     }
                     context.delete(mediaItem)
                     deletedCount += 1

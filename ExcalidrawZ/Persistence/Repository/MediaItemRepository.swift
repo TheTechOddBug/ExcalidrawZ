@@ -13,6 +13,11 @@ import Logging
 actor MediaItemRepository {
     private let logger = Logger(label: "MediaItemRepository")
 
+    private struct MediaSyncPlan {
+        var resourcesToCreate: [ExcalidrawFile.ResourceFile]
+        var resourcesToRepair: [(NSManagedObjectID, ExcalidrawFile.ResourceFile)]
+    }
+
     // MARK: - Create MediaItem
 
     /// Create a new media item with data URL and save to iCloud Drive
@@ -156,29 +161,53 @@ actor MediaItemRepository {
     ) async throws -> [NSManagedObjectID] {
         let context = PersistenceController.shared.newTaskContext()
 
-        // Get new medias that don't exist yet
-        let newMedias = try await context.perform {
+        let syncPlan = try await context.perform {
             guard let file = context.object(with: fileObjectID) as? File else {
                 throw AppError.fileError(.notFound)
             }
 
-            return excalidrawFile.files.filter { (id, _) in
-                file.medias?.contains(where: {
-                    ($0 as? MediaItem)?.id == id
-                }) != true
+            let existingMediaItems = (file.medias?.allObjects as? [MediaItem]) ?? []
+            let existingMediaItemsByID = Dictionary(
+                existingMediaItems.compactMap { mediaItem -> (String, MediaItem)? in
+                    guard let id = mediaItem.id else { return nil }
+                    return (id, mediaItem)
+                },
+                uniquingKeysWith: { existing, _ in existing }
+            )
+
+            var resourcesToCreate: [ExcalidrawFile.ResourceFile] = []
+            var resourcesToRepair: [(NSManagedObjectID, ExcalidrawFile.ResourceFile)] = []
+            for (id, resource) in excalidrawFile.files {
+                guard let existingMediaItem = existingMediaItemsByID[id] else {
+                    resourcesToCreate.append(resource)
+                    continue
+                }
+
+                if existingMediaItem.filePath == nil,
+                   existingMediaItem.dataURL == nil {
+                    resourcesToRepair.append((existingMediaItem.objectID, resource))
+                }
             }
+
+            return MediaSyncPlan(
+                resourcesToCreate: resourcesToCreate,
+                resourcesToRepair: resourcesToRepair
+            )
         }
 
-        // Create media items through repository (will save to iCloud Drive)
-        guard !newMedias.isEmpty else {
-            return []
+        for (mediaItemObjectID, resource) in syncPlan.resourcesToRepair {
+            try await updateMediaItem(mediaItemObjectID: mediaItemObjectID, resource: resource)
         }
 
-        let resources = Array(newMedias.values)
-        return try await createMediaItems(
-            resources: resources,
+        guard !syncPlan.resourcesToCreate.isEmpty else {
+            return syncPlan.resourcesToRepair.map(\.0)
+        }
+
+        let createdObjectIDs = try await createMediaItems(
+            resources: syncPlan.resourcesToCreate,
             fileObjectID: fileObjectID
         )
+        return createdObjectIDs + syncPlan.resourcesToRepair.map(\.0)
     }
 
     /// Sync media items from ExcalidrawFile to CollaborationFile
@@ -193,29 +222,53 @@ actor MediaItemRepository {
     ) async throws -> [NSManagedObjectID] {
         let context = PersistenceController.shared.newTaskContext()
 
-        // Get new medias that don't exist yet
-        let newMedias = try await context.perform {
+        let syncPlan = try await context.perform {
             guard let collaborationFile = context.object(with: collaborationFileObjectID) as? CollaborationFile else {
                 throw AppError.fileError(.notFound)
             }
 
-            return excalidrawFile.files.filter { (id, _) in
-                collaborationFile.medias?.contains(where: {
-                    ($0 as? MediaItem)?.id == id
-                }) != true
+            let existingMediaItems = (collaborationFile.medias?.allObjects as? [MediaItem]) ?? []
+            let existingMediaItemsByID = Dictionary(
+                existingMediaItems.compactMap { mediaItem -> (String, MediaItem)? in
+                    guard let id = mediaItem.id else { return nil }
+                    return (id, mediaItem)
+                },
+                uniquingKeysWith: { existing, _ in existing }
+            )
+
+            var resourcesToCreate: [ExcalidrawFile.ResourceFile] = []
+            var resourcesToRepair: [(NSManagedObjectID, ExcalidrawFile.ResourceFile)] = []
+            for (id, resource) in excalidrawFile.files {
+                guard let existingMediaItem = existingMediaItemsByID[id] else {
+                    resourcesToCreate.append(resource)
+                    continue
+                }
+
+                if existingMediaItem.filePath == nil,
+                   existingMediaItem.dataURL == nil {
+                    resourcesToRepair.append((existingMediaItem.objectID, resource))
+                }
             }
+
+            return MediaSyncPlan(
+                resourcesToCreate: resourcesToCreate,
+                resourcesToRepair: resourcesToRepair
+            )
         }
 
-        // Create media items through repository (will save to iCloud Drive)
-        guard !newMedias.isEmpty else {
-            return []
+        for (mediaItemObjectID, resource) in syncPlan.resourcesToRepair {
+            try await updateMediaItem(mediaItemObjectID: mediaItemObjectID, resource: resource)
         }
 
-        let resources = Array(newMedias.values)
-        return try await createMediaItemsForCollaborationFile(
-            resources: resources,
+        guard !syncPlan.resourcesToCreate.isEmpty else {
+            return syncPlan.resourcesToRepair.map(\.0)
+        }
+
+        let createdObjectIDs = try await createMediaItemsForCollaborationFile(
+            resources: syncPlan.resourcesToCreate,
             collaborationFileObjectID: collaborationFileObjectID
         )
+        return createdObjectIDs + syncPlan.resourcesToRepair.map(\.0)
     }
 
     // MARK: - Load MediaItem

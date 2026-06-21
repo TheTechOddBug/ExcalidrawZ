@@ -204,6 +204,7 @@ struct ShareView: View {
                 .modernButtonStyle(style: .glass, size: .large, shape: .modernCircle)
                 .padding(24)
             }
+            .toolbar(.hidden, for: .windowToolbar)
 #else
             .navigationTitle(.localizable(.exportSheetHeadline))
             .navigationBarTitleDisplayMode(.inline)

@@ -37,6 +37,22 @@ struct OpenSettingsMenuItem: View {
         }
     }
 }
+
+@available(macOS 14.0, *)
+struct OpenMCPSettingsMenuItem: View {
+    let deepLinkTo: SettingsView.Route
+    @Environment(\.openSettings) private var openSettings
+
+    var body: some View {
+        Button {
+            SettingsRouter.shared.pendingRoute = deepLinkTo
+            SettingsRouter.shared.pendingAISettingsRoute = .mcp
+            openSettings()
+        } label: {
+            Label(.localizable(.aiChatButtonMCPSettings), systemSymbol: .serverRack)
+        }
+    }
+}
 #endif
 
 struct HiddenHistoryIndicator: View {

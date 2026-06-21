@@ -17,7 +17,12 @@ struct ColorButton: View {
     let size: CGFloat
     let action: () -> Void
 
-    init(color: String, isSelected: Bool, size: CGFloat = 28, action: @escaping () -> Void) {
+    init(
+        color: String,
+        isSelected: Bool,
+        size: CGFloat = 28,
+        action: @escaping () -> Void
+    ) {
         self.color = color
         self.isSelected = isSelected
         self.size = size

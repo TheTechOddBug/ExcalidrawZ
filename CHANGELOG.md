@@ -1,3 +1,16 @@
+## 2.2.0
+
+#### Features
+
+- Added MCP Services, allowing compatible MCP clients to create and edit ExcalidrawZ drawings through Basic or Optimized interaction modes.
+- Added a richer Math tool with LaTeX formula editing, function graph rendering, reusable templates, and AI-assisted formula generation.
+- Added custom toolbar tool ordering, with drawing tool shortcuts following the configured order.
+
+#### Optimizations
+
+- Improved AI and MCP canvas tools with export support, canvas image/PDF reading, canvas preference updates, file navigation, file history restore, and library-aware workflows.
+- Improved SVG and math media handling so inserted formulas persist and preview more reliably across canvas, file covers, and media settings.
+
 ## 2.1.1
 
 #### Optimizations
