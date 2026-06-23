@@ -407,6 +407,9 @@ struct GroupMenuItems: View {
             }
             do {
                 try PersistenceController.shared.container.viewContext.save()
+                Task {
+                    await PersistenceController.shared.spotlightIndexingService.scheduleRebuild()
+                }
             } catch {
                 groupContextMenuLogger.error("Failed to move files before deleting group: \(error)")
             }

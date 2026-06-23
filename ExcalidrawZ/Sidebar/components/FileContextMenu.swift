@@ -395,17 +395,23 @@ struct FileMenuItems: View {
 
         Task.detached {
             do {
-                try await context.perform {
+                let movedFileIDs: [UUID] = try await context.perform {
                     guard case let group as Group = context.object(with: groupID) else {
-                        return
+                        return []
                     }
+                    var movedFileIDs: [UUID] = []
                     for fileID in fileIDs {
                         if case let file as File = context.object(with: fileID) {
                             file.group = group
+                            if let id = file.id {
+                                movedFileIDs.append(id)
+                            }
                         }
                     }
                     try context.save()
+                    return movedFileIDs
                 }
+                await PersistenceController.shared.spotlightIndexingService.indexFiles(ids: movedFileIDs)
 
                 let fileID: NSManagedObjectID? = fileIDs.first { $0 == currentFileID }
                 if let fileID {

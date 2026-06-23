@@ -1091,6 +1091,11 @@ final class FileState: ObservableObject {
             guard let file = context.object(with: fileID) as? File else { return }
             file.name = newName
             try? context.save()
+            if let id = file.id {
+                Task {
+                    await PersistenceController.shared.spotlightIndexingService.indexFile(id: id)
+                }
+            }
             self.objectWillChange.send()
         }
     }
@@ -1098,6 +1103,9 @@ final class FileState: ObservableObject {
     func renameGroup(_ group: Group, newName: String) {
         group.name = newName
         PersistenceController.shared.save()
+        Task {
+            await PersistenceController.shared.spotlightIndexingService.scheduleRebuild()
+        }
         self.objectWillChange.send()
     }
     
@@ -1175,6 +1183,10 @@ final class FileState: ObservableObject {
         }
         
         if let file {
+            if let id = file.id {
+                await PersistenceController.shared.spotlightIndexingService.indexFile(id: id)
+            }
+
             let fileID = file.objectID
             
             await MainActor.run {
@@ -1190,11 +1202,12 @@ final class FileState: ObservableObject {
     }
     
     func mergeDefaultGroupAndTrashIfNeeded(context: NSManagedObjectContext) async throws {
-        try await context.perform {
+        let didMoveFiles = try await context.perform {
             let groups = try context.fetch(NSFetchRequest<Group>(entityName: "Group"))
             
             let defaultGroups = groups.filter({$0.groupType == .default})
             var theEearlisetGroup: Group?
+            var didMoveFiles = false
             // Merge default groups
             if defaultGroups.count > 1 {
                 theEearlisetGroup = defaultGroups.sorted(by: {
@@ -1208,6 +1221,7 @@ final class FileState: ObservableObject {
                         let defaultGroupFiles = try context.fetch(defaultGroupFilesfetchRequest)
                         defaultGroupFiles.forEach { file in
                             file.group = theEearlisetGroup
+                            didMoveFiles = true
                         }
                         context.delete(group)
                     }
@@ -1219,6 +1233,11 @@ final class FileState: ObservableObject {
                 context.delete(trash)
             }
             try context.save()
+            return didMoveFiles
+        }
+
+        if didMoveFiles {
+            await PersistenceController.shared.spotlightIndexingService.scheduleRebuild()
         }
     }
     

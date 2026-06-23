@@ -312,6 +312,7 @@ actor FileRepository {
             try context.save()
         }
         logger.debug("Saved file to storage: \(relativePath)")
+        await PersistenceController.shared.spotlightIndexingService.indexFile(fileObjectID: fileObjectID)
     }
 
     private func encryptedContentIfNeeded(
@@ -523,9 +524,9 @@ actor FileRepository {
         let context = PersistenceController.shared.newTaskContext()
 
         // Extract file info before deletion (for permanent deletion only)
-        let (filePath, fileID, fileScopeID, checkpointPaths): (String?, UUID?, String?, [(String, UUID)]) = try await context.perform {
+        let (filePath, fileID, fileScopeID, spotlightFileID, checkpointPaths): (String?, UUID?, String?, UUID?, [(String, UUID)]) = try await context.perform {
             guard let file = context.object(with: fileObjectID) as? File else {
-                return (nil, nil, nil, [])
+                return (nil, nil, nil, nil, [])
             }
 
             if file.inTrash || forcePermanently {
@@ -557,9 +558,10 @@ actor FileRepository {
                     try context.save()
                 }
 
-                return (path, id, scopeID, checkpointInfo)
+                return (path, id, scopeID, id, checkpointInfo)
             } else {
                 // Soft deletion: move to trash
+                let id = file.id
                 file.inTrash = true
                 file.deletedAt = .now
 
@@ -567,8 +569,12 @@ actor FileRepository {
                     try context.save()
                 }
 
-                return (nil, nil, nil, [])
+                return (nil, nil, nil, id, [])
             }
+        }
+
+        if let spotlightFileID {
+            await PersistenceController.shared.spotlightIndexingService.deleteFile(id: spotlightFileID)
         }
 
         // Delete physical files from storage (local + iCloud) - only for permanent deletion

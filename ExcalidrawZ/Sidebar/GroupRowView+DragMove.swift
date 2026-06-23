@@ -190,12 +190,13 @@ struct GroupRowDropModifier: ViewModifier {
         // add files to Group
         // or move files to trash
         do {
-            try await viewContext.perform {
-                guard let file = context.object(with: fileID) as? File else { return }
+            let movedFileID: UUID? = try await viewContext.perform {
+                guard let file = context.object(with: fileID) as? File else { return nil }
                 
                 if group.groupType == .trash && !file.inTrash ||
-                    group.groupType != .trash && file.group == self.group { return }
+                    group.groupType != .trash && file.group == self.group { return nil }
                 
+                let movedFileID = file.id
                 if group.groupType == .trash {
                     file.inTrash = true
                 } else {
@@ -204,6 +205,14 @@ struct GroupRowDropModifier: ViewModifier {
                 }
                 
                 try context.save()
+                return movedFileID
+            }
+            if let movedFileID {
+                if group.groupType == .trash {
+                    await PersistenceController.shared.spotlightIndexingService.deleteFile(id: movedFileID)
+                } else {
+                    await PersistenceController.shared.spotlightIndexingService.indexFile(id: movedFileID)
+                }
             }
             return true
         } catch {

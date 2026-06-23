@@ -103,12 +103,20 @@ struct ExcalidrawZApp: App {
             UserDefaults.standard.set(1, forKey: "FolderStructureStyle")
         }
         
-        // refresh spotlight index if expiration
+        // refresh spotlight index if expired, or after changing the indexer implementation
         var shouldRefreshSpotlightIndex = false
-        let dateString = UserDefaults.standard.string(forKey: "LastSpotlightIndexRefreshTime")
+        let storedSpotlightIndexImplementationVersion = UserDefaults.standard.integer(
+            forKey: SpotlightIndexingService.implementationVersionDefaultsKey
+        )
+        if storedSpotlightIndexImplementationVersion < SpotlightIndexingService.implementationVersion {
+            shouldRefreshSpotlightIndex = true
+        }
+        let dateString = UserDefaults.standard.string(
+            forKey: SpotlightIndexingService.lastRefreshDefaultsKey
+        )
         if let dateString,
            let date = try? Date(dateString, strategy: .iso8601),
-           date < Date.now - 20 * 24 * 60 * 60 {
+           date < Date.now - SpotlightIndexingService.periodicRebuildInterval {
             shouldRefreshSpotlightIndex = true
         } else if dateString == nil {
             shouldRefreshSpotlightIndex = true
@@ -118,7 +126,6 @@ struct ExcalidrawZApp: App {
             Task {
                 do {
                     try await PersistenceController.shared.refreshIndices()
-                    UserDefaults.standard.set(Date.now.formatted(.iso8601), forKey: "LastSpotlightIndexRefreshTime")
                 } catch {
                     startupLogger.error("Failed to refresh Spotlight index: \(error)")
                 }

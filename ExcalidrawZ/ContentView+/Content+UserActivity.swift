@@ -42,13 +42,21 @@ struct UserActivityHandlerModifier: ViewModifier {
     private func handleUserSearchableItemAction(userActivity: NSUserActivity) {
         guard let userinfo = userActivity.userInfo as? [String : Any] else { return }
         let identifier = userinfo["kCSSearchableItemActivityIdentifier"] as? String ?? ""
-        
-        let uri = URL(string:identifier)!
+
+        if let fileID = UUID(uuidString: identifier),
+           let file = try? PersistenceController.shared.findFile(id: fileID),
+           !file.inTrash {
+            fileState.setActiveFile(.file(file))
+            return
+        }
+
+        guard let uri = URL(string: identifier) else { return }
         let container = PersistenceController.shared.container
         if let objectID = container.persistentStoreCoordinator.managedObjectID(forURIRepresentation: uri) {
             let object = viewContext.object(with: objectID)
             
-            if case let file as File = object {
+            if case let file as File = object,
+               !file.inTrash {
                 fileState.setActiveFile(.file(file))
             }
         }

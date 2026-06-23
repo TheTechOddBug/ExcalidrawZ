@@ -273,25 +273,25 @@ struct FileRowDragDropModifier<DraggableFile: DragMovableFile>: ViewModifier {
     ) {
         // guard itemID != draggedObjectID else { return }
         Task { [context, allFiles] in
-            try await context.perform {
+            let reindexFileID: UUID? = try await context.perform {
                 guard let draggedFile = context.object(with: draggedObjectID) as? DragFile else {
-                    return
+                    return nil
                 }
                 switch target {
                     case .after(let item):
                         guard case .file(let itemID) = item,
                               let targetFile = context.object(with: itemID) as? DragFile else {
-                            return
+                            return nil
                         }
                         // update rank
                         guard let toIndex = allFiles.firstIndex(of: targetFile) else {
-                            return
+                            return nil
                         }
                         
                         
                         if let fromIndex = allFiles.firstIndex(of: draggedFile) {
                             // In Group Drag
-                            if fromIndex == toIndex { return }
+                            if fromIndex == toIndex { return nil }
                             
                             withAnimation {
                                 /// If  move up to a certain cell, it is always considered that you are moving to the cell above it.
@@ -341,11 +341,11 @@ struct FileRowDragDropModifier<DraggableFile: DragMovableFile>: ViewModifier {
                         
                         
                     case .startOfGroup(let item):
-                        guard case .group(let groupID) = item else { return }
+                        guard case .group(let groupID) = item else { return nil }
                         if draggedFile.group?.objectID == groupID,
                            let fromIndex = allFiles.firstIndex(of: draggedFile),
                            fromIndex == 0 {
-                            return
+                            return nil
                         }
                         
                         withAnimation {
@@ -371,6 +371,10 @@ struct FileRowDragDropModifier<DraggableFile: DragMovableFile>: ViewModifier {
                 fileState.sortField = .rank
 
                 try context.save()
+                return (draggedFile as? File)?.id
+            }
+            if let reindexFileID {
+                await PersistenceController.shared.spotlightIndexingService.indexFile(id: reindexFileID)
             }
             
             await MainActor.run {

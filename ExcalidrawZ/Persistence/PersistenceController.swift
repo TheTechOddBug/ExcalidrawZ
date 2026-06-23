@@ -19,9 +19,7 @@ class PersistenceController {
     
     let container: NSPersistentContainer
 
-    private(set) var spotlightIndexer: SpotlightDelegate?
-    let cloudSpotlightDelegate: NSCoreDataCoreSpotlightDelegate
-    let localSpotlightDelegate: NSCoreDataCoreSpotlightDelegate
+    let spotlightIndexingService = SpotlightIndexingService()
     
     let logger = Logger(label: "PersistenceController")
 
@@ -123,17 +121,9 @@ class PersistenceController {
             }
         }
         
-        // spotlightDelegate
-        self.cloudSpotlightDelegate = SpotlightDelegate(
-            forStoreWith: cloudStoreDescription,
-            coordinator: container.persistentStoreCoordinator
-        )
-        self.cloudSpotlightDelegate.startSpotlightIndexing()
-        self.localSpotlightDelegate = SpotlightDelegate(
-            forStoreWith: localStoreDescription,
-            coordinator: container.persistentStoreCoordinator
-        )
-//        self.localSpotlightDelegate.startSpotlightIndexing()
+        // Spotlight indexing is handled by SpotlightIndexingService instead of
+        // NSCoreDataCoreSpotlightDelegate so file search is decoupled from
+        // Core Data persistent history and CloudKit export churn.
         #if DEBUG
 //        log()
         #endif
