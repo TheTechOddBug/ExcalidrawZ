@@ -35,9 +35,7 @@ struct ExcalidrawZSidebarRowModifier: ViewModifier {
         .padding(6)
         .contentShape(Rectangle())
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.16)) {
-                self.isHovered = hovering
-            }
+            self.isHovered = hovering
         }
         .background(rowBackground)
         .padding(.vertical, {

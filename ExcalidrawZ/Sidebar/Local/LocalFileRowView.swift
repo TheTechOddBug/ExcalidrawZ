@@ -19,16 +19,17 @@ extension Notification.Name {
 struct LocalFileRowView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.alertToast) private var alertToast
-    @EnvironmentObject var fileState: FileState
     
     var file: URL
     var updateFlag: Date?
     var files: [URL]
+    var fileState: FileState
     
-    init(file: URL, updateFlag: Date?, files: [URL]) {
+    init(file: URL, updateFlag: Date?, files: [URL], fileState: FileState) {
         self.file = file
         self.updateFlag = updateFlag
         self.files = files
+        self.fileState = fileState
     }
     
     struct ICloudState {
@@ -48,11 +49,12 @@ struct LocalFileRowView: View {
     @State private var isDeleteConfirmationDialogPresented = false
     
     @State private var isWaitingForOpeningFile = false
+    @StateObject private var selectionState = SidebarLocalFileRowSelectionState()
 
     var body: some View {
         FileRowButton(
-            isSelected: fileState.currentActiveFile == .localFile(file) || isWaitingForOpeningFile,
-            isMultiSelected: fileState.selectedLocalFiles.contains(file)
+            isSelected: selectionState.isSelected || isWaitingForOpeningFile,
+            isMultiSelected: selectionState.isMultiSelected
         ) {
 #if os(macOS)
             if NSEvent.modifierFlags.contains(.shift) {
@@ -138,10 +140,12 @@ struct LocalFileRowView: View {
         .watch(value: updateFlag) { _ in
             updateModifiedDate()
         }
-        .watch(value: fileState.currentActiveFile) { newValue in
-            if case .localFile(let localFile) = newValue,
-               localFile != file,
-               isWaitingForOpeningFile {
+        .onAppear {
+            selectionState.bind(file: file, fileState: fileState)
+        }
+        .onReceive(fileState.$activeFiles) { activeFiles in
+            if isWaitingForOpeningFile,
+               !activeFiles.contains(where: { $0 == .localFile(file) }) {
                 isWaitingForOpeningFile = false
             }
         }

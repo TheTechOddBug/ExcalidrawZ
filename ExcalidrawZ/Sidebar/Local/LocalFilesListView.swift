@@ -71,7 +71,8 @@ struct LocalFilesListContentView: View {
                     LocalFileRowView(
                         file: file,
                         updateFlag: updateFlags[file],
-                        files: files
+                        files: files,
+                        fileState: fileState
                     )
                     .id(updateFlags[file])
                 }

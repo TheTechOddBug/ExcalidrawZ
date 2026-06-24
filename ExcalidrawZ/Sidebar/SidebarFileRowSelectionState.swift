@@ -110,3 +110,58 @@ final class SidebarGroupRowSelectionState: ObservableObject {
         }
     }
 }
+
+final class SidebarLocalFileRowSelectionState: ObservableObject {
+    @Published private(set) var isSelected = false
+    @Published private(set) var isMultiSelected = false
+
+    private var file: URL?
+    private var cancellables: Set<AnyCancellable> = []
+
+    func bind(file: URL, fileState: FileState) {
+        guard self.file != file else { return }
+
+        self.file = file
+        cancellables.removeAll()
+
+        updateActiveSelection(fileState: fileState)
+        updateMultiSelection(fileState: fileState)
+
+        fileState.$activeFiles
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self, weak fileState] _ in
+                guard let self, let fileState else { return }
+                self.updateActiveSelection(fileState: fileState)
+            }
+            .store(in: &cancellables)
+
+        fileState.$selectedLocalFiles
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self, weak fileState] _ in
+                guard let self, let fileState else { return }
+                self.updateMultiSelection(fileState: fileState)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func updateActiveSelection(fileState: FileState) {
+        guard let file else { return }
+        let nextValue: Bool
+        if case .localFile(let localFile) = fileState.currentActiveFile {
+            nextValue = localFile == file
+        } else {
+            nextValue = false
+        }
+        if isSelected != nextValue {
+            isSelected = nextValue
+        }
+    }
+
+    private func updateMultiSelection(fileState: FileState) {
+        guard let file else { return }
+        let nextValue = fileState.selectedLocalFiles.contains(file)
+        if isMultiSelected != nextValue {
+            isMultiSelected = nextValue
+        }
+    }
+}
