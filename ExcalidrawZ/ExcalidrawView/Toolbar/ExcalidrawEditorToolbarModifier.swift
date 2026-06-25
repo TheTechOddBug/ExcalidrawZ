@@ -44,6 +44,8 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
 #if os(iOS)
         guard !usesCompactIOSBottomToolbar else { return false }
         return UIDevice.current.userInterfaceIdiom == .pad
+#elseif os(macOS)
+        true
 #else
         false
 #endif
@@ -146,6 +148,20 @@ struct ExcalidrawEditorToolbarModifier: ViewModifier {
             for: .navigationBar
         )
         .navigationBarTitleDisplayMode(.inline) // <- fix principal toolbar
+#elseif os(macOS)
+        .apply { view in
+            if #available(macOS 15.0, *) {
+                view.toolbarBackgroundVisibility(
+                    shouldHideNavigationToolbarBackground ? .hidden : .visible,
+                    for: .windowToolbar
+                )
+            } else {
+                view.toolbarBackground(
+                    shouldHideNavigationToolbarBackground ? .hidden : .visible,
+                    for: .windowToolbar
+                )
+            }
+        }
 #endif
     }
     

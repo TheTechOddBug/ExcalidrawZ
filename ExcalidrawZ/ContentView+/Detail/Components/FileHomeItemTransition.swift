@@ -275,12 +275,36 @@ struct FileHomeItemHeroLayer: View {
                 show: show,
                 progress: isAnimating ? 1 : 0,
                 sourceRect: sRect,
-                destinationRect: dRect,
+                destinationRect: adjustedDestinationRect(
+                    dRect,
+                    in: geomerty
+                ),
                 lockState: lockState,
                 platformImage: platformImage,
                 background: background
             )
         }
+    }
+
+    private func adjustedDestinationRect(
+        _ rect: CGRect,
+        in geometry: GeometryProxy
+    ) -> CGRect {
+#if os(macOS)
+        let topInset = max(
+            geometry.safeAreaInsets.top,
+            geometry.frame(in: .global).minY
+        )
+        guard topInset > 0 else { return rect }
+        return CGRect(
+            x: rect.minX,
+            y: rect.minY - topInset,
+            width: rect.width,
+            height: rect.height + topInset
+        )
+#else
+        return rect
+#endif
     }
 }
 

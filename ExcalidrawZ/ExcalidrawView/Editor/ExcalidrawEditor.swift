@@ -118,6 +118,8 @@ struct ExcalidrawEditor: View {
 #if os(iOS)
         guard !usesCompactIOSAIChatSurfaces else { return false }
         return UIDevice.current.userInterfaceIdiom == .pad
+#elseif os(macOS)
+        true
 #else
         false
 #endif
@@ -209,12 +211,12 @@ struct ExcalidrawEditor: View {
                 .navigationTitle(String(localizable: .aiChatTitle))
                 .navigationBarTitleDisplayMode(.inline)
         }
+#endif
         .background {
             NativeViewportInsetsMeasurementView(
                 insets: $measuredNativeViewportInsets
             )
         }
-#endif
         .animation(.smooth(duration: 0.3), value: layoutState.isAIChatIslandMode)
         .animation(.smooth(duration: 0.3), value: layoutState.isCompactAIChatToolbarPresented)
         .animation(.smooth(duration: 0.3), value: layoutState.isCompactAIChatInputEditing)
@@ -645,7 +647,6 @@ struct ExcalidrawEditor: View {
     }
 }
 
-#if os(iOS)
 private struct NativeViewportInsetsMeasurementView: View {
     @Binding var insets: ExcalidrawNativeViewportInsets
 
@@ -668,6 +669,7 @@ private struct NativeViewportInsetsMeasurementView: View {
     }
 }
 
+#if os(iOS)
 private extension View {
     func dismissKeyboardOnCanvasTap() -> some View {
         simultaneousGesture(

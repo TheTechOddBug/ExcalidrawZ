@@ -136,6 +136,7 @@ struct ShareToolbarButton: View {
     @MainActor
     private func performShareFile() async {
         do {
+            await syncCurrentCanvasBeforeSharingIfNeeded()
             switch fileState.currentActiveFile {
                 case .file(let file):
                     let content = try await file.loadContent()
@@ -165,6 +166,12 @@ struct ShareToolbarButton: View {
         } catch {
             alertToast(error)
         }
+    }
+
+    @MainActor
+    private func syncCurrentCanvasBeforeSharingIfNeeded() async {
+        await fileState.excalidrawWebCoordinator?.documentSyncController
+            .flushPendingDirtySnapshot(reason: "shareToolbar")
     }
 
 #if os(macOS)
