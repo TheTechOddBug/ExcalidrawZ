@@ -108,6 +108,11 @@ struct ContentView: View {
             .watch(value: colorScheme) { newValue in
                 FileCoverCacheCoordinator.shared.scheduleLibraryPrewarm(colorScheme: newValue)
             }
+            .watch(value: lockedContentState.filePreviewLockStateRevision) { _ in
+                FileCoverCacheCoordinator.shared.refreshLibraryCoversForLockStateChange(
+                    colorScheme: colorScheme
+                )
+            }
             // Pre-select the chat conversation tied to the active file
             // without restoring the full LLM conversation cache. The id-based
             // `.task` fires on first appear and on every subsequent change;

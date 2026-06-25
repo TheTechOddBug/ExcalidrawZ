@@ -111,7 +111,7 @@ struct ExcalidrawFileCover: View {
                 guard let fileID = notification.object as? String,
                       self.fileID == fileID else { return }
 
-                updateCoverFromCache()
+                updateCoverFromCache(requestIfMissing: false)
             }
     }
     
@@ -166,13 +166,19 @@ struct ExcalidrawFileCover: View {
         return true
     }
 
-    private func updateCoverFromCache() {
+    private func updateCoverFromCache(requestIfMissing: Bool = true) {
         if !showCachedCoverIfAvailable() {
             coverImage = nil
+            if requestIfMissing {
+                requestCoverRefresh(forceRefresh: false, priority: .recently)
+            }
         }
     }
 
-    private func requestCoverRefresh(forceRefresh: Bool) {
+    private func requestCoverRefresh(
+        forceRefresh: Bool,
+        priority: FileCoverCacheCoordinator.Priority = .userInitiated
+    ) {
         guard allowsGeneration else { return }
 
         let coordinatorSource: FileCoverCacheCoordinator.Source = {
@@ -187,7 +193,7 @@ struct ExcalidrawFileCover: View {
         FileCoverCacheCoordinator.shared.request(
             source: coordinatorSource,
             colorScheme: colorScheme,
-            priority: .userInitiated,
+            priority: priority,
             forceRefresh: forceRefresh
         )
     }

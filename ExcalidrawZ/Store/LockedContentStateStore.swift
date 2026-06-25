@@ -18,6 +18,7 @@ struct LockedContentAutomaticUnlockRequest: Equatable, Sendable {
 final class LockedContentStateStore: ObservableObject {
     @Published private(set) var activeFileLockState: FileContentLockState = .plaintext
     @Published private(set) var automaticUnlockRequest: LockedContentAutomaticUnlockRequest?
+    @Published private(set) var filePreviewLockStateRevision = 0
     @Published private var fileLockStates: [String: FileContentLockState] = [:]
 
     private struct ManagedFileReference {
@@ -87,7 +88,7 @@ final class LockedContentStateStore: ObservableObject {
     }
 
     func removeDeletedFile(fileID: String) {
-        fileLockStates.removeValue(forKey: fileID)
+        let hadPreviewLockState = fileLockStates.removeValue(forKey: fileID) != nil
 
         if activeFileID == fileID {
             activeFileID = nil
@@ -105,13 +106,20 @@ final class LockedContentStateStore: ObservableObject {
         if automaticUnlockRequest?.fileID == fileID {
             automaticUnlockRequest = nil
         }
+        if hadPreviewLockState {
+            noteFilePreviewLockStateChanged()
+        }
     }
 
     func markUnlockFailed(fileID: String) {
+        let previousDisplayLockState = displayLockStateIfKnown(for: fileID)
         unlockFailedFileIDs.insert(fileID)
 
         if activeFileID == fileID {
             activeFileLockState = .locked
+        }
+        if previousDisplayLockState != displayLockStateIfKnown(for: fileID) {
+            noteFilePreviewLockStateChanged()
         }
     }
 
@@ -210,6 +218,7 @@ final class LockedContentStateStore: ObservableObject {
     }
 
     func resetAll() {
+        let hadPreviewLockState = !fileLockStates.isEmpty || hasActiveUnlockSession
         activeFileLockState = .plaintext
         fileLockStates.removeAll()
         activeFileID = nil
@@ -217,10 +226,13 @@ final class LockedContentStateStore: ObservableObject {
         suppressedAutomaticUnlockFileID = nil
         pendingAutomaticUnlockAfterAppReturnFileID = nil
         automaticUnlockRequest = nil
-        hasActiveUnlockSession = false
+        let didChangeUnlockSession = setHasActiveUnlockSession(false)
         unlockFailedFileIDs.removeAll()
         idleRelockTask?.cancel()
         idleRelockTask = nil
+        if hadPreviewLockState, !didChangeUnlockSession {
+            noteFilePreviewLockStateChanged()
+        }
     }
 
     func relockUnlockedContent(knownLockedFiles: [LockedFileSummary]) async {
@@ -241,7 +253,7 @@ final class LockedContentStateStore: ObservableObject {
     }
 
     private func forgetTransientUnlockSession() async {
-        hasActiveUnlockSession = false
+        setHasActiveUnlockSession(false)
         idleRelockTask?.cancel()
         idleRelockTask = nil
 
@@ -275,7 +287,8 @@ final class LockedContentStateStore: ObservableObject {
     }
 
     private func cacheLockState(_ lockState: FileContentLockState, fileID: String) {
-        noteUnlockSessionActiveIfNeeded(for: lockState)
+        let previousDisplayLockState = displayLockStateIfKnown(for: fileID)
+        let didChangeUnlockSession = noteUnlockSessionActiveIfNeeded(for: lockState)
 
         let storedLockState = storedLockState(for: lockState)
         fileLockStates[fileID] = storedLockState
@@ -289,12 +302,22 @@ final class LockedContentStateStore: ObservableObject {
                 fileID: fileID
             )
         }
+
+        if !didChangeUnlockSession {
+            let nextDisplayLockState = displayLockStateIfKnown(for: fileID)
+            if previousDisplayLockState != nil,
+               previousDisplayLockState != nextDisplayLockState {
+                noteFilePreviewLockStateChanged()
+            }
+        }
     }
 
-    private func noteUnlockSessionActiveIfNeeded(for lockState: FileContentLockState) {
-        guard lockState == .temporarilyUnlocked else { return }
-        hasActiveUnlockSession = true
+    @discardableResult
+    private func noteUnlockSessionActiveIfNeeded(for lockState: FileContentLockState) -> Bool {
+        guard lockState == .temporarilyUnlocked else { return false }
+        let didChange = setHasActiveUnlockSession(true)
         scheduleIdleRelock()
+        return didChange
     }
 
     private func storedLockState(for lockState: FileContentLockState) -> FileContentLockState {
@@ -318,6 +341,23 @@ final class LockedContentStateStore: ObservableObject {
                 ? .temporarilyUnlocked
                 : .locked
         }
+    }
+
+    private func displayLockStateIfKnown(for fileID: String) -> FileContentLockState? {
+        guard let lockState = fileLockStates[fileID] else { return nil }
+        return displayLockState(forStoredLockState: lockState, fileID: fileID)
+    }
+
+    @discardableResult
+    private func setHasActiveUnlockSession(_ isActive: Bool) -> Bool {
+        guard hasActiveUnlockSession != isActive else { return false }
+        hasActiveUnlockSession = isActive
+        noteFilePreviewLockStateChanged()
+        return true
+    }
+
+    private func noteFilePreviewLockStateChanged() {
+        filePreviewLockStateRevision &+= 1
     }
 
     private func scheduleIdleRelock() {

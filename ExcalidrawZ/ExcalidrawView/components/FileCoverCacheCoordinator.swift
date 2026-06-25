@@ -172,6 +172,53 @@ final class FileCoverCacheCoordinator: ObservableObject {
         prewarmTask = nil
     }
 
+    func refreshLibraryCoversForLockStateChange(colorScheme: ColorScheme) {
+        currentColorScheme = colorScheme
+        guard let context,
+              let lockedContentState else {
+            return
+        }
+
+        let fetchRequest = NSFetchRequest<File>(entityName: "File")
+        fetchRequest.predicate = NSPredicate(format: "inTrash == NO")
+        fetchRequest.sortDescriptors = [
+            NSSortDescriptor(key: "visitedAt", ascending: false),
+            NSSortDescriptor(key: "updatedAt", ascending: false),
+            NSSortDescriptor(key: "createdAt", ascending: false)
+        ]
+
+        do {
+            let files = try context.fetch(fetchRequest)
+            for file in files {
+                let activeFile = FileState.ActiveFile.file(file)
+                switch lockedContentState.previewLockState(for: activeFile) {
+                    case .locked:
+                        continue
+
+                    case .temporarilyUnlocked:
+                        request(
+                            activeFile: activeFile,
+                            colorScheme: colorScheme,
+                            priority: .recently,
+                            forceRefresh: false
+                        )
+
+                    case .plaintext:
+                        request(
+                            activeFile: activeFile,
+                            colorScheme: colorScheme,
+                            priority: .background
+                        )
+
+                    case .none:
+                        continue
+                }
+            }
+        } catch {
+            logger.warning("Failed to refresh library covers for lock state change: \(error)")
+        }
+    }
+
     func cacheCurrentViewportPreview(for activeFile: FileState.ActiveFile) async {
         guard !shouldSkipLockedSource(.activeFile(activeFile)),
               let coordinator = fileState?.excalidrawWebCoordinator,
@@ -399,11 +446,6 @@ final class FileCoverCacheCoordinator: ObservableObject {
                                     fileID: activeFile.id
                                 )
                                 if lockedContentState.previewLockState(for: activeFile) == .locked {
-                                    cache.removePreviewCache(forID: activeFile.id)
-                                    NotificationCenter.default.post(
-                                        name: .filePreviewDidUpdate,
-                                        object: activeFile.id
-                                    )
                                     return .completed
                                 }
                             }

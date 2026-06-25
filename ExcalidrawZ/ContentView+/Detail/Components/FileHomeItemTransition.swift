@@ -280,18 +280,7 @@ struct FileHomeItemHeroLayer: View {
                 platformImage: platformImage,
                 background: background
             )
-            .onAppear {
-                clearPreviewCacheIfLocked(lockState)
-            }
-            .watch(value: lockState) { newValue in
-                clearPreviewCacheIfLocked(newValue)
-            }
         }
-    }
-
-    private func clearPreviewCacheIfLocked(_ lockState: FileContentLockState?) {
-        guard lockState == .locked else { return }
-        FileItemPreviewCache.shared.removePreviewCache(forID: file.id)
     }
 }
 

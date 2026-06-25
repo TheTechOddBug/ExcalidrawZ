@@ -44,8 +44,13 @@ struct ExcalidrawHomeView: View {
     /// For transition
     @State private var currentGroups: [Group] = []
     @State private var currentFolders: [LocalFolder] = []
+    @State private var renderedGroups: [Group] = []
+    @State private var renderedFolders: [LocalFolder] = []
     
     @State private var isTransitioning = false
+    @State private var folderTransitionGeneration = 0
+    private let folderNavigationTransitionDuration: TimeInterval = 0.4
+    private let folderNavigationCleanupDelay: TimeInterval = 0.5
     
     var body: some View {
         ZStack {
@@ -82,7 +87,7 @@ struct ExcalidrawHomeView: View {
                     case .fileHome:
                         // File Home View
                         ZStack {
-                            ForEach(Array(currentGroups.enumerated()), id: \.element) { i, group in
+                            ForEach(Array(renderedGroups.enumerated()), id: \.element) { i, group in
                                 GroupFileHomeView(group: group, sortField: fileState.sortField)
                                     .opacity(
                                         fileHomeItemTransitionState.canShowItemContainerView ||
@@ -100,24 +105,31 @@ struct ExcalidrawHomeView: View {
                                             }
                                         }
                                         .shadow(
-                                            color: .gray.opacity(isTransitioning && i == currentGroups.endIndex - 1 ? 0.3 : 0.0),
+                                            color: .gray.opacity(isTransitioning && i == renderedGroups.endIndex - 1 ? 0.3 : 0.0),
                                             radius: 0,
                                             x: -1
                                         )
                                         .animation(
                                             .default,
-                                            value: isTransitioning && i == currentGroups.endIndex - 1
+                                            value: isTransitioning && i == renderedGroups.endIndex - 1
                                         )
                                     }
                                     .transition(
                                         .move(edge: .trailing)
                                     )
+                                    .zIndex(Double(i))
                             }
                         }
+                        .transition(
+                            .asymmetric(
+                                insertion: .move(edge: .trailing),
+                                removal: .move(edge: .trailing)
+                            )
+                        )
                     case .localFileHome:
                         ZStack {
                             LocalFoldersProvider { _ in
-                                ForEach(Array(currentFolders.enumerated()), id: \.element) { i, folder in
+                                ForEach(Array(renderedFolders.enumerated()), id: \.element) { i, folder in
                                     LocalFolderFileHomeView(folder: folder, sortField: fileState.sortField)
                                         .opacity(
                                             fileHomeItemTransitionState.canShowItemContainerView ||
@@ -135,21 +147,28 @@ struct ExcalidrawHomeView: View {
                                                 }
                                             }
                                             .shadow(
-                                                color: .gray.opacity(isTransitioning && i == currentFolders.endIndex - 1 ? 0.3 : 0.0),
+                                                color: .gray.opacity(isTransitioning && i == renderedFolders.endIndex - 1 ? 0.3 : 0.0),
                                                 radius: 0,
                                                 x: -1
                                             )
                                             .animation(
                                                 .default,
-                                                value: isTransitioning && i == currentFolders.endIndex - 1
+                                                value: isTransitioning && i == renderedFolders.endIndex - 1
                                             )
                                         }
                                         .transition(
                                             .move(edge: .trailing)
                                         )
+                                        .zIndex(Double(i))
                                 }
                             }
                         }
+                        .transition(
+                            .asymmetric(
+                                insertion: .move(edge: .trailing),
+                                removal: .move(edge: .trailing)
+                            )
+                        )
                     case .temporaryFileHome:
                         TemporaryFilesHomeView()
                             .opacity(
@@ -189,52 +208,164 @@ struct ExcalidrawHomeView: View {
     private func handleActiveGroupChanged(_ newValue: FileState.ActiveGroup?) {
         switch newValue {
             case .group(let newValue):
+                currentFolders.removeAll()
+                renderedFolders.removeAll()
+
                 if currentGroups.isEmpty {
                     initCurrentGroups()
                 } else if currentGroups.contains(newValue) {
                     let index = currentGroups.firstIndex(of: newValue)!
-                    withAnimation(.smooth(duration: 0.4)) {
-                        currentGroups = Array(currentGroups.prefix(upTo: index + 1))
+                    let previousGroup = currentGroups.last
+                    let targetGroups = Array(currentGroups.prefix(upTo: index + 1))
+                    if previousGroup == newValue {
+                        currentGroups = targetGroups
+                        renderedGroups = Array(targetGroups.suffix(1))
+                    } else {
+                        startFolderTransition()
+                        if let previousGroup {
+                            renderedGroups = [newValue, previousGroup]
+                        }
+                        withAnimation(.smooth(duration: folderNavigationTransitionDuration)) {
+                            currentGroups = targetGroups
+                            renderedGroups = [newValue]
+                        }
+                        resetFolderTransitionStateForGroups()
                     }
                 } else {
-                    isTransitioning = true
+                    let previousGroup = currentGroups.last
+                    let targetGroups = currentGroups + [newValue]
+                    startFolderTransition()
+                    if let previousGroup {
+                        renderedGroups = [previousGroup]
+                    }
+                    currentGroups = targetGroups
                     DispatchQueue.main.async {
-                        withAnimation(.smooth(duration: 0.4)) {
-                            currentGroups.append(newValue)
+                        withAnimation(.smooth(duration: folderNavigationTransitionDuration)) {
+                            if let previousGroup {
+                                renderedGroups = [previousGroup, newValue]
+                            } else {
+                                renderedGroups = [newValue]
+                            }
                         }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            isTransitioning = false
-                        }
+                        resetFolderTransitionStateForGroups()
                     }
                 }
 
             case .localFolder(let newValue):
+                currentGroups.removeAll()
+                renderedGroups.removeAll()
+
                 if currentFolders.isEmpty {
                     initCurrentGroups()
                 } else if currentFolders.contains(newValue) {
                     let index = currentFolders.firstIndex(of: newValue)!
-                    withAnimation(.smooth(duration: 0.4)) {
-                        currentFolders = Array(currentFolders.prefix(upTo: index + 1))
+                    let previousFolder = currentFolders.last
+                    let targetFolders = Array(currentFolders.prefix(upTo: index + 1))
+                    if previousFolder == newValue {
+                        currentFolders = targetFolders
+                        renderedFolders = Array(targetFolders.suffix(1))
+                    } else {
+                        startFolderTransition()
+                        if let previousFolder {
+                            renderedFolders = [newValue, previousFolder]
+                        }
+                        withAnimation(.smooth(duration: folderNavigationTransitionDuration)) {
+                            currentFolders = targetFolders
+                            renderedFolders = [newValue]
+                        }
+                        resetFolderTransitionStateForFolders()
                     }
                 } else {
-                    isTransitioning = true
+                    let previousFolder = currentFolders.last
+                    let targetFolders = currentFolders + [newValue]
+                    startFolderTransition()
+                    if let previousFolder {
+                        renderedFolders = [previousFolder]
+                    }
+                    currentFolders = targetFolders
                     DispatchQueue.main.async {
-                        withAnimation(.smooth(duration: 0.4)) {
-                            currentFolders.append(newValue)
+                        withAnimation(.smooth(duration: folderNavigationTransitionDuration)) {
+                            if let previousFolder {
+                                renderedFolders = [previousFolder, newValue]
+                            } else {
+                                renderedFolders = [newValue]
+                            }
                         }
 
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            isTransitioning = false
-                        }
+                        resetFolderTransitionStateForFolders()
                     }
                 }
 
             default:
-                currentGroups.removeAll()
+                if lastHomeType == .fileHome, !renderedGroups.isEmpty {
+                    startFolderTransition()
+                    currentGroups.removeAll()
+                    withAnimation(.smooth(duration: folderNavigationTransitionDuration)) {
+                        lastHomeType = .home
+                    }
+                    resetHomeTransitionStateForGroups()
+                    return
+                } else if lastHomeType == .localFileHome, !renderedFolders.isEmpty {
+                    startFolderTransition()
+                    currentFolders.removeAll()
+                    withAnimation(.smooth(duration: folderNavigationTransitionDuration)) {
+                        lastHomeType = .home
+                    }
+                    resetHomeTransitionStateForFolders()
+                    return
+                } else {
+                    currentGroups.removeAll()
+                    renderedGroups.removeAll()
+                    currentFolders.removeAll()
+                    renderedFolders.removeAll()
+                }
         }
 
         if fileState.currentActiveFile == nil {
-            updateLastHomeType()
+            updateLastHomeType(animated: true)
+        }
+    }
+
+    private func startFolderTransition() {
+        folderTransitionGeneration += 1
+        isTransitioning = true
+    }
+
+    private func resetFolderTransitionStateForGroups() {
+        let generation = folderTransitionGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + folderNavigationCleanupDelay) {
+            guard generation == folderTransitionGeneration else { return }
+            isTransitioning = false
+            renderedGroups = Array(currentGroups.suffix(1))
+        }
+    }
+
+    private func resetFolderTransitionStateForFolders() {
+        let generation = folderTransitionGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + folderNavigationCleanupDelay) {
+            guard generation == folderTransitionGeneration else { return }
+            isTransitioning = false
+            renderedFolders = Array(currentFolders.suffix(1))
+        }
+    }
+
+    private func resetHomeTransitionStateForGroups() {
+        let generation = folderTransitionGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + folderNavigationCleanupDelay) {
+            guard generation == folderTransitionGeneration else { return }
+            isTransitioning = false
+            currentGroups.removeAll()
+            renderedGroups.removeAll()
+        }
+    }
+
+    private func resetHomeTransitionStateForFolders() {
+        let generation = folderTransitionGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + folderNavigationCleanupDelay) {
+            guard generation == folderTransitionGeneration else { return }
+            isTransitioning = false
+            currentFolders.removeAll()
+            renderedFolders.removeAll()
         }
     }
     
@@ -249,6 +380,7 @@ struct ExcalidrawHomeView: View {
                     p = parent
                 }
                 currentGroups = parents.reversed()
+                renderedGroups = Array(currentGroups.suffix(1))
                 
             case .localFolder(let folder):
                 // file all parents
@@ -259,24 +391,40 @@ struct ExcalidrawHomeView: View {
                     p = parent
                 }
                 currentFolders = parents.reversed()
+                renderedFolders = Array(currentFolders.suffix(1))
             
             default:
+                currentGroups.removeAll()
+                renderedGroups.removeAll()
+                currentFolders.removeAll()
+                renderedFolders.removeAll()
                 break
         }
     }
     
-    private func updateLastHomeType() {
+    private func updateLastHomeType(animated: Bool = false) {
+        let nextHomeType: HomeType
         switch fileState.currentActiveGroup {
             case .group:
-                lastHomeType = .fileHome
+                nextHomeType = .fileHome
             case .localFolder:
-                lastHomeType = .localFileHome
+                nextHomeType = .localFileHome
             case .temporary:
-                lastHomeType = .temporaryFileHome
+                nextHomeType = .temporaryFileHome
             case .collaboration:
-                lastHomeType = .collaborationFileHome
+                nextHomeType = .collaborationFileHome
             default:
-                lastHomeType = .home
+                nextHomeType = .home
+        }
+
+        guard lastHomeType != nextHomeType else { return }
+
+        if animated {
+            withAnimation(.smooth(duration: folderNavigationTransitionDuration)) {
+                lastHomeType = nextHomeType
+            }
+        } else {
+            lastHomeType = nextHomeType
         }
     }
     
