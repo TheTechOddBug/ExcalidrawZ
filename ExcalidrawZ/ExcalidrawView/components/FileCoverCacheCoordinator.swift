@@ -26,6 +26,7 @@ final class FileCoverCacheCoordinator: ObservableObject {
     enum Source {
         case activeFile(FileState.ActiveFile)
         case excalidrawFile(ExcalidrawFile)
+        case checkpoint(CheckpointPreviewSource)
 
         var id: String {
             switch self {
@@ -33,8 +34,31 @@ final class FileCoverCacheCoordinator: ObservableObject {
                     file.id
                 case .excalidrawFile(let file):
                     file.id
+                case .checkpoint(let checkpoint):
+                    checkpoint.cacheID
             }
         }
+
+        var isCheckpointPreview: Bool {
+            if case .checkpoint = self {
+                return true
+            }
+            return false
+        }
+
+        var thumbnailMaxPixelSize: CGFloat {
+            switch self {
+                case .checkpoint:
+                    return 256
+                case .activeFile, .excalidrawFile:
+                    return 720
+            }
+        }
+    }
+
+    struct CheckpointPreviewSource {
+        let objectID: NSManagedObjectID
+        let cacheID: String
     }
 
     private struct Job {
@@ -146,6 +170,37 @@ final class FileCoverCacheCoordinator: ObservableObject {
         )
     }
 
+    func request<Checkpoint: FileCheckpointRepresentable>(
+        checkpoint: Checkpoint,
+        colorScheme: ColorScheme,
+        priority: Priority = .background,
+        forceRefresh: Bool = false
+    ) {
+        request(
+            source: .checkpoint(.init(
+                objectID: checkpoint.objectID,
+                cacheID: Self.checkpointPreviewID(for: checkpoint)
+            )),
+            colorScheme: colorScheme,
+            priority: priority,
+            forceRefresh: forceRefresh
+        )
+    }
+
+    static func checkpointPreviewID<Checkpoint: FileCheckpointRepresentable>(for checkpoint: Checkpoint) -> String {
+        if let fileCheckpoint = checkpoint as? FileCheckpoint,
+           let id = fileCheckpoint.id?.uuidString {
+            return "checkpoint:\(id)"
+        }
+
+        if let localFileCheckpoint = checkpoint as? LocalFileCheckpoint,
+           let id = localFileCheckpoint.id?.uuidString {
+            return "checkpoint:\(id)"
+        }
+
+        return "checkpoint:\(checkpoint.objectID.uriRepresentation().absoluteString)"
+    }
+
     func prioritizeRecentlyVisibleFiles(
         _ files: [FileState.ActiveFile],
         colorScheme: ColorScheme,
@@ -240,7 +295,8 @@ final class FileCoverCacheCoordinator: ObservableObject {
     }
 
     func cacheCurrentViewportPreview(for activeFile: FileState.ActiveFile) async {
-        guard !shouldSkipLockedSource(.activeFile(activeFile)),
+        let source = Source.activeFile(activeFile)
+        guard !shouldSkipLockedSource(source),
               let coordinator = fileState?.excalidrawWebCoordinator,
               !coordinator.isLoading,
               coordinator.documentSyncController.currentLoadedFileID == activeFile.id else {
@@ -249,7 +305,10 @@ final class FileCoverCacheCoordinator: ObservableObject {
 
         do {
             let image = try await coordinator.exportCurrentViewportToPNG()
-            guard let thumbnail = makeThumbnail(from: image) else {
+            guard let thumbnail = makeThumbnail(
+                from: image,
+                maxPixelSize: source.thumbnailMaxPixelSize
+            ) else {
                 logger.warning("Failed to downsample current viewport preview for \(activeFile.id)")
                 return
             }
@@ -296,7 +355,8 @@ final class FileCoverCacheCoordinator: ObservableObject {
             let job = queue.removeFirst()
             queuedKeys.remove(job.cacheKey)
 
-            if job.priority.rawValue < Priority.userInitiated.rawValue,
+            if !job.source.isCheckpointPreview,
+               job.priority.rawValue < Priority.userInitiated.rawValue,
                fileState?.currentActiveFile != nil {
                 queuedKeys.insert(job.cacheKey)
                 queue.append(job)
@@ -492,6 +552,30 @@ final class FileCoverCacheCoordinator: ObservableObject {
                 case .excalidrawFile(let file):
                     mediaHydrationFileObjectID = nil
                     excalidrawFile = file
+
+                case .checkpoint(let checkpointSource):
+                    guard let context else {
+                        return .retry
+                    }
+
+                    let object = try context.existingObject(with: checkpointSource.objectID)
+                    if let checkpoint = object as? FileCheckpoint {
+                        mediaHydrationFileObjectID = checkpoint.file?.objectID
+                        let content = try await checkpoint.loadContent()
+                        excalidrawFile = try ExcalidrawFile(
+                            data: content,
+                            id: checkpointSource.cacheID
+                        )
+                    } else if let checkpoint = object as? LocalFileCheckpoint,
+                              let content = checkpoint.content {
+                        mediaHydrationFileObjectID = nil
+                        excalidrawFile = try ExcalidrawFile(
+                            data: content,
+                            id: checkpointSource.cacheID
+                        )
+                    } else {
+                        return .completed
+                    }
             }
 
             excalidrawFile = await hydrateMediaForPreview(
@@ -516,7 +600,10 @@ final class FileCoverCacheCoordinator: ObservableObject {
 
             guard !Task.isCancelled else { return .completed }
 
-            let thumbnail = makeThumbnail(from: image)
+            let thumbnail = makeThumbnail(
+                from: image,
+                maxPixelSize: job.source.thumbnailMaxPixelSize
+            )
             guard let thumbnail else {
                 logger.warning("Failed to downsample preview image for \(job.source.id)")
                 return .completed
@@ -605,8 +692,11 @@ final class FileCoverCacheCoordinator: ObservableObject {
         }
     }
 
-    private func makeThumbnail(from image: PlatformImage) -> PlatformImage? {
-        guard let cgThumb = image.downsampledCGImage(maxPixelSize: 720) else {
+    private func makeThumbnail(
+        from image: PlatformImage,
+        maxPixelSize: CGFloat
+    ) -> PlatformImage? {
+        guard let cgThumb = image.downsampledCGImage(maxPixelSize: maxPixelSize) else {
             return nil
         }
 #if canImport(UIKit)

@@ -117,8 +117,6 @@ struct FileCheckpointListView<Checkpoint: FileCheckpointRepresentable>: View {
         )
     }
     
-    @State private var selection: Checkpoint?
-    
     var body: some View {
         switch presentation {
             case .compactNavigation:
@@ -134,22 +132,19 @@ struct FileCheckpointListView<Checkpoint: FileCheckpointRepresentable>: View {
 
     @ViewBuilder
     private func checkpointRows() -> some View {
-        ForEach(fileCheckpoints, id: \.objectID) { checkpoint in
-            FileCheckpointRowView(checkpoint: checkpoint)
+        LazyVStack(spacing: 8) {
+            ForEach(fileCheckpoints, id: \.objectID) { checkpoint in
+                FileCheckpointRowView(checkpoint: checkpoint)
+            }
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
     }
 
     @ViewBuilder
     private func inspectorListContent() -> some View {
-        if #available(macOS 13.0, iOS 16.0, *) {
-            List {
-                checkpointRows()
-            }
-            .scrollContentBackground(.hidden)
-        } else {
-            List {
-                checkpointRows()
-            }
+        ScrollView {
+            checkpointRows()
         }
     }
     
@@ -158,10 +153,8 @@ struct FileCheckpointListView<Checkpoint: FileCheckpointRepresentable>: View {
     @ViewBuilder
     private func compactNavigationContent() -> some View {
         NavigationStack {
-            List(selection: $selection) {
-                ForEach(fileCheckpoints) { checkpoint in
-                    FileCheckpointRowView(checkpoint: checkpoint)
-                }
+            ScrollView {
+                checkpointRows()
             }
             .navigationTitle(String(localizable: .checkpoints))
             .toolbar {

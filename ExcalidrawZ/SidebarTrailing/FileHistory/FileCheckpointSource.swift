@@ -57,4 +57,28 @@ extension FileCheckpointRepresentable {
             case .aiPre, .aiPost, .mcpPre, .mcpPost, .restorePost: return true
         }
     }
+
+    var checkpointDisplayTitle: String {
+        if let historyDescription = historyDescription?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !historyDescription.isEmpty {
+            return historyDescription
+        }
+
+        return checkpointSource.fallbackDisplayTitle
+    }
+}
+
+private extension FileCheckpointSource {
+    var fallbackDisplayTitle: String {
+        switch self {
+            case .user, .aiPre, .mcpPre:
+                return "Regular checkpoint"
+            case .aiPost:
+                return "AI checkpoint"
+            case .mcpPost:
+                return "MCP checkpoint"
+            case .restorePost:
+                return "Restore checkpoint"
+        }
+    }
 }

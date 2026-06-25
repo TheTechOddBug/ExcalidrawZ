@@ -370,6 +370,7 @@ struct InspectorToolbarTitleLabel: View {
         Text(title)
             .foregroundStyle(.secondary)
             .font(.headline)
+            .padding(.horizontal, 8)
     }
 }
 

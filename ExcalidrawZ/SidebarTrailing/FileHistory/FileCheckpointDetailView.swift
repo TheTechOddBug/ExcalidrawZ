@@ -44,8 +44,10 @@ struct FileCheckpointDetailView<Checkpoint: FileCheckpointRepresentable>: View {
 
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(checkpoint.filename ?? "")
+                    Text(checkpoint.checkpointDisplayTitle)
                         .font(.title2.bold())
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
                     Text(checkpoint.updatedAt?.formatted() ?? "")
                         .font(.footnote)
                 }

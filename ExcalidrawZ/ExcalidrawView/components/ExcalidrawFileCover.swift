@@ -209,7 +209,10 @@ extension NSImage {
 
         let width = CGFloat(cgImage.width)
         let height = CGFloat(cgImage.height)
-        let scale = maxPixelSize / max(width, height)
+        let longestSide = max(width, height)
+        guard maxPixelSize > 0, longestSide > 0 else { return nil }
+        let scale = min(1, maxPixelSize / longestSide)
+        guard scale < 1 else { return cgImage }
         let targetSize = CGSize(width: max(1, width * scale), height: max(1, height * scale))
 
         guard let ctx = CGContext(
@@ -247,7 +250,10 @@ extension UIImage {
 
         let width = CGFloat(cgImage.width)
         let height = CGFloat(cgImage.height)
-        let scale = maxPixelSize / max(width, height)
+        let longestSide = max(width, height)
+        guard maxPixelSize > 0, longestSide > 0 else { return nil }
+        let scale = min(1, maxPixelSize / longestSide)
+        guard scale < 1 else { return cgImage }
         let targetSize = CGSize(width: max(1, width * scale), height: max(1, height * scale))
 
         guard let ctx = CGContext(
