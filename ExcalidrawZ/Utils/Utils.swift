@@ -64,6 +64,15 @@ enum BackupFilesReason {
                 true
         }
     }
+
+    var includesUnlockedLockedFiles: Bool {
+        switch self {
+            case .regular:
+                false
+            case .unlockedContent:
+                true
+        }
+    }
 }
 
 @discardableResult
@@ -82,19 +91,6 @@ func backupFiles(
     let exportURL = backupsDir.appendingPathComponent(backupFolderName, conformingTo: .directory)
     let existingBackupExists = fileManager.fileExists(at: exportURL)
     if existingBackupExists && !replaceExistingToday { return false }
-
-    switch reason {
-        case .regular:
-            if try await cloudBackupHasEncryptedContent(context: context) {
-                utilitiesLogger.debug("Skipping regular backup because encrypted files exist")
-                return false
-            }
-        case .unlockedContent:
-            if try await cloudBackupHasLockedContentUnavailable(context: context) {
-                utilitiesLogger.debug("Skipping unlock-triggered backup because locked files are not unlocked")
-                return false
-            }
-    }
 
     let workingExportURL: URL
     if replaceExistingToday {
@@ -117,7 +113,11 @@ func backupFiles(
     do {
         utilitiesLogger.debug("Starting cloud backup at \(cloudExportURL.path)")
         try fileManager.createDirectory(at: cloudExportURL, withIntermediateDirectories: true)
-        try await backupAllCloudFiles(to: cloudExportURL, context: context)
+        try await backupAllCloudFiles(
+            to: cloudExportURL,
+            context: context,
+            includeLockedFiles: reason.includesUnlockedLockedFiles
+        )
     } catch let error as EncryptedContentError where error.isContentLocked {
         utilitiesLogger.debug("Skipping backup because locked files are not unlocked")
         try? fileManager.removeItem(at: workingExportURL)

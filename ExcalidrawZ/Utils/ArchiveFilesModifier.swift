@@ -435,7 +435,11 @@ private func archivedFileData(
     )
 }
 
-func backupAllCloudFiles(to url: URL, context: NSManagedObjectContext) async throws {
+func backupAllCloudFiles(
+    to url: URL,
+    context: NSManagedObjectContext,
+    includeLockedFiles: Bool = true
+) async throws {
     let filemanager = FileManager.default
     let allFiles: [PersistenceController.ExcalidrawGroup : [File]] = try PersistenceController.shared.listAllFiles(context: context)
 
@@ -455,7 +459,13 @@ func backupAllCloudFiles(to url: URL, context: NSManagedObjectContext) async thr
 
         for file in files {
             do {
-                let archiveData = try await backupFileData(for: file, context: context)
+                guard let archiveData = try await archivedFileData(
+                    for: file,
+                    context: context,
+                    includeLockedFiles: includeLockedFiles
+                ) else {
+                    continue
+                }
                 var index = 1
                 var filename = archiveData.name
                 var fileURL: URL = groupURL.appendingPathComponent(filename, conformingTo: .fileURL).appendingPathExtension("excalidraw")
@@ -478,7 +488,8 @@ func backupAllCloudFiles(to url: URL, context: NSManagedObjectContext) async thr
                 }
             } catch let error as EncryptedContentError {
                 if error.isContentLocked {
-                    throw error
+                    archiveFilesLogger.debug("Skipping locked file during backup")
+                    continue
                 }
                 errorDuringBackup = error
             } catch {
@@ -490,92 +501,6 @@ func backupAllCloudFiles(to url: URL, context: NSManagedObjectContext) async thr
     if let errorDuringBackup {
         throw errorDuringBackup
     }
-}
-
-func cloudBackupHasLockedContentUnavailable(context: NSManagedObjectContext) async throws -> Bool {
-    let allFiles: [PersistenceController.ExcalidrawGroup: [File]] = try PersistenceController.shared.listAllFiles(context: context)
-    for file in allFiles.values.flatMap({ $0 }) {
-        let snapshot: ArchiveFileSnapshot
-        do {
-            snapshot = try await archiveFileSnapshot(for: file)
-        } catch {
-            continue
-        }
-
-        let encryptedContent: Data?
-        do {
-            encryptedContent = try await storedEncryptedContentIfPresent(from: snapshot)
-        } catch {
-            continue
-        }
-        guard let encryptedContent else { continue }
-
-        guard let fileID = snapshot.fileID else {
-            return true
-        }
-        let canBackup = await LockedContentUnlockSession.shared.isUnlockedOrCanUnlock(
-            encryptedContent,
-            expectedContentType: "file",
-            expectedContentID: fileID.uuidString
-        )
-        if !canBackup {
-            return true
-        }
-    }
-    return false
-}
-
-func cloudBackupHasEncryptedContent(context: NSManagedObjectContext) async throws -> Bool {
-    let allFiles: [PersistenceController.ExcalidrawGroup: [File]] = try PersistenceController.shared.listAllFiles(context: context)
-    for file in allFiles.values.flatMap({ $0 }) {
-        let snapshot: ArchiveFileSnapshot
-        do {
-            snapshot = try await archiveFileSnapshot(for: file)
-        } catch {
-            continue
-        }
-
-        do {
-            if try await storedEncryptedContentIfPresent(from: snapshot) != nil {
-                return true
-            }
-        } catch {
-            continue
-        }
-    }
-    return false
-}
-
-private func backupFileData(
-    for file: File,
-    context: NSManagedObjectContext
-) async throws -> ArchivedFileData {
-    let snapshot = try await archiveFileSnapshot(for: file)
-    let fallbackName = snapshot.name ?? String(localizable: .newFileNamePlaceholder)
-
-    if let encryptedContent = try await storedEncryptedContentIfPresent(from: snapshot) {
-        guard let fileID = snapshot.fileID else {
-            throw EncryptedContentError.invalidEnvelope
-        }
-        let plaintext = try await LockedContentUnlockSession.shared.decrypt(
-            encryptedContent,
-            expectedContentType: "file",
-            expectedContentID: fileID.uuidString
-        )
-        var excalidrawFile = try ExcalidrawFile(data: plaintext, id: fileID.uuidString)
-        excalidrawFile.name = fallbackName
-        try await excalidrawFile.syncFiles(context: context)
-
-        return ArchivedFileData(
-            name: excalidrawFile.name ?? fallbackName,
-            content: excalidrawFile.content ?? Data()
-        )
-    }
-
-    guard let archiveData = try await archivedFileData(for: file, context: context) else {
-        throw AppError.fileError(.contentNotAvailable(filename: fallbackName))
-    }
-    return archiveData
 }
 
 private func archiveFileSnapshot(for file: File) async throws -> ArchiveFileSnapshot {

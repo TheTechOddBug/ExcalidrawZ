@@ -131722,6 +131722,52 @@
         }
       }
     },
+    "whatsNewPerformanceImprovementsDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This update focuses on performance improvements across file loading, saving, covers, and everyday canvas interactions."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本次更新主要优化性能，改进了文件加载、保存、封面生成以及日常画布操作的流畅度。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本次更新主要優化效能，改善了檔案載入、儲存、封面生成以及日常畫布操作的流暢度。"
+          }
+        }
+      }
+    },
+    "whatsNewPerformanceImprovementsTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Performance Improvements"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "性能优化"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "效能優化"
+          }
+        }
+      }
+    },
     "whatsNewRedesignUIDescription": {
       "extractionState": "manual",
       "localizations": {

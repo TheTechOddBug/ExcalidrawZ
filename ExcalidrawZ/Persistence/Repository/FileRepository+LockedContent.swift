@@ -136,7 +136,7 @@ extension FileRepository {
         await RecoveryKeyVault.shared.activate(recoveryKey)
         rememberRecoveryKeyForSystemUnlock(recoveryKey)
 #if canImport(AppKit)
-        await UnlockTriggeredBackupCoordinator.shared.noteLockedContentUnlocked()
+        await UnlockTriggeredBackupCoordinator.shared.noteLockedContentUnlocked(fileID: contentID)
 #endif
         return plaintext
     }
