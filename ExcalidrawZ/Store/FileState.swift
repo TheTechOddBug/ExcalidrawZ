@@ -1022,8 +1022,9 @@ final class FileState: ObservableObject {
             fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \LocalFileCheckpoint.updatedAt, ascending: false)]
             let localFileCheckpoints = try context.fetch(fetchRequest)
 
-            if didUpdate, let firstCheckpoint = localFileCheckpoints.first {
-                firstCheckpoint.updatedAt = Date()
+            if didUpdate,
+               let firstCheckpoint = localFileCheckpoints.first,
+               !UserCheckpointRolloverPolicy.shouldCreateNewCheckpoint(latestUpdatedAt: firstCheckpoint.updatedAt) {
                 firstCheckpoint.content = file.content
                 if firstCheckpoint.source == nil {
                     firstCheckpoint.source = FileCheckpointSource.user.rawValue
@@ -1168,8 +1169,9 @@ final class FileState: ObservableObject {
             fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \LocalFileCheckpoint.updatedAt, ascending: false)]
             let localFileCheckpoints = try context.fetch(fetchRequest)
 
-            if didUpdateFile, let firstCheckpoint = localFileCheckpoints.first {
-                firstCheckpoint.updatedAt = Date()
+            if didUpdateFile,
+               let firstCheckpoint = localFileCheckpoints.first,
+               !UserCheckpointRolloverPolicy.shouldCreateNewCheckpoint(latestUpdatedAt: firstCheckpoint.updatedAt) {
                 firstCheckpoint.content = excalidrawFile.content
                 // Backfill on legacy rows so future predicates needn't OR-nil.
                 if firstCheckpoint.source == nil {
@@ -1192,6 +1194,7 @@ final class FileState: ObservableObject {
                     context.delete(last)
                 }
             }
+            try context.save()
         }
 
         await MainActor.run {

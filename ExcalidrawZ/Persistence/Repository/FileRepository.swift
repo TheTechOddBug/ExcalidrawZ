@@ -463,11 +463,15 @@ actor FileRepository {
 
         struct LatestLookup {
             let foundUserCheckpoint: NSManagedObjectID?
+            let shouldCreateNewCheckpoint: Bool
         }
 
         let lookup: LatestLookup = try await context.perform {
             guard let file = context.object(with: fileObjectID) as? File else {
-                return LatestLookup(foundUserCheckpoint: nil)
+                return LatestLookup(
+                    foundUserCheckpoint: nil,
+                    shouldCreateNewCheckpoint: true
+                )
             }
 
             // Match user-source rows OR legacy rows (source == nil).
@@ -480,13 +484,22 @@ actor FileRepository {
             )
             fetchRequest.sortDescriptors = [.init(key: "updatedAt", ascending: false)]
             guard let checkpoint = try context.fetch(fetchRequest).first else {
-                return LatestLookup(foundUserCheckpoint: nil)
+                return LatestLookup(
+                    foundUserCheckpoint: nil,
+                    shouldCreateNewCheckpoint: true
+                )
             }
 
-            return LatestLookup(foundUserCheckpoint: checkpoint.objectID)
+            return LatestLookup(
+                foundUserCheckpoint: checkpoint.objectID,
+                shouldCreateNewCheckpoint: UserCheckpointRolloverPolicy.shouldCreateNewCheckpoint(
+                    latestUpdatedAt: checkpoint.updatedAt
+                )
+            )
         }
 
-        if let checkpointObjectID = lookup.foundUserCheckpoint {
+        if let checkpointObjectID = lookup.foundUserCheckpoint,
+           !lookup.shouldCreateNewCheckpoint {
             self.logger.info("Updating latest user checkpoint")
             try await PersistenceController.shared.checkpointRepository.saveCheckpointContentToStorage(
                 checkpointObjectID: checkpointObjectID,
@@ -494,8 +507,10 @@ actor FileRepository {
                 updateMetadataWhenPathUnchanged: false
             )
         } else {
-            // Latest checkpoint(s) are all AI rows — start a new user
-            // checkpoint instead of clobbering them.
+            // Start a new checkpoint when there is no user row to update,
+            // or when the current editing run has exceeded the rollover
+            // interval. This keeps long sessions from having a single
+            // restore point that can be overwritten by a bad save.
             _ = try await createCheckpoint(
                 fileObjectID: fileObjectID,
                 content: content,
