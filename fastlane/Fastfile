@@ -1,0 +1,240 @@
+require "cgi"
+require "fileutils"
+require "rexml/document"
+
+default_platform(:mac)
+
+def current_project_version
+  get_version_number(
+    xcodeproj: "ExcalidrawZ.xcodeproj",
+    target: "ExcalidrawZ"
+  )
+end
+
+def load_local_env
+  env_paths = [
+    File.expand_path(".env.local", __dir__),
+    File.expand_path(".env", __dir__)
+  ]
+
+  env_paths.each do |path|
+    next unless File.exist?(path)
+
+    File.readlines(path, chomp: true).each do |line|
+      next if line.strip.empty? || line.strip.start_with?("#")
+
+      key, value = line.split("=", 2)
+      next if key.to_s.empty? || value.nil?
+
+      ENV[key.strip] ||= value.strip.gsub(/\A["']|["']\z/, "")
+    end
+  end
+end
+
+def app_store_connect_api_key_from_env
+  load_local_env
+
+  key_id = ENV["APP_STORE_CONNECT_API_KEY_ID"]
+  issuer_id = ENV["APP_STORE_CONNECT_API_ISSUER_ID"]
+  key_filepath = ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+
+  return nil if key_id.to_s.empty? || issuer_id.to_s.empty? || key_filepath.to_s.empty?
+
+  app_store_connect_api_key(
+    key_id: key_id,
+    issuer_id: issuer_id,
+    key_filepath: key_filepath
+  )
+end
+
+def release_note_locales(metadata_path)
+  Dir.glob(File.join(metadata_path, "*", "release_notes.txt"))
+     .map { |path| File.basename(File.dirname(path)) }
+     .sort
+end
+
+def release_notes_html(version, locale, text)
+  body = []
+  in_list = false
+
+  text.lines.map(&:chomp).each do |line|
+    stripped = line.strip
+    next if stripped.empty?
+
+    if stripped.start_with?("- ")
+      unless in_list
+        body << "<ul>"
+        in_list = true
+      end
+      body << "  <li>#{CGI.escapeHTML(stripped.delete_prefix("- ").strip)}</li>"
+    else
+      if in_list
+        body << "</ul>"
+        in_list = false
+      end
+      body << "<p>#{CGI.escapeHTML(stripped)}</p>"
+    end
+  end
+
+  body << "</ul>" if in_list
+  direction = locale.start_with?("ar") ? "rtl" : "ltr"
+
+  <<~HTML
+    <!doctype html>
+    <html lang="#{CGI.escapeHTML(locale)}" dir="#{direction}">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>ExcalidrawZ #{CGI.escapeHTML(version)}</title>
+      <style>
+        :root { color-scheme: light dark; }
+        body {
+          margin: 0;
+          padding: 24px;
+          font: -apple-system-body;
+          line-height: 1.45;
+        }
+        main {
+          max-width: 680px;
+        }
+        h1 {
+          font: -apple-system-title2;
+          margin: 0 0 16px;
+        }
+        p {
+          margin: 0 0 12px;
+        }
+        ul {
+          margin: 0;
+          padding-inline-start: 1.3em;
+        }
+        li {
+          margin: 0 0 7px;
+        }
+      </style>
+    </head>
+    <body>
+      <main>
+        <h1>ExcalidrawZ #{CGI.escapeHTML(version)}</h1>
+        #{body.join("\n        ")}
+      </main>
+    </body>
+    </html>
+  HTML
+end
+
+def write_sparkle_release_notes(version:, metadata_path:, output_dir:, output_base_name:)
+  FileUtils.mkdir_p(output_dir)
+
+  Dir.glob(File.join(metadata_path, "*", "release_notes.txt")).sort.filter_map do |path|
+    locale = File.basename(File.dirname(path))
+    text = File.read(path, encoding: "UTF-8").strip
+    next if text.empty?
+
+    filename = "#{output_base_name}.#{locale}.html"
+    output_path = File.join(output_dir, filename)
+    File.write(output_path, release_notes_html(version, locale, text))
+    [locale, filename, output_path]
+  end
+end
+
+def appcast_child_text(element, suffix)
+  element.elements.each do |child|
+    return child.text.to_s.strip if child.name == suffix || child.expanded_name.end_with?(":#{suffix}")
+  end
+  ""
+end
+
+def patch_sparkle_appcast_release_notes(version:, output_dir:, output_base_name:, feed_base_url:, notes:)
+  appcast_path = File.join(output_dir, "appcast.xml")
+  return false unless File.exist?(appcast_path)
+
+  document = REXML::Document.new(File.read(appcast_path))
+  matching_items = []
+
+  REXML::XPath.each(document, "//item") do |item|
+    matching_items << item if appcast_child_text(item, "shortVersionString") == version
+  end
+
+  return false if matching_items.empty?
+
+  sorted_notes = notes.sort_by do |locale, _filename, _path|
+    locale == "en-US" ? ["", locale] : [locale, locale]
+  end
+
+  matching_items.each do |item|
+    links = []
+    item.elements.each do |child|
+      links << child if child.name == "releaseNotesLink" || child.expanded_name.end_with?(":releaseNotesLink")
+    end
+    links.each { |link| item.delete_element(link) }
+
+    sorted_notes.each do |locale, filename, _path|
+      link = REXML::Element.new("sparkle:releaseNotesLink")
+      link.add_attribute("xml:lang", locale)
+      link.text = "#{feed_base_url.sub(%r{/*\z}, "")}/#{CGI.escape(filename).gsub("+", "%20")}"
+      item.add_element(link)
+    end
+  end
+
+  File.write(appcast_path, "#{document}\n")
+  true
+end
+
+platform :mac do
+  desc "Upload App Store Connect metadata only. Build upload stays manual."
+  lane :upload_metadata do |options|
+    version = options[:version] || current_project_version
+    metadata_path = "./fastlane/metadata"
+    locales = release_note_locales(metadata_path)
+
+    UI.message("Preparing to upload App Store Connect metadata.")
+    UI.message("Target version: #{version}")
+    UI.message("Locales: #{locales.join(', ')}")
+    UI.confirm("Upload metadata to App Store Connect version #{version}?")
+
+    deliver(
+      app_identifier: "com.chocoford.excalidraw",
+      platform: "osx",
+      app_version: version,
+      metadata_path: metadata_path,
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      submit_for_review: false,
+      run_precheck_before_submit: false,
+      force: true,
+      api_key: app_store_connect_api_key_from_env
+    )
+  end
+
+  desc "Generate localized Sparkle release notes and patch local website appcast."
+  lane :generate_sparkle_release_notes do |options|
+    version = options[:version] || current_project_version
+    metadata_path = File.expand_path("metadata", __dir__)
+    output_dir = File.expand_path("../WebPage/public/downloads", __dir__)
+    output_base_name = options[:output_base_name] || "ExcalidrawZ.#{version}"
+    feed_base_url = options[:feed_base_url] || "https://excalidrawz.chocoford.com/downloads/"
+
+    notes = write_sparkle_release_notes(
+      version: version,
+      metadata_path: metadata_path,
+      output_dir: output_dir,
+      output_base_name: output_base_name
+    )
+
+    UI.message("Generated #{notes.count} localized Sparkle release note files.")
+    notes.each { |_locale, _filename, path| UI.message(path) }
+
+    if patch_sparkle_appcast_release_notes(
+      version: version,
+      output_dir: output_dir,
+      output_base_name: output_base_name,
+      feed_base_url: feed_base_url,
+      notes: notes
+    )
+      UI.message("Patched Sparkle appcast release notes for version #{version}.")
+    else
+      UI.message("No matching appcast item found for version #{version}; generated HTML only.")
+    end
+  end
+end

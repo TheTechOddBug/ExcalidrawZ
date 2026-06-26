@@ -1,0 +1,1 @@
+Mac, iPad ve iPhone için yerel Excalidraw istemcisi. Elle çizilmiş beyaz tahtalar, diyagramlar, eskizler ve görsel notlar oluşturun.

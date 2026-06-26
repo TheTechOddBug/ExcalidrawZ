@@ -1,3 +1,21 @@
+## 2.2.1
+
+#### Optimizations
+
+- Improved file opening and closing so returning to Home and switching between drawings feels smoother, especially when the trailing sidebar is open.
+- Improved saving and loading performance for larger drawings, reducing visible pauses during everyday canvas work.
+- Improved file cover generation so recent drawings, checkpoint previews, and library item previews appear more reliably without interrupting the editor.
+- Improved File History previews by loading checkpoint thumbnails lazily and keeping each row easier to scan.
+- Improved Home, File Home, and sidebar interactions to reduce unnecessary refreshes while files are saving or previews are updating.
+- Improved Mermaid insertion on macOS with a wider edit-and-preview layout that better uses available space.
+
+#### Bug fixed
+
+- Fixed cases where JavaScript-side errors were not surfaced through the app toast layer.
+- Fixed cases where closing a file could save the visible cover before the latest canvas viewport was persisted.
+- Fixed cases where closing the last window could finish the backup task but fail to terminate the app.
+- Fixed backup behavior so app termination can still back up unlocked content even when locked files exist.
+
 ## 2.2.0
 
 #### Features

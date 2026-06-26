@@ -1,0 +1,1 @@
+skizze,flussdiagramm,mindmap,canvas,notizen,zeichnen,diagramm,wireframe,Mermaid,Excalidraw

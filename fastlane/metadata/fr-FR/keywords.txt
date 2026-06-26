@@ -1,0 +1,1 @@
+croquis,organigramme,carte mentale,canvas,notes,dessin,diagramme,wireframe,Mermaid,Excalidraw

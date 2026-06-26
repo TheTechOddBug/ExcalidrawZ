@@ -1,0 +1,1 @@
+Ein nativer Excalidraw-Client für Mac, iPad und iPhone. Erstelle handgezeichnete Whiteboards, Diagramme, Skizzen und visuelle Notizen.
