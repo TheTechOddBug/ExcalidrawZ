@@ -51,6 +51,8 @@ struct ContentView: View {
     @State private var cloudContainerEventChangeListener: AnyCancellable?
     
     @State private var isFirstAppear = true
+
+    private static let activeFileCloseInspectorDismissalDelay: UInt64 = 400_000_000
     
     var body: some View {
         content()
@@ -137,6 +139,11 @@ struct ContentView: View {
                 }
 #endif
                 await MainActor.run {
+                    fileState.prepareActiveFileCloseTransition = {
+                        guard layoutState.isInspectorPresented else { return }
+                        layoutState.isInspectorPresented = false
+                        try? await Task.sleep(nanoseconds: Self.activeFileCloseInspectorDismissalDelay)
+                    }
                     ExcalidrawMCPAppBridge.shared.register(
                         fileState: fileState,
                         context: viewContext

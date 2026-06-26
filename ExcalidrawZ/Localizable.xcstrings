@@ -76120,6 +76120,121 @@
         }
       }
     },
+    "settingsAIMCPConnectionGuideCodexTabTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex"
+          }
+        }
+      }
+    },
+    "settingsAIMCPCodexGuideMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex connects directly to ExcalidrawZ's local streamable HTTP MCP endpoint. Keep ExcalidrawZ open and enable the MCP Server first."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex 可以直接连接 ExcalidrawZ 的本地 streamable HTTP MCP 端点。请先保持 ExcalidrawZ 打开并启用 MCP 服务器。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex 可以直接連接 ExcalidrawZ 的本地 streamable HTTP MCP 端點。請先保持 ExcalidrawZ 開啟並啟用 MCP 伺服器。"
+          }
+        }
+      }
+    },
+    "settingsAIMCPCodexGuideSteps": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Codex, open Settings > MCP Servers > Add server. Choose Streamable HTTP server, enter the server name and URL below, then save."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Codex 中，打开 Settings > MCP Servers > Add server。选择 Streamable HTTP server，输入下面的服务器名称和 URL，然后保存。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Codex 中，打開 Settings > MCP Servers > Add server。選擇 Streamable HTTP server，輸入下面的伺服器名稱和 URL，然後保存。"
+          }
+        }
+      }
+    },
+    "settingsAIMCPCodexServerNameLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server name"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "服务器名称"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "伺服器名稱"
+          }
+        }
+      }
+    },
+    "settingsAIMCPCodexServerURLLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server URL"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "服务器 URL"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "伺服器 URL"
+          }
+        }
+      }
+    },
     "settingsAIMCPConnectionGuideMessage": {
       "extractionState": "manual",
       "localizations": {

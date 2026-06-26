@@ -90,15 +90,44 @@ struct ExcalidrawEditorOverlayModifier: ViewModifier {
 
     @ViewBuilder
     private var loadingOverlayBackground: some View {
+        GeometryReader { geometry in
+            let rect = adjustedLoadingOverlayBackgroundRect(in: geometry)
+
+            loadingOverlayBackgroundContent
+                .frame(width: rect.width, height: rect.height)
+                .clipped()
+                .offset(x: rect.minX, y: rect.minY)
+        }
+    }
+
+    @ViewBuilder
+    private var loadingOverlayBackgroundContent: some View {
         if let image = loadingOverlayCoverImage {
             Image(platformImage: image)
                 .resizable()
                 .scaledToFill()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
         } else {
             fallbackLoadingOverlayBackground
         }
+    }
+
+    private func adjustedLoadingOverlayBackgroundRect(in geometry: GeometryProxy) -> CGRect {
+        let rect = CGRect(origin: .zero, size: geometry.size)
+#if os(macOS)
+        let topInset = max(
+            geometry.safeAreaInsets.top,
+            geometry.frame(in: .global).minY
+        )
+        guard topInset > 0 else { return rect }
+        return CGRect(
+            x: rect.minX,
+            y: rect.minY - topInset,
+            width: rect.width,
+            height: rect.height + topInset
+        )
+#else
+        return rect
+#endif
     }
 
     private var loadingCoverImage: PlatformImage? {

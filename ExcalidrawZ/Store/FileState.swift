@@ -205,6 +205,8 @@ final class FileState: ObservableObject {
     private var activeFileChangeGeneration = 0
     @MainActor
     private var pendingActiveFileOpenDurationOverrides: [String: TimeInterval] = [:]
+    @MainActor
+    var prepareActiveFileCloseTransition: (() async -> Void)?
     private let homeOpenNavigationUpdateDelay: UInt64 = 650_000_000
 
     @MainActor
@@ -365,9 +367,15 @@ final class FileState: ObservableObject {
             return true
         }
 
+        let previousFile = currentActiveFile
         let shouldDelayNavigationUpdate = currentActiveFile == nil && file != nil
 
-        if let previousFile = currentActiveFile,
+        await prepareActiveFileCloseTransitionIfNeeded(
+            from: previousFile,
+            to: file
+        )
+
+        if let previousFile,
            let saveTarget = capturedCanvasSaveTarget(for: previousFile) {
             await FileCoverCacheCoordinator.shared.cacheCurrentViewportPreview(
                 for: previousFile
@@ -504,6 +512,15 @@ final class FileState: ObservableObject {
                 }
         }
         return true
+    }
+
+    @MainActor
+    private func prepareActiveFileCloseTransitionIfNeeded(
+        from previousFile: ActiveFile?,
+        to nextFile: ActiveFile?
+    ) async {
+        guard previousFile != nil, nextFile == nil else { return }
+        await prepareActiveFileCloseTransition?()
     }
 
     @MainActor

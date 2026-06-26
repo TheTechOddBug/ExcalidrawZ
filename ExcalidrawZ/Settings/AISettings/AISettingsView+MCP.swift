@@ -16,6 +16,7 @@ import UIKit
 
 enum MCPConnectionGuideTab: Hashable, Identifiable {
     case claude
+    case codex
     case vscode
 
     var id: Self { self }
@@ -182,6 +183,10 @@ extension AISettingsView {
                             mcpClaudeConnectionGuideContent
                                 .mcpFeatureRowScrollTransition()
 
+                        case .codex:
+                            mcpCodexConnectionGuideContent
+                                .mcpFeatureRowScrollTransition()
+
                         case .vscode:
                             mcpVSCodeConnectionGuideContent
                                 .mcpFeatureRowScrollTransition()
@@ -263,6 +268,10 @@ extension AISettingsView {
                 title: String(localizable: .settingsAIMCPConnectionGuideClaudeTabTitle)
             )
             mcpConnectionGuideTabButton(
+                .codex,
+                title: String(localizable: .settingsAIMCPConnectionGuideCodexTabTitle)
+            )
+            mcpConnectionGuideTabButton(
                 .vscode,
                 title: String(localizable: .settingsAIMCPConnectionGuideVSCodeTabTitle)
             )
@@ -334,6 +343,38 @@ extension AISettingsView {
     }
 
     @ViewBuilder
+    var mcpCodexConnectionGuideContent: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(localizable: .settingsAIMCPCodexGuideMessage)
+                    .foregroundStyle(.secondary)
+
+                Text(localizable: .settingsAIMCPCodexGuideSteps)
+                    .font(.callout)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                mcpGuideSectionHeader(
+                    title: String(localizable: .settingsAIMCPCodexServerNameLabel),
+                    copyText: mcpCodexServerName
+                )
+
+                mcpCodeBlock(mcpCodexServerName)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                mcpGuideSectionHeader(
+                    title: String(localizable: .settingsAIMCPCodexServerURLLabel),
+                    copyText: mcpEndpoint
+                )
+
+                mcpCodeBlock(mcpEndpoint)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
     var mcpVSCodeConnectionGuideContent: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 10) {
@@ -391,6 +432,10 @@ extension AISettingsView {
 
     var mcpEndpoint: String {
         "http://127.0.0.1:\(mcpServerController.port)/mcp"
+    }
+
+    var mcpCodexServerName: String {
+        "ExcalidrawZ"
     }
 
     var mcpClaudeDesktopConfigPath: String {
